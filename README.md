@@ -1,5 +1,9 @@
 # VistrTavern
 
+> Experimental MVP / work in progress.
+>
+> VistrTavern is an early SillyTavern extension prototype for testing human intrusion, AI recovery, structured narrative memory, and export workflows. It is not a stable end-user plugin yet.
+
 VistrTavern is an AI ensemble narrative disturbance system.
 
 Its core question is:
@@ -57,6 +61,14 @@ Implemented baseline:
 - AI recovery continuity handoff for canonical post-intrusion context.
 - Markdown and JSON export.
 - Local smoke test for the core modules.
+
+## Current Limitations
+
+- Continuity handoffs are generated, stored, and exported, but are not yet automatically injected into SillyTavern prompts.
+- AI reaction capture depends on SillyTavern runtime events and still needs broader real-environment testing.
+- The UI is an experimental control panel, not a polished user-facing workflow.
+- Test coverage is limited to a local smoke test.
+- Installation and update behavior may change with SillyTavern extension API changes.
 
 Run the smoke test:
 
