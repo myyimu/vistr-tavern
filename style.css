@@ -1,0 +1,133 @@
+#vistr-tavern-root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.vt-floating-button {
+  position: fixed;
+  right: 18px;
+  bottom: 82px;
+  z-index: 30000;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: #17191f;
+  color: #f7f3e8;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.vt-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 132px;
+  z-index: 30000;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(760px, calc(100vh - 164px));
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: #101218;
+  color: #f5f2ea;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+}
+
+.vt-panel button,
+.vt-panel input,
+.vt-panel select,
+.vt-panel textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: #191c24;
+  color: #f5f2ea;
+  font: inherit;
+}
+
+.vt-panel button {
+  min-height: 34px;
+  cursor: pointer;
+}
+
+.vt-panel textarea {
+  resize: vertical;
+}
+
+.vt-panel__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.vt-panel__header span {
+  display: block;
+  margin-top: 2px;
+  color: #a9afbc;
+  font-size: 12px;
+}
+
+.vt-panel__header button {
+  width: 88px;
+}
+
+.vt-field {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.vt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.vt-grid label,
+.vt-toggles label {
+  display: grid;
+  gap: 6px;
+}
+
+.vt-toggles {
+  display: flex;
+  gap: 14px;
+  margin: 10px 0;
+}
+
+.vt-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vt-toggles input {
+  width: auto;
+}
+
+.vt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.vt-active-list {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: #c9ced8;
+}
+
+@media (max-width: 520px) {
+  .vt-grid,
+  .vt-actions {
+    grid-template-columns: 1fr;
+  }
+}
+

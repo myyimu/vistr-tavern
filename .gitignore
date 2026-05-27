@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build and coverage output
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Editor and OS metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# SillyTavern local/runtime data if this repo is tested inside an app tree
+data/*/chats/
+data/*/characters/
+data/*/groups/
+data/*/backups/
+data/*/settings.json
+data/*/secrets.json
+

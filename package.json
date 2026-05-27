@@ -1,0 +1,11 @@
+{
+  "name": "vistr-tavern",
+  "version": "0.1.0",
+  "description": "AI ensemble narrative disturbance extension for SillyTavern.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "smoke": "node scripts/smoke-test.mjs"
+  }
+}
+
