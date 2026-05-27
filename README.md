@@ -29,6 +29,10 @@ AI ensemble runs normally
 
 The first target is a SillyTavern extension, not a standalone web app.
 
+## Release Target
+
+`v0.1.0-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+
 ## Core Principle
 
 If a feature does not strengthen the dramatic tension caused by a human anomaly entering an AI ensemble, it is not a first-priority feature.
@@ -73,6 +77,14 @@ npm run smoke
 ## Installation Shape
 
 This repository is structured as the extension folder itself. For local testing, place it under the SillyTavern extensions directory and name the folder `vistr-tavern`.
+
+Manual install:
+
+1. Clone or download this repository.
+2. Rename the folder to `vistr-tavern` if needed.
+3. Place it under your SillyTavern user extensions directory.
+4. Restart SillyTavern or reload the web UI.
+5. Open a chat and look for the floating `VT` button.
 
 Expected structure:
 
