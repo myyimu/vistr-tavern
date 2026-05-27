@@ -34,17 +34,31 @@ const humanMessage = memory.recordMessage({
   intrusion,
 });
 
+memory.recordMessage({
+  characterId: 'Chancellor',
+  speakerName: 'Chancellor',
+  controller: Controller.AI,
+  visibility: Visibility.REVEALED,
+  content: 'That question borders on treason.',
+  scene,
+  intrusion,
+});
+
 assert.equal(engine.isHumanControlled('Eileen'), true);
-assert.equal(memory.memory.messages.length, 1);
+assert.equal(memory.memory.messages.length, 2);
 assert.equal(humanMessage.controller, Controller.HUMAN);
 
 now += 61_000;
 engine.tick(now);
 assert.equal(engine.isHumanControlled('Eileen'), false);
+assert.equal(memory.memory.handoffs.length, 1);
+assert.match(memory.memory.handoffs[0].prompt, /These events are canonical/);
+assert.match(memory.memory.handoffs[0].prompt, /Do not mention human control/);
 
 const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
 assert.match(markdown, /Do you really believe/);
+assert.match(markdown, /AI 接管连续性/);
 
 console.log('VistrTavern smoke test passed.');
 

@@ -20,6 +20,12 @@ export const ViewMode = Object.freeze({
   GOD: 'god',
 });
 
+export const HandoffAwareness = Object.freeze({
+  NONE: 'none',
+  SUBTLE: 'subtle',
+  EXPLICIT: 'explicit',
+});
+
 export function createId(prefix) {
   const random = Math.random().toString(36).slice(2, 10);
   return `${prefix}_${Date.now().toString(36)}_${random}`;
@@ -41,6 +47,7 @@ export function createEmptyMemory(now = new Date()) {
     characters: [],
     scenes: [],
     intrusions: [],
+    handoffs: [],
     messages: [],
     disturbanceEvents: [],
     relationshipDeltas: [],

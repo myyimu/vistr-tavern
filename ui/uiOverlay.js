@@ -1,4 +1,4 @@
-import { ControlMode, Controller, ViewMode, Visibility } from '../data/schema.js';
+import { ControlMode, Controller, HandoffAwareness, ViewMode, Visibility } from '../data/schema.js';
 
 export class UiOverlay {
   constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onSaveScene, onExportMarkdown, onExportJson, getState }) {
@@ -77,6 +77,7 @@ export class UiOverlay {
       const durationMinutes = Number(this.root.querySelector('[data-vt-duration]').value) || 5;
       const visibility = this.root.querySelector('[data-vt-anonymous]').checked ? Visibility.ANONYMOUS : Visibility.REVEALED;
       const mode = this.root.querySelector('[data-vt-director]').checked ? ControlMode.DIRECTOR : ControlMode.INTRUSION;
+      const awareness = this.root.querySelector('[data-vt-awareness]').value || HandoffAwareness.NONE;
 
       await this.onStartIntrusion({
         characterId: character.id,
@@ -84,6 +85,7 @@ export class UiOverlay {
         durationMs: durationMinutes * 60 * 1000,
         visibility,
         mode,
+        awareness,
       });
       this.refresh();
     });
@@ -174,6 +176,15 @@ export class UiOverlay {
           <label><input type="checkbox" data-vt-anonymous checked> Anonymous</label>
           <label><input type="checkbox" data-vt-director> Director</label>
         </div>
+
+        <label class="vt-field">
+          Awareness after recovery
+          <select data-vt-awareness>
+            <option value="${HandoffAwareness.NONE}">None</option>
+            <option value="${HandoffAwareness.SUBTLE}">Subtle</option>
+            <option value="${HandoffAwareness.EXPLICIT}">Explicit</option>
+          </select>
+        </label>
 
         <div class="vt-actions">
           <button type="button" data-vt-start>Start Intrusion</button>

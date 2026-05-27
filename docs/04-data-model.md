@@ -98,6 +98,33 @@ Do not store only raw chat messages. Every important record should carry control
 }
 ```
 
+## Continuity Handoff
+
+Created when control returns from human to AI. This is the canonical bridge that helps the AI continue from the human-changed story state.
+
+```json
+{
+  "id": "handoff_001",
+  "sessionId": "session_001",
+  "sceneId": "scene_001",
+  "intrusionId": "intrusion_001",
+  "characterId": "char_eileen",
+  "characterName": "Eileen",
+  "visibility": "anonymous",
+  "awareness": "none",
+  "summary": "Eileen returned to AI control after 1 canonical human-controlled line(s) and 1 AI reaction(s).",
+  "prompt": "[VistrTavern Continuity Handoff]\\nThese events are canonical...",
+  "relatedMessageIds": ["msg_001", "msg_002"],
+  "createdAt": "2026-05-27T12:10:03.000Z"
+}
+```
+
+Awareness modes:
+
+- `none`: the character does not know about human control in-world.
+- `subtle`: the character may feel hesitation, memory gaps, or loss of control.
+- `explicit`: the character may recognize an external will as an in-world experience.
+
 ## Relationship Delta
 
 ```json
@@ -137,6 +164,7 @@ Every export should include:
 - Session summary.
 - Scene list.
 - Intrusion timeline.
+- AI recovery continuity handoffs.
 - High-tension dialogue.
 - AI reactions to the intrusion.
 - Relationship changes.

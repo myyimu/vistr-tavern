@@ -15,6 +15,7 @@ export class ExportWriter {
     const humanMessages = memory.messages.filter((message) => message.controller === Controller.HUMAN);
     const aiReactions = memory.messages.filter((message) => message.controller === Controller.AI && message.intrusionId);
     const highTensionMessages = memory.messages.filter((message) => Number(message.tension) >= 70);
+    const handoffs = memory.handoffs || [];
 
     return [
       `# ${memory.session.title}`,
@@ -35,6 +36,9 @@ export class ExportWriter {
       '',
       '## AI 反应',
       aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无绑定到入侵窗口的 AI 反应',
+      '',
+      '## AI 接管连续性',
+      handoffs.length ? handoffs.map(formatHandoff).join('\n\n') : '- 暂无接管恢复上下文',
       '',
       '## 高张力对话',
       highTensionMessages.length ? highTensionMessages.map(formatMessage).join('\n') : '- 暂无高张力对话',
@@ -62,5 +66,17 @@ function formatMessage(message) {
   const label = message.visibility === 'anonymous' ? 'Unknown Source' : message.controller;
   const tension = message.tension === null || message.tension === undefined ? '' : ` tension=${message.tension}`;
   return `- ${message.speakerName} [${label}${tension}]: ${message.content}`;
+}
+
+function formatHandoff(handoff) {
+  return [
+    `### ${handoff.characterName || handoff.characterId}`,
+    `- Awareness: ${handoff.awareness}`,
+    `- Summary: ${handoff.summary}`,
+    '',
+    '```text',
+    handoff.prompt,
+    '```',
+  ].join('\n');
 }
 

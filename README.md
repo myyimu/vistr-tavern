@@ -54,6 +54,7 @@ Implemented baseline:
 - Manual scene and tension fields.
 - Human anomaly line recording.
 - AI reaction capture during active intrusion windows.
+- AI recovery continuity handoff for canonical post-intrusion context.
 - Markdown and JSON export.
 - Local smoke test for the core modules.
 
@@ -88,3 +89,7 @@ SillyTavern/
 - [路线图](docs/zh-CN/02-路线图.md)
 - [MVP 开发计划](docs/zh-CN/03-MVP开发计划.md)
 - [数据模型](docs/zh-CN/04-数据模型.md)
+
+## License
+
+MIT
