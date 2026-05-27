@@ -57,7 +57,7 @@ export class UiOverlay {
       ? state.activeIntrusions.map((intrusion) => `<li>${escapeHtml(intrusion.characterName || intrusion.characterId)} · ${escapeHtml(intrusion.visibility)} · until ${new Date(intrusion.endsAt).toLocaleTimeString()}</li>`).join('')
       : '<li>No active intrusion</li>';
 
-    status.textContent = `${state.viewMode} · ${state.messageCount} messages · ${state.intrusionCount} intrusions`;
+    status.textContent = `${state.viewMode} · ${state.messageCount} messages · ${state.intrusionCount} intrusions · ${state.pendingHandoffCount || 0} pending handoffs`;
   }
 
   #bind() {

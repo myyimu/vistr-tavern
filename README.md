@@ -55,13 +55,14 @@ VistrTavern records:
 - Human anomaly line recording.
 - AI reaction capture during active intrusion windows.
 - AI recovery continuity handoff for preserving the context that the story has already been changed by the human.
+- Prompt injection through SillyTavern `generate_interceptor` for pending continuity handoffs.
 - Markdown and JSON export.
 - Core module smoke test.
 
 ## Current Limitations
 
-- Continuity handoffs are generated, stored, and exported, but are not yet automatically injected into SillyTavern prompts.
-- AI reaction capture depends on SillyTavern runtime events and needs broader real-environment testing.
+- Continuity handoff prompt injection is implemented through SillyTavern `generate_interceptor`, but still needs broader real-environment testing.
+- AI reaction capture depends on SillyTavern runtime events and may need compatibility fixes across versions.
 - The UI is still an experimental control panel, not a polished end-user workflow.
 - Test coverage is currently limited to a smoke test.
 - SillyTavern extension API changes may affect installation and update behavior.

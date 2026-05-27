@@ -72,6 +72,7 @@ function formatHandoff(handoff) {
   return [
     `### ${handoff.characterName || handoff.characterId}`,
     `- Awareness: ${handoff.awareness}`,
+    `- Status: ${handoff.consumedAt ? 'consumed' : 'pending'}`,
     `- Summary: ${handoff.summary}`,
     '',
     '```text',

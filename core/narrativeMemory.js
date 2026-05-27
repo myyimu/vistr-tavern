@@ -55,6 +55,7 @@ export class NarrativeMemory {
     content,
     scene = null,
     intrusion = null,
+    handoff = null,
     source = 'sillytavern',
   }) {
     const trimmedContent = content?.trim();
@@ -66,8 +67,9 @@ export class NarrativeMemory {
       id: createId('msg'),
       sessionId: this.memory.session.id,
       sceneId: scene?.id || this.memory.session.activeSceneId,
-      intrusionId: intrusion?.id || null,
-      characterId: characterId || intrusion?.characterId || null,
+      intrusionId: intrusion?.id || handoff?.intrusionId || null,
+      handoffId: handoff?.id || null,
+      characterId: characterId || intrusion?.characterId || handoff?.characterId || null,
       speakerName: speakerName || intrusion?.characterName || 'Unknown',
       controller,
       visibility,
@@ -142,6 +144,40 @@ export class NarrativeMemory {
     };
 
     this.memory.handoffs.push(handoff);
+    return handoff;
+  }
+
+  getPendingHandoff() {
+    return [...this.memory.handoffs]
+      .filter((handoff) => !handoff.consumedAt)
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())[0] || null;
+  }
+
+  getInjectedHandoff() {
+    return [...this.memory.handoffs]
+      .filter((handoff) => handoff.lastInjectedAt && !handoff.consumedAt)
+      .sort((left, right) => new Date(right.lastInjectedAt).getTime() - new Date(left.lastInjectedAt).getTime())[0] || null;
+  }
+
+  recordHandoffInjected(handoffId) {
+    const handoff = this.memory.handoffs.find((item) => item.id === handoffId);
+    if (!handoff || handoff.consumedAt) {
+      return null;
+    }
+
+    handoff.injectionCount = (handoff.injectionCount || 0) + 1;
+    handoff.lastInjectedAt = new Date().toISOString();
+    return handoff;
+  }
+
+  recordHandoffConsumed(handoffId, messageId = null) {
+    const handoff = this.memory.handoffs.find((item) => item.id === handoffId);
+    if (!handoff || handoff.consumedAt) {
+      return null;
+    }
+
+    handoff.consumedAt = new Date().toISOString();
+    handoff.consumedByMessageId = messageId;
     return handoff;
   }
 

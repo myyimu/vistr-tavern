@@ -18,6 +18,10 @@ function getContext() {
   return globalThis.SillyTavern?.getContext?.() || null;
 }
 
+globalThis.VistrTavernPromptInterceptor = async function VistrTavernPromptInterceptor(chat) {
+  await injectContinuityHandoff(chat);
+};
+
 export function onActivate() {
   initialize();
 }
@@ -163,7 +167,8 @@ async function recordHumanLine({ characterId, speakerName, content }) {
 
 async function captureAiMessage(eventData) {
   const activeIntrusions = intrusionEngine.getActiveIntrusions();
-  if (!activeIntrusions.length) {
+  const injectedHandoff = narrativeMemory.getInjectedHandoff();
+  if (!activeIntrusions.length && !injectedHandoff) {
     return;
   }
 
@@ -173,19 +178,56 @@ async function captureAiMessage(eventData) {
   const character = findCharacterByName(speakerName);
   const activeScene = sceneManager.getActiveScene();
 
-  narrativeMemory.recordMessage({
+  const message = narrativeMemory.recordMessage({
     characterId: character?.id || speakerName,
     speakerName,
     content,
     controller: Controller.AI,
     visibility: Visibility.REVEALED,
     scene: activeScene,
-    intrusion: activeIntrusions[0],
+    intrusion: activeIntrusions[0] || null,
+    handoff: activeIntrusions.length ? null : injectedHandoff,
     source: 'sillytavern-message-received',
   });
 
+  if (injectedHandoff && message) {
+    narrativeMemory.recordHandoffConsumed(injectedHandoff.id, message.id);
+  }
+
   await persist();
   overlay?.refresh();
+}
+
+async function injectContinuityHandoff(chat) {
+  if (!Array.isArray(chat) || !narrativeMemory || !storage) {
+    return;
+  }
+
+  const handoff = narrativeMemory.getPendingHandoff();
+  if (!handoff || chat.some((message) => message?.extra?.vistrTavernHandoffId === handoff.id)) {
+    return;
+  }
+
+  const insertionIndex = chat.length > 0 ? Math.max(0, chat.length - 1) : 0;
+  chat.splice(insertionIndex, 0, createHandoffChatMessage(handoff));
+
+  narrativeMemory.recordHandoffInjected(handoff.id);
+  await persist();
+}
+
+function createHandoffChatMessage(handoff) {
+  return {
+    name: 'VistrTavern',
+    is_user: false,
+    is_system: true,
+    send_date: Date.now(),
+    mes: handoff.prompt,
+    extra: {
+      type: 'system',
+      vistrTavern: true,
+      vistrTavernHandoffId: handoff.id,
+    },
+  };
 }
 
 function syncCharacters() {
@@ -248,6 +290,7 @@ function getState() {
     activeIntrusions: intrusionEngine.getActiveIntrusions(),
     messageCount: narrativeMemory.memory.messages.length,
     intrusionCount: narrativeMemory.memory.intrusions.length,
+    pendingHandoffCount: narrativeMemory.memory.handoffs.filter((handoff) => !handoff.consumedAt).length,
   };
 }
 

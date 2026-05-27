@@ -55,13 +55,14 @@ VistrTavern 重点记录：
 - 真人异常发言记录。
 - 入侵窗口内的 AI 反应捕获。
 - AI 接管连续性 handoff，用于保存“剧情已经被真人改变”的上下文。
+- 通过 SillyTavern `generate_interceptor` 注入待处理的 continuity handoff。
 - Markdown 和 JSON 导出。
 - 核心模块 smoke test。
 
 ## 当前限制
 
-- Continuity handoff 目前会生成、保存和导出，但还没有自动注入 SillyTavern prompt。
-- AI 反应捕获依赖 SillyTavern runtime events，需要更多真实环境测试。
+- Continuity handoff prompt 注入已通过 SillyTavern `generate_interceptor` 实现，但仍需要更多真实环境测试。
+- AI 反应捕获依赖 SillyTavern runtime events，不同版本之间可能需要兼容性修正。
 - UI 还是实验控制面板，不是最终用户工作流。
 - 测试覆盖目前只有 smoke test。
 - SillyTavern 扩展 API 变化可能影响安装和更新行为。

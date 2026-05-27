@@ -54,11 +54,17 @@ assert.equal(engine.isHumanControlled('Eileen'), false);
 assert.equal(memory.memory.handoffs.length, 1);
 assert.match(memory.memory.handoffs[0].prompt, /These events are canonical/);
 assert.match(memory.memory.handoffs[0].prompt, /Do not mention human control/);
+assert.equal(memory.getPendingHandoff().id, memory.memory.handoffs[0].id);
+memory.recordHandoffInjected(memory.memory.handoffs[0].id);
+assert.equal(memory.getInjectedHandoff().id, memory.memory.handoffs[0].id);
+memory.recordHandoffConsumed(memory.memory.handoffs[0].id, 'msg_recovery');
+assert.equal(memory.getPendingHandoff(), null);
 
 const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
 assert.match(markdown, /Do you really believe/);
 assert.match(markdown, /AI 接管连续性/);
+assert.match(markdown, /Status: consumed/);
 
 console.log('VistrTavern smoke test passed.');
 
