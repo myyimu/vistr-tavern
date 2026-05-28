@@ -133,6 +133,10 @@ SillyTavern/
 
 - [CHANGELOG.md](CHANGELOG.md)
 
+## PS
+
+忽然发现这个插件很适合在虚构 RP 里“嫁祸 AI”：真人篡改了 AI 角色的话，再让角色自己承担后果。没想到更好玩的是，除了改 AI 说过什么，还可以给 AI 造谣，推演“它刚才为什么会那样说”，哈哈哈。
+
 ## License
 
 MIT

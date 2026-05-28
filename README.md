@@ -133,6 +133,10 @@ Chinese documentation:
 
 - [CHANGELOG.md](CHANGELOG.md)
 
+## P.S.
+
+In fictional roleplay terms, VistrTavern accidentally turned out to be very good at making an AI character take the blame for strange lines. Even funnier: the real toy is not only changing what an AI said, but inventing rumors about what the AI "must have meant" afterward.
+
 ## License
 
 MIT
