@@ -124,6 +124,42 @@
   color: #c9ced8;
 }
 
+.vt-debug {
+  margin: 10px 0;
+}
+
+.vt-debug summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.vt-debug dl {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.7fr) minmax(0, 1.3fr);
+  gap: 6px 10px;
+  margin: 10px 0;
+  color: #c9ced8;
+  font-size: 12px;
+}
+
+.vt-debug dt {
+  color: #8f96a5;
+}
+
+.vt-debug dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.vt-copy-status {
+  display: block;
+  min-height: 18px;
+  margin-top: 6px;
+  color: #a9afbc;
+  font-size: 12px;
+}
+
 @media (max-width: 520px) {
   .vt-grid,
   .vt-actions {

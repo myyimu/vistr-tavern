@@ -1,15 +1,17 @@
-import { ControlMode, Controller, HandoffAwareness, ViewMode, Visibility } from '../data/schema.js';
+import { AwarenessScope, ControlMode, Controller, HandoffAwareness, ViewMode, Visibility } from '../data/schema.js';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onSaveScene, onExportMarkdown, onExportJson, getState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
     this.onRecordHumanLine = onRecordHumanLine;
     this.onSaveScene = onSaveScene;
+    this.onCopyLatestHandoff = onCopyLatestHandoff;
     this.onExportMarkdown = onExportMarkdown;
     this.onExportJson = onExportJson;
     this.getState = getState;
+    this.getDebugState = getDebugState;
     this.root = null;
     this.panel = null;
   }
@@ -38,6 +40,7 @@ export class UiOverlay {
     const characterSelect = this.root.querySelector('[data-vt-character]');
     const activeList = this.root.querySelector('[data-vt-active-list]');
     const status = this.root.querySelector('[data-vt-status]');
+    const debugPanel = this.root.querySelector('[data-vt-debug]');
 
     const selectedValue = characterSelect.value;
     characterSelect.innerHTML = '';
@@ -58,6 +61,8 @@ export class UiOverlay {
       : '<li>No active intrusion</li>';
 
     status.textContent = `${state.viewMode} · ${state.messageCount} messages · ${state.intrusionCount} intrusions · ${state.pendingHandoffCount || 0} pending handoffs`;
+
+    debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {});
   }
 
   #bind() {
@@ -78,6 +83,7 @@ export class UiOverlay {
       const visibility = this.root.querySelector('[data-vt-anonymous]').checked ? Visibility.ANONYMOUS : Visibility.REVEALED;
       const mode = this.root.querySelector('[data-vt-director]').checked ? ControlMode.DIRECTOR : ControlMode.INTRUSION;
       const awareness = this.root.querySelector('[data-vt-awareness]').value || HandoffAwareness.NONE;
+      const awarenessScope = this.root.querySelector('[data-vt-awareness-scope]').value || AwarenessScope.CONTROLLED;
 
       await this.onStartIntrusion({
         characterId: character.id,
@@ -86,6 +92,7 @@ export class UiOverlay {
         visibility,
         mode,
         awareness,
+        awarenessScope,
       });
       this.refresh();
     });
@@ -126,6 +133,23 @@ export class UiOverlay {
 
     this.root.querySelector('[data-vt-export-json]').addEventListener('click', () => {
       this.#download('vistr-tavern-export.json', this.onExportJson(), 'application/json');
+    });
+
+    this.root.querySelector('[data-vt-copy-handoff]').addEventListener('click', async () => {
+      const status = this.root.querySelector('[data-vt-copy-status]');
+      const content = this.onCopyLatestHandoff?.() || '';
+      if (!content) {
+        status.textContent = 'No handoff available';
+        return;
+      }
+
+      try {
+        await copyText(content);
+        status.textContent = 'Latest handoff copied';
+      } catch (error) {
+        status.textContent = 'Copy failed';
+        console.warn('[VistrTavern] Failed to copy handoff.', error);
+      }
     });
   }
 
@@ -180,9 +204,18 @@ export class UiOverlay {
         <label class="vt-field">
           Awareness after recovery
           <select data-vt-awareness>
-            <option value="${HandoffAwareness.NONE}">None</option>
-            <option value="${HandoffAwareness.SUBTLE}">Subtle</option>
-            <option value="${HandoffAwareness.EXPLICIT}">Explicit</option>
+            <option value="${HandoffAwareness.NONE}">AI 无感</option>
+            <option value="${HandoffAwareness.SUBTLE}">断片</option>
+            <option value="${HandoffAwareness.EXPLICIT}">怀疑</option>
+          </select>
+        </label>
+
+        <label class="vt-field">
+          Awareness target
+          <select data-vt-awareness-scope>
+            <option value="${AwarenessScope.CONTROLLED}">Controlled character</option>
+            <option value="${AwarenessScope.OBSERVERS}">Observers</option>
+            <option value="${AwarenessScope.BOTH}">Both</option>
           </select>
         </label>
 
@@ -218,6 +251,15 @@ export class UiOverlay {
         <strong>Active Intrusions</strong>
         <ul class="vt-active-list" data-vt-active-list></ul>
 
+        <hr>
+
+        <details class="vt-debug" open>
+          <summary>Debug</summary>
+          <dl data-vt-debug></dl>
+          <button type="button" data-vt-copy-handoff>Copy Latest Handoff</button>
+          <span class="vt-copy-status" data-vt-copy-status></span>
+        </details>
+
         <div class="vt-actions">
           <button type="button" data-vt-export-md>Export Markdown</button>
           <button type="button" data-vt-export-json>Export JSON</button>
@@ -225,6 +267,51 @@ export class UiOverlay {
       </section>
     `;
   }
+}
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.append(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  textarea.remove();
+}
+
+function formatDebugState(debug) {
+  const rows = [
+    ['Version', debug.version || 'unknown'],
+    ['Storage', debug.storageMode || 'unknown'],
+    ['Active intrusion', debug.activeIntrusions?.length ? debug.activeIntrusions.map((item) => item.characterName || item.characterId).join(', ') : 'none'],
+    ['Pending handoff', formatHandoffSummary(debug.pendingHandoff)],
+    ['Last injected', formatHandoffSummary(debug.lastInjectedHandoff)],
+    ['Last consumed', formatHandoffSummary(debug.lastConsumedHandoff)],
+    ['Awareness events', debug.awarenessEventCount ?? 0],
+    ['Last AI message', debug.lastCapturedAiMessage ? `${debug.lastCapturedAiMessage.speakerName} · ${debug.lastCapturedAiMessage.createdAt}` : 'none'],
+    ['Interceptor', debug.lastInterceptorCallAt ? `${debug.lastInjectionResult} · ${debug.lastInterceptorCallAt}` : debug.lastInjectionResult || 'not-called'],
+    ['Last error', debug.lastError ? `${debug.lastError.type}: ${debug.lastError.message}` : debug.lastInjectionError || 'none'],
+  ];
+
+  return rows
+    .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
+    .join('');
+}
+
+function formatHandoffSummary(handoff) {
+  if (!handoff) {
+    return 'none';
+  }
+
+  const status = handoff.consumedAt ? 'consumed' : handoff.lastInjectedAt ? 'injected' : 'pending';
+  return `${handoff.characterName || handoff.id} · ${status} · ${handoff.awareness}/${handoff.awarenessScope || 'controlled'}`;
 }
 
 function escapeHtml(value) {

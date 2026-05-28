@@ -1,4 +1,4 @@
-import { Controller, HandoffAwareness, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
+import { AwarenessScope, Controller, HandoffAwareness, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
 
 export class NarrativeMemory {
   constructor(memory = createEmptyMemory()) {
@@ -83,7 +83,18 @@ export class NarrativeMemory {
     return message;
   }
 
-  recordDisturbanceEvent({ type, severity = 1, summary, relatedMessageIds = [], scene = null, intrusion = null }) {
+  recordDisturbanceEvent({
+    type,
+    severity = 1,
+    summary,
+    relatedMessageIds = [],
+    scene = null,
+    intrusion = null,
+    handoff = null,
+    characterId = null,
+    awareness = null,
+    awarenessScope = null,
+  }) {
     const trimmedSummary = summary?.trim();
     if (!trimmedSummary) {
       return null;
@@ -93,7 +104,11 @@ export class NarrativeMemory {
       id: createId('event'),
       sessionId: this.memory.session.id,
       sceneId: scene?.id || this.memory.session.activeSceneId,
-      intrusionId: intrusion?.id || null,
+      intrusionId: intrusion?.id || handoff?.intrusionId || null,
+      handoffId: handoff?.id || null,
+      characterId,
+      awareness,
+      awarenessScope,
       type,
       severity: Math.min(5, Math.max(1, Number(severity) || 1)),
       summary: trimmedSummary,
@@ -127,6 +142,9 @@ export class NarrativeMemory {
     const awareness = Object.values(HandoffAwareness).includes(intrusion.awareness)
       ? intrusion.awareness
       : HandoffAwareness.NONE;
+    const awarenessScope = Object.values(AwarenessScope).includes(intrusion.awarenessScope)
+      ? intrusion.awarenessScope
+      : AwarenessScope.CONTROLLED;
 
     const handoff = {
       id: createId('handoff'),
@@ -137,13 +155,15 @@ export class NarrativeMemory {
       characterName: intrusion.characterName || intrusion.characterId,
       visibility: intrusion.visibility || Visibility.ANONYMOUS,
       awareness,
+      awarenessScope,
       summary: this.#handoffSummary(intrusion, humanMessages, aiReactions),
-      prompt: this.#handoffPrompt({ intrusion, scene, humanMessages, aiReactions, awareness }),
+      prompt: this.#handoffPrompt({ intrusion, scene, humanMessages, aiReactions, awareness, awarenessScope }),
       relatedMessageIds: relatedMessages.map((message) => message.id),
       createdAt: new Date().toISOString(),
     };
 
     this.memory.handoffs.push(handoff);
+    this.#recordAwarenessEvents({ intrusion, handoff, scene, awareness, awarenessScope });
     return handoff;
   }
 
@@ -221,7 +241,7 @@ export class NarrativeMemory {
     return `${name} returned to AI control after ${humanMessages.length} canonical human-controlled line(s) and ${aiReactions.length} AI reaction(s).`;
   }
 
-  #handoffPrompt({ intrusion, scene, humanMessages, aiReactions, awareness }) {
+  #handoffPrompt({ intrusion, scene, humanMessages, aiReactions, awareness, awarenessScope }) {
     const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
     const sceneLine = scene
       ? `Scene: ${scene.name}${scene.mood ? `, mood: ${scene.mood}` : ''}, tension: ${scene.tension}.`
@@ -244,6 +264,8 @@ export class NarrativeMemory {
       '- Treat the human-controlled lines as actions and dialogue that really happened in the story.',
       '- Preserve emotional, relationship, and world-state consequences created by the intrusion.',
       this.#awarenessRule(awareness),
+      '',
+      ...this.#awarenessDirective({ intrusion, awareness, awarenessScope }),
     ];
 
     return lines.join('\n');
@@ -267,5 +289,93 @@ export class NarrativeMemory {
     }
 
     return '- Do not mention human control, takeover, or external authorship in-world. Treat the lines as the character\'s own actions.';
+  }
+
+  #recordAwarenessEvents({ intrusion, handoff, scene, awareness, awarenessScope }) {
+    if (awareness === HandoffAwareness.NONE) {
+      return;
+    }
+
+    if (awarenessScope === AwarenessScope.CONTROLLED || awarenessScope === AwarenessScope.BOTH) {
+      this.recordDisturbanceEvent({
+        type: 'self_anomaly_awareness',
+        severity: awareness === HandoffAwareness.EXPLICIT ? 4 : 3,
+        summary: this.#selfAwarenessSummary(intrusion, awareness),
+        relatedMessageIds: handoff.relatedMessageIds,
+        scene,
+        handoff,
+        characterId: intrusion.characterId,
+        awareness,
+        awarenessScope,
+      });
+    }
+
+    if (awarenessScope === AwarenessScope.OBSERVERS || awarenessScope === AwarenessScope.BOTH) {
+      this.recordDisturbanceEvent({
+        type: 'observer_anomaly_awareness',
+        severity: awareness === HandoffAwareness.EXPLICIT ? 4 : 3,
+        summary: this.#observerAwarenessSummary(intrusion, awareness),
+        relatedMessageIds: handoff.relatedMessageIds,
+        scene,
+        handoff,
+        characterId: intrusion.characterId,
+        awareness,
+        awarenessScope,
+      });
+    }
+  }
+
+  #awarenessDirective({ intrusion, awareness, awarenessScope }) {
+    if (awareness === HandoffAwareness.NONE) {
+      return ['Awareness Directive:', '- No anomaly awareness should be expressed. Continue immersively from the changed story state.'];
+    }
+
+    const name = intrusion.characterName || intrusion.characterId || 'the recovered character';
+    const targetLine = this.#awarenessScopeLine(name, awarenessScope);
+    const monologue = awareness === HandoffAwareness.EXPLICIT
+      ? '*That sentence came from my mouth, but it did not feel born from my own will. Is this world truly stable?*'
+      : '*Why did I say that? That did not feel like me.*';
+    const intensity = awareness === HandoffAwareness.EXPLICIT
+      ? '- The inner monologue may question external will, world rules, or the stability of reality.'
+      : '- The inner monologue should suggest hesitation, memory gaps, or loss of control without naming human authorship.';
+
+    return [
+      'Awareness Directive:',
+      targetLine,
+      '- The next relevant AI response should include one short italic inner monologue.',
+      `- Example inner monologue: ${monologue}`,
+      intensity,
+      '- Do not add a separate fake chat message; express this inside the next model-generated reply.',
+    ];
+  }
+
+  #awarenessScopeLine(name, awarenessScope) {
+    if (awarenessScope === AwarenessScope.OBSERVERS) {
+      return `- Observer characters may notice that ${name} behaved unlike themself and should express synchronized suspicion through inner monologue if they are the next respondent.`;
+    }
+
+    if (awarenessScope === AwarenessScope.BOTH) {
+      return `- Both ${name} and observer characters may notice the anomaly; whichever is the next respondent should express the matching inner unease.`;
+    }
+
+    return `- ${name} should notice that their own recent words or actions felt wrong if they are the next respondent.`;
+  }
+
+  #selfAwarenessSummary(intrusion, awareness) {
+    const name = intrusion.characterName || intrusion.characterId || 'The recovered character';
+    if (awareness === HandoffAwareness.EXPLICIT) {
+      return `${name} may suspect that their own strange words came from an external will or unstable world rule.`;
+    }
+
+    return `${name} may feel that their recent words did not sound like themself, with hesitation or memory discontinuity.`;
+  }
+
+  #observerAwarenessSummary(intrusion, awareness) {
+    const name = intrusion.characterName || intrusion.characterId || 'the recovered character';
+    if (awareness === HandoffAwareness.EXPLICIT) {
+      return `Observer AI characters may suspect that ${name}'s abnormal behavior points to an external will or unstable world rule.`;
+    }
+
+    return `Observer AI characters may notice that ${name}'s recent behavior felt wrong, inconsistent, or hard to explain in-world.`;
   }
 }

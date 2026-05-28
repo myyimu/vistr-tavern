@@ -6,6 +6,8 @@ import { StorageAdapter } from './data/storageAdapter.js';
 import { Controller, MODULE_NAME, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
 import { UiOverlay } from './ui/uiOverlay.js';
 
+const EXTENSION_VERSION = '0.1.0-alpha';
+
 let storage;
 let narrativeMemory;
 let sceneManager;
@@ -13,14 +15,46 @@ let intrusionEngine;
 let exportWriter;
 let overlay;
 let tickTimer = null;
+const runtimeDebug = {
+  lastInterceptorCallAt: null,
+  lastInjectionResult: 'not-called',
+  lastInjectionHandoffId: null,
+  lastInjectionError: null,
+  lastCapturedAiMessage: null,
+  lastConsumedHandoffId: null,
+  lastConsumedAt: null,
+  lastError: null,
+};
 
 function getContext() {
   return globalThis.SillyTavern?.getContext?.() || null;
 }
 
-globalThis.VistrTavernPromptInterceptor = async function VistrTavernPromptInterceptor(chat) {
-  await injectContinuityHandoff(chat);
-};
+function exposeGlobal(name, value) {
+  globalThis[name] = value;
+  if (typeof window !== 'undefined') {
+    window[name] = value;
+  }
+  if (typeof document !== 'undefined' && document.defaultView) {
+    document.defaultView[name] = value;
+  }
+}
+
+exposeGlobal('VistrTavernPromptInterceptor', async function VistrTavernPromptInterceptor(chat) {
+  runtimeDebug.lastInterceptorCallAt = new Date().toISOString();
+
+  try {
+    const result = await injectContinuityHandoff(chat);
+    runtimeDebug.lastInjectionResult = result.status;
+    runtimeDebug.lastInjectionHandoffId = result.handoffId || null;
+    runtimeDebug.lastInjectionError = null;
+  } catch (error) {
+    recordError('prompt_interceptor_failed', error);
+    runtimeDebug.lastInjectionResult = 'error';
+    runtimeDebug.lastInjectionHandoffId = null;
+    runtimeDebug.lastInjectionError = error?.message || String(error);
+  }
+});
 
 export function onActivate() {
   initialize();
@@ -64,11 +98,14 @@ function initialize() {
     onEndIntrusion: endIntrusion,
     onRecordHumanLine: recordHumanLine,
     onSaveScene: saveScene,
+    onCopyLatestHandoff: copyLatestHandoff,
     onExportMarkdown: () => exportWriter.toMarkdown(narrativeMemory.memory),
     onExportJson: () => exportWriter.toJson(narrativeMemory.memory),
     getState,
+    getDebugState,
   });
   overlay.mount();
+  publishDebugState();
 
   tickTimer = globalThis.setInterval(async () => {
     const ended = intrusionEngine.tick();
@@ -192,6 +229,18 @@ async function captureAiMessage(eventData) {
 
   if (injectedHandoff && message) {
     narrativeMemory.recordHandoffConsumed(injectedHandoff.id, message.id);
+    runtimeDebug.lastConsumedHandoffId = injectedHandoff.id;
+    runtimeDebug.lastConsumedAt = new Date().toISOString();
+  }
+
+  if (message) {
+    runtimeDebug.lastCapturedAiMessage = {
+      id: message.id,
+      speakerName: message.speakerName,
+      intrusionId: message.intrusionId,
+      handoffId: message.handoffId,
+      createdAt: message.createdAt,
+    };
   }
 
   await persist();
@@ -200,12 +249,15 @@ async function captureAiMessage(eventData) {
 
 async function injectContinuityHandoff(chat) {
   if (!Array.isArray(chat) || !narrativeMemory || !storage) {
-    return;
+    return { status: 'skipped:not-ready' };
   }
 
   const handoff = narrativeMemory.getPendingHandoff();
   if (!handoff || chat.some((message) => message?.extra?.vistrTavernHandoffId === handoff.id)) {
-    return;
+    return {
+      status: handoff ? 'skipped:duplicate' : 'skipped:no-pending-handoff',
+      handoffId: handoff?.id || null,
+    };
   }
 
   const insertionIndex = chat.length > 0 ? Math.max(0, chat.length - 1) : 0;
@@ -213,6 +265,8 @@ async function injectContinuityHandoff(chat) {
 
   narrativeMemory.recordHandoffInjected(handoff.id);
   await persist();
+
+  return { status: 'injected', handoffId: handoff.id };
 }
 
 function createHandoffChatMessage(handoff) {
@@ -232,6 +286,15 @@ function createHandoffChatMessage(handoff) {
 
 function syncCharacters() {
   narrativeMemory.syncCharacters(getRawCharacters());
+}
+
+function copyLatestHandoff() {
+  const handoff = latestHandoff();
+  if (!handoff) {
+    return '';
+  }
+
+  return handoff.prompt;
 }
 
 function bindEvent(eventSource, eventType, handler) {
@@ -291,15 +354,96 @@ function getState() {
     messageCount: narrativeMemory.memory.messages.length,
     intrusionCount: narrativeMemory.memory.intrusions.length,
     pendingHandoffCount: narrativeMemory.memory.handoffs.filter((handoff) => !handoff.consumedAt).length,
+    awarenessEventCount: awarenessEvents().length,
+    debug: getDebugState(),
   };
 }
 
-async function persist() {
-  narrativeMemory.memory = await storage.save(narrativeMemory.memory);
-  sceneManager.memory = narrativeMemory.memory;
+function getDebugState() {
+  const handoffs = narrativeMemory?.memory?.handoffs || [];
+
+  return {
+    version: EXTENSION_VERSION,
+    storageMode: storage?.getStorageMode?.() || 'unknown',
+    activeIntrusions: intrusionEngine?.getActiveIntrusions?.() || [],
+    pendingHandoff: summarizeHandoff(narrativeMemory?.getPendingHandoff?.() || null),
+    lastInjectedHandoff: summarizeHandoff(latestBy(handoffs, 'lastInjectedAt')),
+    lastConsumedHandoff: summarizeHandoff(latestBy(handoffs, 'consumedAt')),
+    awarenessEventCount: awarenessEvents().length,
+    lastCapturedAiMessage: runtimeDebug.lastCapturedAiMessage,
+    lastInterceptorCallAt: runtimeDebug.lastInterceptorCallAt,
+    lastInjectionResult: runtimeDebug.lastInjectionResult,
+    lastInjectionHandoffId: runtimeDebug.lastInjectionHandoffId,
+    lastInjectionError: runtimeDebug.lastInjectionError,
+    lastConsumedHandoffId: runtimeDebug.lastConsumedHandoffId,
+    lastConsumedAt: runtimeDebug.lastConsumedAt,
+    lastError: runtimeDebug.lastError,
+  };
 }
 
-globalThis.VistrTavern = {
+function publishDebugState() {
+  const root = document.getElementById('vistr-tavern-root');
+  if (!root) {
+    return;
+  }
+
+  root.dataset.vtDebugState = JSON.stringify(getDebugState());
+}
+
+function summarizeHandoff(handoff) {
+  if (!handoff) {
+    return null;
+  }
+
+  return {
+    id: handoff.id,
+    characterName: handoff.characterName,
+    awareness: handoff.awareness,
+    awarenessScope: handoff.awarenessScope || 'controlled',
+    createdAt: handoff.createdAt,
+    lastInjectedAt: handoff.lastInjectedAt || null,
+    consumedAt: handoff.consumedAt || null,
+    injectionCount: handoff.injectionCount || 0,
+    summary: handoff.summary,
+  };
+}
+
+function awarenessEvents() {
+  return (narrativeMemory?.memory?.disturbanceEvents || [])
+    .filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
+}
+
+function latestHandoff() {
+  return latestBy(narrativeMemory?.memory?.handoffs || [], 'createdAt');
+}
+
+function latestBy(items, field) {
+  return [...items]
+    .filter((item) => item?.[field])
+    .sort((left, right) => new Date(right[field]).getTime() - new Date(left[field]).getTime())[0] || null;
+}
+
+function recordError(type, error) {
+  runtimeDebug.lastError = {
+    type,
+    message: error?.message || String(error),
+    at: new Date().toISOString(),
+  };
+  console.warn(`[VistrTavern] ${type}`, error);
+}
+
+async function persist() {
+  try {
+    narrativeMemory.memory = await storage.save(narrativeMemory.memory);
+    sceneManager.memory = narrativeMemory.memory;
+    publishDebugState();
+  } catch (error) {
+    recordError('persist_failed', error);
+    throw error;
+  }
+}
+
+exposeGlobal('VistrTavern', {
   get memory() {
     return narrativeMemory?.memory || null;
   },
@@ -312,6 +456,7 @@ globalThis.VistrTavern = {
   exportJson() {
     return exportWriter?.toJson(narrativeMemory.memory) || '{}';
   },
+  getDebugState,
   dispose() {
     if (tickTimer) {
       clearInterval(tickTimer);
@@ -321,4 +466,4 @@ globalThis.VistrTavern = {
     overlay = null;
     console.info(`[${MODULE_NAME}] disposed`);
   },
-};
+});

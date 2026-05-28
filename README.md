@@ -55,7 +55,10 @@ VistrTavern records:
 - Human anomaly line recording.
 - AI reaction capture during active intrusion windows.
 - AI recovery continuity handoff for preserving the context that the story has already been changed by the human.
+- AI anomaly awareness modes: no awareness, memory fracture, and reality doubt.
 - Prompt injection through SillyTavern `generate_interceptor` for pending continuity handoffs.
+- Alpha Debug panel with storage, handoff, interceptor, AI capture, and error status.
+- Manual `Copy Latest Handoff` fallback.
 - Markdown and JSON export.
 - Core module smoke test.
 
@@ -112,6 +115,7 @@ SillyTavern/
 - [Data Model](docs/04-data-model.md)
 - [Technical Concepts and Narrative Principles](docs/05-concepts.md)
 - [User Guide](docs/06-user-guide.md)
+- [Release Checklist](docs/release-checklist.md)
 
 Chinese documentation:
 
@@ -123,6 +127,11 @@ Chinese documentation:
 - [技术与原理](docs/zh-CN/05-技术与原理.md)
 - [AI perspective narrative sample](docs/zh-CN/06-AI视角叙事样例.md) (Chinese)
 - [使用手册](docs/zh-CN/07-使用手册.md)
+- [发布检查清单](docs/zh-CN/08-发布检查清单.md)
+
+## Changelog
+
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 

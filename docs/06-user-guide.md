@@ -60,6 +60,7 @@ The panel shows:
 - recorded message count
 - intrusion count
 - pending handoff count
+- debug status
 - character selector
 - intrusion controls
 - scene fields
@@ -95,11 +96,17 @@ Before starting an intrusion, choose:
 
 Awareness modes:
 
-- `None`: the character does not know about human control in-world.
-- `Subtle`: the character may feel hesitation, memory gaps, or loss of control.
-- `Explicit`: the character may recognize an external will as an in-world experience.
+- `AI 无感`: the character does not express anomaly awareness.
+- `断片`: the character may feel hesitation, memory gaps, or loss of control.
+- `怀疑`: the character may suspect external will, world rules, or reality instability.
 
-For normal immersive testing, use `Anonymous` + `None`.
+Awareness target:
+
+- `Controlled character`: only the recovered character may express anomaly awareness.
+- `Observers`: observer AI characters may notice that the recovered character behaved wrong.
+- `Both`: both the recovered character and observers may express synchronized awareness.
+
+For normal immersive testing, use `Anonymous` + `AI 无感` + `Controlled character`.
 
 ### 5. Start Intrusion
 
@@ -154,8 +161,52 @@ The handoff tells the AI:
 - do not ignore or rewrite them
 - continue from their emotional, relationship, and world-state consequences
 - follow the selected awareness mode
+- if awareness is `断片` or `怀疑`, include one short italic inner monologue in the next relevant AI response
 
 After the next AI message is received, the handoff should be marked consumed.
+
+Example inner monologues:
+
+```text
+*Why did I say that? That did not feel like me.*
+*That sentence came from my mouth, but it did not feel born from my own will. Is this world truly stable?*
+```
+
+## Debug Panel
+
+The `Debug` section is intended for alpha testing.
+
+It shows:
+
+- `Version`: extension version.
+- `Storage`: current persistence mode, usually `chatMetadata` or `localStorage`.
+- `Active intrusion`: currently human-controlled character names.
+- `Pending handoff`: latest unconsumed handoff.
+- `Last injected`: latest handoff inserted through the generation interceptor.
+- `Last consumed`: latest handoff consumed by an AI response.
+- `Last AI message`: latest AI message captured by VistrTavern.
+- `Interceptor`: last generation interceptor result.
+- `Last error`: latest runtime error recorded by VistrTavern.
+
+Use this panel to verify whether the handoff flow is working:
+
+```text
+pending
+-> injected
+-> consumed
+```
+
+For browser console checks, the debug snapshot is also published on the extension root element:
+
+```js
+JSON.parse(document.getElementById('vistr-tavern-root').dataset.vtDebugState)
+```
+
+## Manual Handoff Fallback
+
+If automatic prompt injection does not work in your SillyTavern version, click `Copy Latest Handoff`.
+
+Paste the copied handoff into a suitable temporary context or prompt area before the next AI generation. This is only a fallback for alpha testing; automatic injection through `generate_interceptor` remains the default path.
 
 ## Exporting
 
@@ -171,6 +222,7 @@ Markdown export includes:
 - human anomaly lines
 - AI reactions
 - AI recovery continuity handoffs
+- AI anomaly awareness events
 - high-tension dialogue
 - disturbance events
 - relationship deltas

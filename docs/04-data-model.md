@@ -90,6 +90,10 @@ Do not store only raw chat messages. Every important record should carry control
   "sessionId": "session_001",
   "sceneId": "scene_001",
   "intrusionId": "intrusion_001",
+  "handoffId": null,
+  "characterId": "char_eileen",
+  "awareness": null,
+  "awarenessScope": null,
   "type": "anomaly_detected",
   "severity": 4,
   "summary": "Eileen implied the king may already be dead, contradicting the court's public narrative.",
@@ -112,6 +116,7 @@ Created when control returns from human to AI. This is the canonical bridge that
   "characterName": "Eileen",
   "visibility": "anonymous",
   "awareness": "none",
+  "awarenessScope": "controlled",
   "summary": "Eileen returned to AI control after 1 canonical human-controlled line(s) and 1 AI reaction(s).",
   "prompt": "[VistrTavern Continuity Handoff]\\nThese events are canonical...",
   "relatedMessageIds": ["msg_001", "msg_002"],
@@ -124,6 +129,17 @@ Awareness modes:
 - `none`: the character does not know about human control in-world.
 - `subtle`: the character may feel hesitation, memory gaps, or loss of control.
 - `explicit`: the character may recognize an external will as an in-world experience.
+
+Awareness scopes:
+
+- `controlled`: only the recovered character may express anomaly awareness.
+- `observers`: observer AI characters may notice the anomaly.
+- `both`: both the recovered character and observers may express anomaly awareness.
+
+Awareness events:
+
+- `self_anomaly_awareness`: the recovered character notices that their own words or actions felt wrong.
+- `observer_anomaly_awareness`: observer AI characters notice that the recovered character behaved abnormally.
 
 ## Relationship Delta
 
@@ -165,6 +181,7 @@ Every export should include:
 - Scene list.
 - Intrusion timeline.
 - AI recovery continuity handoffs.
+- AI anomaly awareness events.
 - High-tension dialogue.
 - AI reactions to the intrusion.
 - Relationship changes.

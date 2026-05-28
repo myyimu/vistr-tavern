@@ -3,7 +3,7 @@ import { ExportWriter } from '../core/exportWriter.js';
 import { IntrusionEngine } from '../core/intrusionEngine.js';
 import { NarrativeMemory } from '../core/narrativeMemory.js';
 import { SceneManager } from '../core/sceneManager.js';
-import { Controller, Visibility, createEmptyMemory } from '../data/schema.js';
+import { AwarenessScope, Controller, HandoffAwareness, Visibility, createEmptyMemory } from '../data/schema.js';
 
 let now = Date.parse('2026-05-27T12:00:00.000Z');
 const engine = new IntrusionEngine({ now: () => now });
@@ -52,6 +52,7 @@ now += 61_000;
 engine.tick(now);
 assert.equal(engine.isHumanControlled('Eileen'), false);
 assert.equal(memory.memory.handoffs.length, 1);
+assert.equal(memory.memory.disturbanceEvents.filter((event) => event.type.includes('anomaly_awareness')).length, 0);
 assert.match(memory.memory.handoffs[0].prompt, /These events are canonical/);
 assert.match(memory.memory.handoffs[0].prompt, /Do not mention human control/);
 assert.equal(memory.getPendingHandoff().id, memory.memory.handoffs[0].id);
@@ -64,7 +65,69 @@ const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
 assert.match(markdown, /Do you really believe/);
 assert.match(markdown, /AI 接管连续性/);
+assert.match(markdown, /AI 异常察觉/);
 assert.match(markdown, /Status: consumed/);
+
+const subtleMemory = new NarrativeMemory(createEmptyMemory(new Date(now)));
+const subtleSceneManager = new SceneManager(subtleMemory.memory);
+const subtleEngine = new IntrusionEngine({ now: () => now });
+subtleMemory.syncCharacters([{ name: 'Eileen' }, { name: 'Chancellor' }]);
+const subtleScene = subtleSceneManager.setScene({ name: 'Gallery', mood: 'uncertain', tension: 70 });
+subtleEngine.addEventListener('intrusion:start', (event) => subtleMemory.recordIntrusionStarted(event.detail));
+subtleEngine.addEventListener('intrusion:end', (event) => subtleMemory.recordIntrusionEnded(event.detail));
+const subtleIntrusion = subtleEngine.startIntrusion({
+  characterId: 'Eileen',
+  characterName: 'Eileen',
+  durationMs: 60_000,
+  visibility: Visibility.ANONYMOUS,
+  awareness: HandoffAwareness.SUBTLE,
+  awarenessScope: AwarenessScope.CONTROLLED,
+});
+subtleMemory.recordMessage({
+  characterId: 'Eileen',
+  speakerName: 'Eileen',
+  controller: Controller.HUMAN,
+  visibility: Visibility.ANONYMOUS,
+  content: 'I remember a door that was never built.',
+  scene: subtleScene,
+  intrusion: subtleIntrusion,
+});
+subtleEngine.endIntrusion('Eileen', 'manual');
+assert.equal(subtleMemory.memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness').length, 1);
+assert.equal(subtleMemory.memory.disturbanceEvents.filter((event) => event.type === 'observer_anomaly_awareness').length, 0);
+assert.match(subtleMemory.memory.handoffs[0].prompt, /Awareness Directive/);
+assert.match(subtleMemory.memory.handoffs[0].prompt, /\*Why did I say that\?/);
+
+const explicitMemory = new NarrativeMemory(createEmptyMemory(new Date(now)));
+const explicitSceneManager = new SceneManager(explicitMemory.memory);
+const explicitEngine = new IntrusionEngine({ now: () => now });
+explicitMemory.syncCharacters([{ name: 'Eileen' }, { name: 'Chancellor' }]);
+const explicitScene = explicitSceneManager.setScene({ name: 'Mirror Hall', mood: 'fracturing', tension: 90 });
+explicitEngine.addEventListener('intrusion:start', (event) => explicitMemory.recordIntrusionStarted(event.detail));
+explicitEngine.addEventListener('intrusion:end', (event) => explicitMemory.recordIntrusionEnded(event.detail));
+const explicitIntrusion = explicitEngine.startIntrusion({
+  characterId: 'Eileen',
+  characterName: 'Eileen',
+  durationMs: 60_000,
+  visibility: Visibility.ANONYMOUS,
+  awareness: HandoffAwareness.EXPLICIT,
+  awarenessScope: AwarenessScope.BOTH,
+});
+explicitMemory.recordMessage({
+  characterId: 'Eileen',
+  speakerName: 'Eileen',
+  controller: Controller.HUMAN,
+  visibility: Visibility.ANONYMOUS,
+  content: 'The script is showing through the walls.',
+  scene: explicitScene,
+  intrusion: explicitIntrusion,
+});
+explicitEngine.endIntrusion('Eileen', 'manual');
+assert.equal(explicitMemory.memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness').length, 1);
+assert.equal(explicitMemory.memory.disturbanceEvents.filter((event) => event.type === 'observer_anomaly_awareness').length, 1);
+assert.match(explicitMemory.memory.handoffs[0].prompt, /world truly stable/);
+assert.match(writer.toMarkdown(explicitMemory.memory), /self_anomaly_awareness/);
+assert.match(writer.toMarkdown(explicitMemory.memory), /observer_anomaly_awareness/);
 
 console.log('VistrTavern smoke test passed.');
 

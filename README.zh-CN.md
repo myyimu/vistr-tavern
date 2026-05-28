@@ -55,7 +55,10 @@ VistrTavern 重点记录：
 - 真人异常发言记录。
 - 入侵窗口内的 AI 反应捕获。
 - AI 接管连续性 handoff，用于保存“剧情已经被真人改变”的上下文。
+- AI 异常察觉模式：AI 无感、断片、怀疑。
 - 通过 SillyTavern `generate_interceptor` 注入待处理的 continuity handoff。
+- Alpha Debug 面板，显示存储、handoff、interceptor、AI 捕获和错误状态。
+- 手动 `Copy Latest Handoff` fallback。
 - Markdown 和 JSON 导出。
 - 核心模块 smoke test。
 
@@ -113,6 +116,7 @@ SillyTavern/
 - [技术与原理](docs/zh-CN/05-技术与原理.md)
 - [AI 视角叙事样例](docs/zh-CN/06-AI视角叙事样例.md)
 - [使用手册](docs/zh-CN/07-使用手册.md)
+- [发布检查清单](docs/zh-CN/08-发布检查清单.md)
 
 英文文档：
 
@@ -123,6 +127,11 @@ SillyTavern/
 - [Data Model](docs/04-data-model.md)
 - [Technical Concepts and Narrative Principles](docs/05-concepts.md)
 - [User Guide](docs/06-user-guide.md)
+- [Release Checklist](docs/release-checklist.md)
+
+## 更新日志
+
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 

@@ -1,4 +1,4 @@
-import { ControlMode, Controller, HandoffAwareness, Visibility, createId } from '../data/schema.js';
+import { AwarenessScope, ControlMode, Controller, HandoffAwareness, Visibility, createId } from '../data/schema.js';
 
 export class IntrusionEngine extends EventTarget {
   constructor({ now = () => Date.now() } = {}) {
@@ -14,6 +14,7 @@ export class IntrusionEngine extends EventTarget {
     visibility = Visibility.ANONYMOUS,
     mode = ControlMode.INTRUSION,
     awareness = HandoffAwareness.NONE,
+    awarenessScope = AwarenessScope.CONTROLLED,
   }) {
     if (!characterId) {
       throw new Error('characterId is required to start an intrusion.');
@@ -28,6 +29,7 @@ export class IntrusionEngine extends EventTarget {
       visibility,
       controller: Controller.HUMAN,
       awareness,
+      awarenessScope,
       startedAt: new Date(startedAtMs).toISOString(),
       endsAt: new Date(startedAtMs + durationMs).toISOString(),
       endedAt: null,

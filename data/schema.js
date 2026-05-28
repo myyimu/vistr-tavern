@@ -26,6 +26,12 @@ export const HandoffAwareness = Object.freeze({
   EXPLICIT: 'explicit',
 });
 
+export const AwarenessScope = Object.freeze({
+  CONTROLLED: 'controlled',
+  OBSERVERS: 'observers',
+  BOTH: 'both',
+});
+
 export function createId(prefix) {
   const random = Math.random().toString(36).slice(2, 10);
   return `${prefix}_${Date.now().toString(36)}_${random}`;

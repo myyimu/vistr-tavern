@@ -5,15 +5,18 @@ const LOCAL_STORAGE_KEY = `${MODULE_NAME}.memory`;
 export class StorageAdapter {
   constructor({ getContext = null } = {}) {
     this.getContext = getContext;
+    this.lastMode = 'unknown';
   }
 
   load() {
     const metadataMemory = this.#readFromChatMetadata();
     if (metadataMemory) {
+      this.lastMode = 'chatMetadata';
       return metadataMemory;
     }
 
     const localMemory = this.#readFromLocalStorage();
+    this.lastMode = localMemory ? 'localStorage' : 'empty';
     return localMemory || createEmptyMemory();
   }
 
@@ -29,9 +32,16 @@ export class StorageAdapter {
     const savedToMetadata = await this.#writeToChatMetadata(nextMemory);
     if (!savedToMetadata) {
       this.#writeToLocalStorage(nextMemory);
+      this.lastMode = 'localStorage';
+    } else {
+      this.lastMode = 'chatMetadata';
     }
 
     return nextMemory;
+  }
+
+  getStorageMode() {
+    return this.lastMode;
   }
 
   #readFromChatMetadata() {

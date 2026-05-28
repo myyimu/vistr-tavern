@@ -16,6 +16,7 @@ export class ExportWriter {
     const aiReactions = memory.messages.filter((message) => message.controller === Controller.AI && message.intrusionId);
     const highTensionMessages = memory.messages.filter((message) => Number(message.tension) >= 70);
     const handoffs = memory.handoffs || [];
+    const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
 
     return [
       `# ${memory.session.title}`,
@@ -39,6 +40,9 @@ export class ExportWriter {
       '',
       '## AI 接管连续性',
       handoffs.length ? handoffs.map(formatHandoff).join('\n\n') : '- 暂无接管恢复上下文',
+      '',
+      '## AI 异常察觉',
+      awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- 暂无 AI 异常察觉事件',
       '',
       '## 高张力对话',
       highTensionMessages.length ? highTensionMessages.map(formatMessage).join('\n') : '- 暂无高张力对话',
@@ -72,12 +76,20 @@ function formatHandoff(handoff) {
   return [
     `### ${handoff.characterName || handoff.characterId}`,
     `- Awareness: ${handoff.awareness}`,
+    `- Awareness scope: ${handoff.awarenessScope || 'controlled'}`,
     `- Status: ${handoff.consumedAt ? 'consumed' : 'pending'}`,
+    `- Injection: ${handoff.lastInjectedAt ? `injected ${handoff.injectionCount || 1} time(s)` : 'not injected'}`,
     `- Summary: ${handoff.summary}`,
     '',
     '```text',
     handoff.prompt,
     '```',
   ].join('\n');
+}
+
+function formatAwarenessEvent(event) {
+  const scope = event.awarenessScope ? ` scope=${event.awarenessScope}` : '';
+  const awareness = event.awareness ? ` awareness=${event.awareness}` : '';
+  return `- [${event.type}${awareness}${scope}] ${event.summary} (severity: ${event.severity})`;
 }
 

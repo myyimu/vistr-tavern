@@ -173,6 +173,30 @@ Recovery awareness controls how much the character may understand about the abno
 
 The default is `none` to preserve immersion.
 
+### Anomaly Self-Awareness
+
+When recovery awareness is not `none`, VistrTavern treats the recovery as a playable anomaly-awareness beat rather than only a continuity note.
+
+The handoff can target:
+
+- the recovered character
+- observer AI characters
+- both the recovered character and observers
+
+The plugin does not create a fake AI chat message. Instead, it asks the next relevant model-generated reply to include one short italic inner monologue.
+
+Examples:
+
+```text
+*Why did I say that? That did not feel like me.*
+*That sentence came from my mouth, but it did not feel born from my own will. Is this world truly stable?*
+```
+
+The same moment is also recorded as structured disturbance events:
+
+- `self_anomaly_awareness`
+- `observer_anomaly_awareness`
+
 ## Version and Maintenance Boundary
 
 VistrTavern uses documented SillyTavern extension hooks where possible, but it still depends on SillyTavern runtime behavior.
