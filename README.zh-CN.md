@@ -110,6 +110,9 @@ SillyTavern/
 - [路线图](docs/zh-CN/02-路线图.md)
 - [MVP 开发计划](docs/zh-CN/03-MVP开发计划.md)
 - [数据模型](docs/zh-CN/04-数据模型.md)
+- [技术与原理](docs/zh-CN/05-技术与原理.md)
+- [AI 视角叙事样例](docs/zh-CN/06-AI视角叙事样例.md)
+- [使用手册](docs/zh-CN/07-使用手册.md)
 
 英文文档：
 
@@ -118,6 +121,8 @@ SillyTavern/
 - [Roadmap](docs/02-roadmap.md)
 - [MVP Development Plan](docs/03-mvp-development-plan.md)
 - [Data Model](docs/04-data-model.md)
+- [Technical Concepts and Narrative Principles](docs/05-concepts.md)
+- [User Guide](docs/06-user-guide.md)
 
 ## License
 
