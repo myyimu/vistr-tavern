@@ -41,7 +41,7 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.1.2-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
+`v0.2.0-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
 
 ## 已测试环境
 
@@ -49,7 +49,7 @@ AI 群像正常运行
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
-| `v0.1.2-alpha` | 等待公开验证 | TODO | TODO | TODO |
+| `v0.2.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
 
 ## 产出示例
 
@@ -86,6 +86,8 @@ VistrTavern 重点记录：
 - Alpha Debug 面板，显示存储、handoff、interceptor、AI 捕获和错误状态。
 - 手动 `Copy Latest Handoff` fallback。
 - Markdown 和 JSON 导出。
+- Creator Pack 导出，用于整理可复用写作素材、冲突钩子、分支路线和 handoff 上下文。
+- 剧情分支标记，支持关系线、阴谋线、身份揭露、世界观裂缝、线索污染和情绪破裂等路线。
 - 核心模块 smoke test。
 
 ## 当前限制
@@ -101,7 +103,7 @@ VistrTavern 重点记录：
 运行 smoke test：
 
 ```bash
-npm run smoke
+npm run verify
 ```
 
 ## 安装形态
@@ -144,7 +146,7 @@ SillyTavern/
 - [使用手册](docs/zh-CN/07-使用手册.md)
 - [发布检查清单](docs/zh-CN/08-发布检查清单.md)
 - [Alpha 验证指南](docs/zh-CN/09-alpha验证指南.md)
-- [v0.1.1 小版本计划](docs/zh-CN/10-v0.1.1计划.md)
+- [工程化说明](docs/zh-CN/10-工程化.md)
 - [案例示例](examples/README.md)
 
 英文文档：
@@ -157,7 +159,7 @@ SillyTavern/
 - [Technical Concepts and Narrative Principles](docs/05-concepts.md)
 - [User Guide](docs/06-user-guide.md)
 - [Alpha Validation Guide](docs/07-alpha-validation.md)
-- [v0.1.1 Patch Plan](docs/08-v0.1.1-plan.md)
+- [Engineering Notes](docs/08-engineering.md)
 - [Release Checklist](docs/release-checklist.md)
 - [Examples](examples/README.md)
 

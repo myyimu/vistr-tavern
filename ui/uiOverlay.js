@@ -1,14 +1,16 @@
-import { AwarenessScope, ControlMode, Controller, HandoffAwareness, ViewMode, Visibility } from '../data/schema.js';
+import { AwarenessScope, BranchType, ControlMode, HandoffAwareness, Visibility } from '../data/schema.js';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportJson, getState, getDebugState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
     this.onRecordHumanLine = onRecordHumanLine;
+    this.onMarkBranchPoint = onMarkBranchPoint;
     this.onSaveScene = onSaveScene;
     this.onCopyLatestHandoff = onCopyLatestHandoff;
     this.onExportMarkdown = onExportMarkdown;
+    this.onExportCreatorPack = onExportCreatorPack;
     this.onExportJson = onExportJson;
     this.getState = getState;
     this.getDebugState = getDebugState;
@@ -131,6 +133,10 @@ export class UiOverlay {
       this.#download('vistr-tavern-export.md', this.onExportMarkdown(), 'text/markdown');
     });
 
+    this.root.querySelector('[data-vt-export-creator-pack]').addEventListener('click', () => {
+      this.#download('vistr-tavern-creator-pack.md', this.onExportCreatorPack(), 'text/markdown');
+    });
+
     this.root.querySelector('[data-vt-export-json]').addEventListener('click', () => {
       this.#download('vistr-tavern-export.json', this.onExportJson(), 'application/json');
     });
@@ -164,6 +170,35 @@ export class UiOverlay {
         status.textContent = 'Copy failed';
         console.warn('[VistrTavern] Failed to copy debug snapshot.', error);
       }
+    });
+
+    this.root.querySelector('[data-vt-mark-branch]').addEventListener('click', async () => {
+      const character = this.#selectedCharacter();
+      const status = this.root.querySelector('[data-vt-branch-status]');
+      const titleInput = this.root.querySelector('[data-vt-branch-title]');
+      const summaryInput = this.root.querySelector('[data-vt-branch-summary]');
+      const optionInputs = Array.from(this.root.querySelectorAll('[data-vt-branch-option]'));
+      const branchPoint = await this.onMarkBranchPoint?.({
+        characterId: character?.id || null,
+        characterName: character?.name || null,
+        title: titleInput.value,
+        type: this.root.querySelector('[data-vt-branch-type]').value,
+        summary: summaryInput.value,
+        options: optionInputs.map((input) => input.value),
+      });
+
+      if (!branchPoint) {
+        status.textContent = 'Branch title and summary are required';
+        return;
+      }
+
+      titleInput.value = '';
+      summaryInput.value = '';
+      for (const input of optionInputs) {
+        input.value = '';
+      }
+      status.textContent = 'Branch point marked';
+      this.refresh();
     });
   }
 
@@ -262,6 +297,39 @@ export class UiOverlay {
 
         <hr>
 
+        <strong>Branch Point</strong>
+        <div class="vt-grid">
+          <label>
+            Title
+            <input type="text" placeholder="Identity reveal" data-vt-branch-title>
+          </label>
+          <label>
+            Type
+            <select data-vt-branch-type>
+              <option value="${BranchType.RELATIONSHIP}">Relationship</option>
+              <option value="${BranchType.CONSPIRACY}">Conspiracy</option>
+              <option value="${BranchType.IDENTITY}">Identity reveal</option>
+              <option value="${BranchType.WORLD_FRACTURE}">World fracture</option>
+              <option value="${BranchType.CLUE_CONTAMINATION}">Clue contamination</option>
+              <option value="${BranchType.EMOTIONAL_RUPTURE}">Emotional rupture</option>
+              <option value="${BranchType.OTHER}">Other</option>
+            </select>
+          </label>
+        </div>
+        <label class="vt-field">
+          Branch summary
+          <textarea rows="3" data-vt-branch-summary placeholder="What new route did this intrusion open?"></textarea>
+        </label>
+        <div class="vt-grid">
+          <input type="text" placeholder="Option A" data-vt-branch-option>
+          <input type="text" placeholder="Option B" data-vt-branch-option>
+        </div>
+        <input type="text" placeholder="Option C" data-vt-branch-option>
+        <button type="button" data-vt-mark-branch>Mark Branch Point</button>
+        <span class="vt-copy-status" data-vt-branch-status></span>
+
+        <hr>
+
         <strong>Active Intrusions</strong>
         <ul class="vt-active-list" data-vt-active-list></ul>
 
@@ -280,6 +348,7 @@ export class UiOverlay {
 
         <div class="vt-actions">
           <button type="button" data-vt-export-md>Export Markdown</button>
+          <button type="button" data-vt-export-creator-pack>Export Creator Pack</button>
           <button type="button" data-vt-export-json>Export JSON</button>
         </div>
       </section>

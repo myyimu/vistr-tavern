@@ -3,7 +3,7 @@ import { ExportWriter } from '../core/exportWriter.js';
 import { IntrusionEngine } from '../core/intrusionEngine.js';
 import { NarrativeMemory } from '../core/narrativeMemory.js';
 import { SceneManager } from '../core/sceneManager.js';
-import { AwarenessScope, Controller, HandoffAwareness, Visibility, createEmptyMemory } from '../data/schema.js';
+import { AwarenessScope, BranchType, Controller, HandoffAwareness, Visibility, createEmptyMemory } from '../data/schema.js';
 
 let now = Date.parse('2026-05-27T12:00:00.000Z');
 const engine = new IntrusionEngine({ now: () => now });
@@ -61,12 +61,33 @@ assert.equal(memory.getInjectedHandoff().id, memory.memory.handoffs[0].id);
 memory.recordHandoffConsumed(memory.memory.handoffs[0].id, 'msg_recovery');
 assert.equal(memory.getPendingHandoff(), null);
 
+const branchPoint = memory.recordBranchPoint({
+  characterId: 'Eileen',
+  characterName: 'Eileen',
+  title: 'Forbidden bloodline reveal',
+  type: BranchType.IDENTITY,
+  summary: 'Eileen may know royal secrets that should be impossible for her to know.',
+  options: ['Expose the bloodline', 'Hide the memory gap', 'Let the chancellor weaponize the secret'],
+  scene,
+  intrusion,
+});
+assert.equal(memory.memory.branchPoints.length, 1);
+assert.equal(branchPoint.type, BranchType.IDENTITY);
+
 const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
 assert.match(markdown, /Do you really believe/);
 assert.match(markdown, /AI 接管连续性/);
 assert.match(markdown, /AI 异常察觉/);
+assert.match(markdown, /剧情分支标记/);
+assert.match(markdown, /Forbidden bloodline reveal/);
 assert.match(markdown, /Status: consumed/);
+
+const creatorPack = writer.toCreatorPack(memory.memory);
+assert.match(creatorPack, /Creator Pack/);
+assert.match(creatorPack, /冲突升级点/);
+assert.match(creatorPack, /剧情分支/);
+assert.match(creatorPack, /Forbidden bloodline reveal/);
 
 const subtleMemory = new NarrativeMemory(createEmptyMemory(new Date(now)));
 const subtleSceneManager = new SceneManager(subtleMemory.memory);

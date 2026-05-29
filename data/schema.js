@@ -32,6 +32,16 @@ export const AwarenessScope = Object.freeze({
   BOTH: 'both',
 });
 
+export const BranchType = Object.freeze({
+  RELATIONSHIP: 'relationship',
+  CONSPIRACY: 'conspiracy',
+  IDENTITY: 'identity',
+  WORLD_FRACTURE: 'world_fracture',
+  CLUE_CONTAMINATION: 'clue_contamination',
+  EMOTIONAL_RUPTURE: 'emotional_rupture',
+  OTHER: 'other',
+});
+
 export function createId(prefix) {
   const random = Math.random().toString(36).slice(2, 10);
   return `${prefix}_${Date.now().toString(36)}_${random}`;
@@ -56,6 +66,7 @@ export function createEmptyMemory(now = new Date()) {
     handoffs: [],
     messages: [],
     disturbanceEvents: [],
+    branchPoints: [],
     relationshipDeltas: [],
     worldStateDeltas: [],
   };

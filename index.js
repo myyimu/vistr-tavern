@@ -4,9 +4,8 @@ import { NarrativeMemory } from './core/narrativeMemory.js';
 import { SceneManager } from './core/sceneManager.js';
 import { StorageAdapter } from './data/storageAdapter.js';
 import { Controller, MODULE_NAME, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
+import { EXTENSION_VERSION } from './data/version.js';
 import { UiOverlay } from './ui/uiOverlay.js';
-
-const EXTENSION_VERSION = '0.1.2-alpha';
 
 let storage;
 let narrativeMemory;
@@ -97,9 +96,11 @@ function initialize() {
     onStartIntrusion: startIntrusion,
     onEndIntrusion: endIntrusion,
     onRecordHumanLine: recordHumanLine,
+    onMarkBranchPoint: markBranchPoint,
     onSaveScene: saveScene,
     onCopyLatestHandoff: copyLatestHandoff,
     onExportMarkdown: () => exportWriter.toMarkdown(narrativeMemory.memory),
+    onExportCreatorPack: () => exportWriter.toCreatorPack(narrativeMemory.memory),
     onExportJson: () => exportWriter.toJson(narrativeMemory.memory),
     getState,
     getDebugState,
@@ -200,6 +201,37 @@ async function recordHumanLine({ characterId, speakerName, content }) {
   }
 
   await persist();
+}
+
+async function markBranchPoint({ characterId, characterName, title, type, summary, options }) {
+  const activeScene = sceneManager.getActiveScene();
+  const intrusion = latestIntrusionForCharacter(characterId);
+  const branchPoint = narrativeMemory.recordBranchPoint({
+    characterId,
+    characterName,
+    title,
+    type,
+    summary,
+    options,
+    scene: activeScene,
+    intrusion,
+  });
+
+  if (!branchPoint) {
+    return null;
+  }
+
+  narrativeMemory.recordDisturbanceEvent({
+    type: 'branch_point_marked',
+    severity: activeScene?.tension >= 70 ? 4 : 2,
+    summary: `Branch point marked: ${branchPoint.title}. ${branchPoint.summary}`,
+    scene: activeScene,
+    intrusion,
+    characterId,
+  });
+
+  await persist();
+  return branchPoint;
 }
 
 async function captureAiMessage(eventData) {
@@ -336,6 +368,16 @@ function latestChatMessage() {
   return context.chat[context.chat.length - 1];
 }
 
+function latestIntrusionForCharacter(characterId) {
+  return [...(narrativeMemory?.memory?.intrusions || [])]
+    .filter((intrusion) => !characterId || intrusion.characterId === characterId)
+    .sort((left, right) => {
+      const leftTime = left.endedAt || left.startedAt || left.createdAt || '';
+      const rightTime = right.endedAt || right.startedAt || right.createdAt || '';
+      return new Date(rightTime).getTime() - new Date(leftTime).getTime();
+    })[0] || null;
+}
+
 function ensureDefaultScene() {
   if (!sceneManager.getActiveScene()) {
     sceneManager.setScene({
@@ -354,6 +396,7 @@ function getState() {
     messageCount: narrativeMemory.memory.messages.length,
     intrusionCount: narrativeMemory.memory.intrusions.length,
     pendingHandoffCount: narrativeMemory.memory.handoffs.filter((handoff) => !handoff.consumedAt).length,
+    branchPointCount: narrativeMemory.memory.branchPoints?.length || 0,
     awarenessEventCount: awarenessEvents().length,
     debug: getDebugState(),
   };

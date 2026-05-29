@@ -141,6 +141,36 @@ Awareness events:
 - `self_anomaly_awareness`: the recovered character notices that their own words or actions felt wrong.
 - `observer_anomaly_awareness`: observer AI characters notice that the recovered character behaved abnormally.
 
+## Branch Point
+
+Branch points mark creator-facing story routes opened by an intrusion. They do not create chat messages.
+
+```json
+{
+  "id": "branch_001",
+  "sessionId": "session_001",
+  "sceneId": "scene_001",
+  "intrusionId": "intrusion_001",
+  "characterId": "char_eileen",
+  "characterName": "Eileen",
+  "type": "identity",
+  "title": "Forbidden bloodline reveal",
+  "summary": "Eileen may know royal secrets that should be impossible for her to know.",
+  "options": ["Expose the bloodline", "Hide the memory gap", "Let the chancellor weaponize the secret"],
+  "createdAt": "2026-05-27T12:11:00.000Z"
+}
+```
+
+Branch types:
+
+- `relationship`
+- `conspiracy`
+- `identity`
+- `world_fracture`
+- `clue_contamination`
+- `emotional_rupture`
+- `other`
+
 ## Relationship Delta
 
 ```json
@@ -182,6 +212,8 @@ Every export should include:
 - Intrusion timeline.
 - AI recovery continuity handoffs.
 - AI anomaly awareness events.
+- Branch points.
+- Creator Pack Markdown for reusable writing material, conflict hooks, branch routes, and continuity handoff context.
 - High-tension dialogue.
 - AI reactions to the intrusion.
 - Relationship changes.

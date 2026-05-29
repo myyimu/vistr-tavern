@@ -41,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.1.2-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+`v0.2.0-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
 
 ## Tested Environments
 
@@ -49,7 +49,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.1.2-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.2.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 
@@ -86,6 +86,8 @@ VistrTavern records:
 - Alpha Debug panel with storage, handoff, interceptor, AI capture, and error status.
 - Manual `Copy Latest Handoff` fallback.
 - Markdown and JSON export.
+- Creator Pack export for reusable writing material, conflict hooks, branch routes, and handoff context.
+- Branch Point marking for relationship, conspiracy, identity, world-fracture, clue-contamination, and emotional rupture routes.
 - Core module smoke test.
 
 ## Current Limitations
@@ -101,7 +103,7 @@ VistrTavern records:
 Run the smoke test:
 
 ```bash
-npm run smoke
+npm run verify
 ```
 
 ## Installation Shape
@@ -142,7 +144,7 @@ SillyTavern/
 - [Technical Concepts and Narrative Principles](docs/05-concepts.md)
 - [User Guide](docs/06-user-guide.md)
 - [Alpha Validation Guide](docs/07-alpha-validation.md)
-- [v0.1.1 Patch Plan](docs/08-v0.1.1-plan.md)
+- [Engineering Notes](docs/08-engineering.md)
 - [Release Checklist](docs/release-checklist.md)
 - [Examples](examples/README.md)
 
@@ -158,7 +160,7 @@ Chinese documentation:
 - [使用手册](docs/zh-CN/07-使用手册.md)
 - [发布检查清单](docs/zh-CN/08-发布检查清单.md)
 - [Alpha 验证指南](docs/zh-CN/09-alpha验证指南.md)
-- [v0.1.1 小版本计划](docs/zh-CN/10-v0.1.1计划.md)
+- [工程化说明](docs/zh-CN/10-工程化.md)
 - [案例示例](examples/README.md)
 
 ## Changelog

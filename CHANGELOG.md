@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.2.0-alpha
+
+Creator tooling and engineering cleanup release.
+
+### Added
+
+- Creator Pack Markdown export for reusable writing material, AI reactions, conflict hooks, branch routes, awareness events, and continuity handoff context.
+- Branch Point marking in the VT panel.
+- `branchPoints` memory collection for creator-facing story routes.
+- Branch point output in Markdown and JSON exports.
+- Branch point data model documentation in English and Chinese.
+- `npm run verify` as the single local validation entrypoint.
+- Version consistency checks across `package.json`, `manifest.json`, and `data/version.js`.
+- English and Chinese engineering notes.
+
+### Changed
+
+- Moved runtime extension version into `data/version.js`.
+- Removed completed `v0.1.1` patch-plan documents from the public README navigation.
+- Extension version updated to `0.2.0-alpha`.
+
 ## v0.1.2-alpha
 
 Public positioning and creator-value update.

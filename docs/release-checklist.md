@@ -1,22 +1,23 @@
 # Release Checklist
 
-Use this checklist before publishing `v0.1.2-alpha`.
+Use this checklist before publishing `v0.2.0-alpha`.
 
 ## Repository
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
 - [ ] `manifest.json` `homePage` points to `https://github.com/xiaoke5211-star/vistr-tavern`.
-- [ ] `package.json` and `manifest.json` versions are `0.1.2-alpha`.
+- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.2.0-alpha`.
 - [ ] `README.md`, `README.zh-CN.md`, and user guides mention manual install.
 
 ## Local Verification
 
-- [ ] Run `npm run smoke`.
-- [ ] Run `node --check index.js core/narrativeMemory.js core/exportWriter.js ui/uiOverlay.js`.
+- [ ] Run `npm run verify`.
 - [ ] Confirm Markdown export includes intrusion timeline, human line, AI reaction, and continuity handoff.
 - [ ] Confirm Markdown export includes the `AI 异常察觉` section when awareness is enabled.
-- [ ] Confirm JSON export includes `intrusions`, `messages`, and `handoffs`.
+- [ ] Confirm Markdown export includes branch points when marked.
+- [ ] Confirm Creator Pack export includes anomaly lines, AI reactions, conflict hooks, branch routes, and handoff context.
+- [ ] Confirm JSON export includes `intrusions`, `messages`, `handoffs`, and `branchPoints`.
 
 ## SillyTavern Manual Install
 
@@ -47,11 +48,12 @@ Use this checklist before publishing `v0.1.2-alpha`.
 - [ ] `Copy Latest Handoff` copies handoff text.
 - [ ] Markdown export downloads successfully.
 - [ ] JSON export downloads successfully.
+- [ ] Creator Pack export downloads successfully.
 - [ ] Exports do not include unexpected private data beyond local session story content.
 
 ## GitHub Release
 
 - [ ] Commit all release changes.
-- [ ] Tag `v0.1.2-alpha`.
+- [ ] Tag `v0.2.0-alpha`.
 - [ ] Push branch and tag.
 - [ ] Create GitHub Release with alpha status and known limitations.

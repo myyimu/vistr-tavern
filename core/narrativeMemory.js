@@ -1,4 +1,4 @@
-import { AwarenessScope, Controller, HandoffAwareness, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
+import { AwarenessScope, BranchType, Controller, HandoffAwareness, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
 
 export class NarrativeMemory {
   constructor(memory = createEmptyMemory()) {
@@ -120,6 +120,43 @@ export class NarrativeMemory {
     return event;
   }
 
+  recordBranchPoint({
+    title,
+    type = BranchType.OTHER,
+    summary,
+    options = [],
+    scene = null,
+    intrusion = null,
+    characterId = null,
+    characterName = null,
+  }) {
+    const trimmedTitle = title?.trim();
+    const trimmedSummary = summary?.trim();
+    if (!trimmedTitle || !trimmedSummary) {
+      return null;
+    }
+
+    const branchPoint = {
+      id: createId('branch'),
+      sessionId: this.memory.session.id,
+      sceneId: scene?.id || this.memory.session.activeSceneId,
+      intrusionId: intrusion?.id || null,
+      characterId: characterId || intrusion?.characterId || null,
+      characterName: characterName || intrusion?.characterName || null,
+      type: Object.values(BranchType).includes(type) ? type : BranchType.OTHER,
+      title: trimmedTitle,
+      summary: trimmedSummary,
+      options: options
+        .map((option) => option?.trim())
+        .filter(Boolean)
+        .slice(0, 3),
+      createdAt: new Date().toISOString(),
+    };
+
+    this.memory.branchPoints.push(branchPoint);
+    return branchPoint;
+  }
+
   recordContinuityHandoff(intrusion) {
     if (!intrusion?.id) {
       return null;
@@ -231,6 +268,7 @@ export class NarrativeMemory {
       handoffs: memory.handoffs || [],
       messages: memory.messages || [],
       disturbanceEvents: memory.disturbanceEvents || [],
+      branchPoints: memory.branchPoints || [],
       relationshipDeltas: memory.relationshipDeltas || [],
       worldStateDeltas: memory.worldStateDeltas || [],
     };

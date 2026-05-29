@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to manually install and test VistrTavern `v0.1.2-alpha`.
+This guide describes how to manually install and test VistrTavern `v0.2.0-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -20,7 +20,7 @@ install extension
 - A chat with at least one character.
 - This repository placed inside the SillyTavern user extensions folder.
 
-The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.1.2-alpha`.
+The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.2.0-alpha`.
 
 ## Manual Installation
 
@@ -212,11 +212,25 @@ If automatic prompt injection does not work in your SillyTavern version, click `
 
 Paste the copied handoff into a suitable temporary context or prompt area before the next AI generation. This is only a fallback for alpha testing; automatic injection through `generate_interceptor` remains the default path.
 
+## Branch Points
+
+Use `Branch Point` when an intrusion opens a route worth developing later.
+
+1. Select the relevant character.
+2. Enter a branch title.
+3. Choose a branch type, such as `Identity reveal`, `Conspiracy`, or `Clue contamination`.
+4. Write a short branch summary.
+5. Optionally add up to three possible routes.
+6. Click `Mark Branch Point`.
+
+Branch points are saved into local memory. They appear in JSON export, Markdown export, and Creator Pack export. They do not create chat messages.
+
 ## Exporting
 
 Click:
 
 - `Export Markdown` for creator-facing story material.
+- `Export Creator Pack` for a condensed writing pack with anomaly lines, AI reactions, conflict hooks, branch routes, awareness events, and handoff context.
 - `Export JSON` for raw structured memory.
 
 Markdown export includes:
@@ -227,6 +241,7 @@ Markdown export includes:
 - AI reactions
 - AI recovery continuity handoffs
 - AI anomaly awareness events
+- branch points
 - high-tension dialogue
 - disturbance events
 - relationship deltas
@@ -234,7 +249,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.1.2-alpha`, a successful test means:
+For `v0.2.0-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -274,7 +289,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.1.2-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.2.0-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

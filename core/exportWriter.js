@@ -17,6 +17,7 @@ export class ExportWriter {
     const highTensionMessages = memory.messages.filter((message) => Number(message.tension) >= 70);
     const handoffs = memory.handoffs || [];
     const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
+    const branchPoints = memory.branchPoints || [];
 
     return [
       `# ${memory.session.title}`,
@@ -44,6 +45,9 @@ export class ExportWriter {
       '## AI 异常察觉',
       awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- 暂无 AI 异常察觉事件',
       '',
+      '## 剧情分支标记',
+      branchPoints.length ? branchPoints.map(formatBranchPoint).join('\n\n') : '- 暂无剧情分支标记',
+      '',
       '## 高张力对话',
       highTensionMessages.length ? highTensionMessages.map(formatMessage).join('\n') : '- 暂无高张力对话',
       '',
@@ -61,6 +65,53 @@ export class ExportWriter {
       memory.worldStateDeltas.length
         ? memory.worldStateDeltas.map((delta) => `- ${delta.key}: ${delta.before} -> ${delta.after}. ${delta.reason}`).join('\n')
         : '- MVP 阶段暂未记录',
+      '',
+    ].join('\n');
+  }
+
+  toCreatorPack(memory) {
+    const activeScene = memory.scenes.find((scene) => scene.id === memory.session.activeSceneId);
+    const humanMessages = memory.messages.filter((message) => message.controller === Controller.HUMAN);
+    const aiReactions = memory.messages.filter((message) => message.controller === Controller.AI && message.intrusionId);
+    const handoffs = memory.handoffs || [];
+    const branchPoints = memory.branchPoints || [];
+    const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
+    const conflictHooks = [
+      ...memory.disturbanceEvents.filter((event) => event.severity >= 3).map((event) => event.summary),
+      ...branchPoints.map((branch) => branch.summary),
+    ];
+
+    return [
+      `# Creator Pack - ${memory.session.title}`,
+      '',
+      '## 创作摘要',
+      activeScene
+        ? `当前素材围绕「${activeScene.name}」展开，氛围为「${activeScene.mood || '未设置'}」，张力值为 ${activeScene.tension}。`
+        : '当前素材尚未绑定明确场景。',
+      `本次导出包含 ${memory.intrusions.length} 次 intrusion、${humanMessages.length} 条真人异常发言、${aiReactions.length} 条 AI 反应、${handoffs.length} 个 continuity handoff 和 ${branchPoints.length} 个剧情分支。`,
+      '',
+      '## 真人异常素材',
+      humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
+      '',
+      '## AI 误读 / 抵抗 / 修复',
+      aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无 AI 反应',
+      '',
+      '## 冲突升级点',
+      conflictHooks.length ? conflictHooks.map((hook) => `- ${hook}`).join('\n') : '- 暂无可整理的冲突升级点',
+      '',
+      '## 剧情分支',
+      branchPoints.length ? branchPoints.map(formatBranchPoint).join('\n\n') : '- 暂无剧情分支',
+      '',
+      '## AI 异常察觉',
+      awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- 暂无 AI 异常察觉事件',
+      '',
+      '## 可继续写作的钩子',
+      branchPoints.length
+        ? branchPoints.map((branch) => `- 继续推进「${branch.title}」：${branch.options.length ? branch.options.join(' / ') : branch.summary}`).join('\n')
+        : '- 从真人异常发言中挑选一条，追问它会改变谁的判断、关系或世界状态。',
+      '',
+      '## Continuity Handoff',
+      handoffs.length ? handoffs.map(formatHandoff).join('\n\n') : '- 暂无接管恢复上下文',
       '',
     ].join('\n');
   }
@@ -91,5 +142,21 @@ function formatAwarenessEvent(event) {
   const scope = event.awarenessScope ? ` scope=${event.awarenessScope}` : '';
   const awareness = event.awareness ? ` awareness=${event.awareness}` : '';
   return `- [${event.type}${awareness}${scope}] ${event.summary} (severity: ${event.severity})`;
+}
+
+function formatBranchPoint(branch) {
+  const lines = [
+    `### ${branch.title}`,
+    `- Type: ${branch.type}`,
+    `- Character: ${branch.characterName || branch.characterId || 'not specified'}`,
+    `- Summary: ${branch.summary}`,
+  ];
+
+  if (branch.options?.length) {
+    lines.push('- Options:');
+    lines.push(...branch.options.map((option, index) => `  ${index + 1}. ${option}`));
+  }
+
+  return lines.join('\n');
 }
 

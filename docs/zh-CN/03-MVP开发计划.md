@@ -71,7 +71,7 @@ style.css
 当前状态：
 
 - 已实现为浮动扩展面板。
-- 核心模块 smoke test 可通过 `npm run smoke` 验证。
+- 核心验证可通过 `npm run verify` 完成。
 
 ### Milestone 2：Intrusion Engine
 

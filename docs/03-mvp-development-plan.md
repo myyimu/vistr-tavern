@@ -71,7 +71,7 @@ Exit criteria:
 Current status:
 
 - Implemented as a floating extension panel.
-- Core module smoke test passes with `npm run smoke`.
+- Core verification passes with `npm run verify`.
 
 ### Milestone 2: Intrusion Engine
 
