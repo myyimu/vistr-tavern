@@ -31,7 +31,15 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.1.0-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
+`v0.1.1-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
+
+## 已测试环境
+
+公开兼容性还在收集中。如果你测试了 VistrTavern，请在 [alpha feedback thread](https://github.com/xiaoke5211-star/vistr-tavern/issues/1) 反馈结果。
+
+| VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
+| --- | --- | --- | --- | --- |
+| `v0.1.1-alpha` | 等待公开验证 | TODO | TODO | TODO |
 
 ## 核心原则
 

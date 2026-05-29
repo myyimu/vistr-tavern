@@ -1,4 +1,4 @@
-name: v0.1.0-alpha feedback
+name: alpha feedback
 description: Report manual testing results for the alpha build.
 title: "[alpha feedback] "
 labels: ["alpha-feedback"]
@@ -60,4 +60,3 @@ body:
     attributes:
       label: Console logs or screenshots
       description: Paste errors or attach screenshots if available. Remove private roleplay content first.
-

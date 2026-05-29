@@ -10,7 +10,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| VistrTavern 版本 | `v0.1.0-alpha` |
+| VistrTavern 版本 | `v0.1.1-alpha` |
 | SillyTavern 版本 | TODO |
 | 浏览器 | TODO |
 | 系统 | TODO |
@@ -93,7 +93,7 @@ docs/assets/screenshots/export-markdown.png
 
 ## Alpha 反馈 issue
 
-请测试者使用 `v0.1.0-alpha feedback` issue 模板，并提供：
+请测试者使用 `alpha feedback` issue 模板，并提供：
 
 - SillyTavern 版本。
 - 安装方式。
@@ -102,4 +102,3 @@ docs/assets/screenshots/export-markdown.png
 - `Copy Latest Handoff` 是否可用。
 - 测试了哪个 awareness mode 和 target。
 - 控制台错误或截图，注意先移除私密 RP 内容。
-

@@ -1,13 +1,13 @@
 # Release Checklist
 
-Use this checklist before publishing `v0.1.0-alpha`.
+Use this checklist before publishing `v0.1.1-alpha`.
 
 ## Repository
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
 - [ ] `manifest.json` `homePage` points to `https://github.com/xiaoke5211-star/vistr-tavern`.
-- [ ] `package.json` and `manifest.json` versions are `0.1.0-alpha`.
+- [ ] `package.json` and `manifest.json` versions are `0.1.1-alpha`.
 - [ ] `README.md`, `README.zh-CN.md`, and user guides mention manual install.
 
 ## Local Verification
@@ -52,6 +52,6 @@ Use this checklist before publishing `v0.1.0-alpha`.
 ## GitHub Release
 
 - [ ] Commit all release changes.
-- [ ] Tag `v0.1.0-alpha`.
+- [ ] Tag `v0.1.1-alpha`.
 - [ ] Push branch and tag.
 - [ ] Create GitHub Release with alpha status and known limitations.

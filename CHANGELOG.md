@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.1.1-alpha
+
+Public alpha stabilization patch.
+
+### Added
+
+- `Copy Debug Snapshot` button in the Debug panel for issue reports.
+- Visible Debug warning when a pending handoff has not reached the prompt interceptor yet.
+- Tested environment table in English and Chinese README files.
+- Link to the public alpha feedback issue from README files.
+- Screenshot placeholder directory at `docs/assets/screenshots/`.
+
+### Changed
+
+- Extension version updated to `0.1.1-alpha`.
+- User guides now explain Debug warnings and debug snapshot copying.
+
 ## v0.1.0-alpha
 
 Initial public alpha target.

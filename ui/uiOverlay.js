@@ -151,6 +151,20 @@ export class UiOverlay {
         console.warn('[VistrTavern] Failed to copy handoff.', error);
       }
     });
+
+    this.root.querySelector('[data-vt-copy-debug]').addEventListener('click', async () => {
+      const status = this.root.querySelector('[data-vt-copy-status]');
+      const snapshot = this.getDebugState?.() || this.getState().debug || {};
+      const content = JSON.stringify(snapshot, null, 2);
+
+      try {
+        await copyText(content);
+        status.textContent = 'Debug snapshot copied';
+      } catch (error) {
+        status.textContent = 'Copy failed';
+        console.warn('[VistrTavern] Failed to copy debug snapshot.', error);
+      }
+    });
   }
 
   #selectedCharacter() {
@@ -255,8 +269,12 @@ export class UiOverlay {
 
         <details class="vt-debug" open>
           <summary>Debug</summary>
+          <p class="vt-debug-warning" data-vt-debug-warning></p>
           <dl data-vt-debug></dl>
-          <button type="button" data-vt-copy-handoff>Copy Latest Handoff</button>
+          <div class="vt-actions">
+            <button type="button" data-vt-copy-handoff>Copy Latest Handoff</button>
+            <button type="button" data-vt-copy-debug>Copy Debug Snapshot</button>
+          </div>
           <span class="vt-copy-status" data-vt-copy-status></span>
         </details>
 
@@ -287,6 +305,12 @@ async function copyText(value) {
 }
 
 function formatDebugState(debug) {
+  const warning = document.querySelector('#vistr-tavern-root [data-vt-debug-warning]');
+  if (warning) {
+    warning.textContent = debugWarning(debug);
+    warning.hidden = !warning.textContent;
+  }
+
   const rows = [
     ['Version', debug.version || 'unknown'],
     ['Storage', debug.storageMode || 'unknown'],
@@ -303,6 +327,22 @@ function formatDebugState(debug) {
   return rows
     .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
     .join('');
+}
+
+function debugWarning(debug) {
+  if (debug.pendingHandoff && !debug.lastInterceptorCallAt) {
+    return 'Pending handoff is waiting, but the prompt interceptor has not been called yet. Generate the next reply or use Copy Latest Handoff.';
+  }
+
+  if (debug.pendingHandoff && debug.lastInjectionResult?.startsWith('skipped')) {
+    return `Pending handoff still exists. Last injection result: ${debug.lastInjectionResult}. Use Copy Latest Handoff if automatic injection is unclear.`;
+  }
+
+  if (debug.lastInjectionResult === 'error') {
+    return 'Prompt injection failed. Copy the Debug Snapshot when reporting this issue.';
+  }
+
+  return '';
 }
 
 function formatHandoffSummary(handoff) {

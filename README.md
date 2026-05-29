@@ -31,7 +31,15 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.1.0-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+`v0.1.1-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+
+## Tested Environments
+
+Public compatibility is still being collected. If you test VistrTavern, please report results in the [alpha feedback thread](https://github.com/xiaoke5211-star/vistr-tavern/issues/1).
+
+| VistrTavern | SillyTavern | OS | Browser | Status |
+| --- | --- | --- | --- | --- |
+| `v0.1.1-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Core Principle
 

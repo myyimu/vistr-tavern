@@ -7,7 +7,7 @@ body:
     id: version
     attributes:
       label: VistrTavern version
-      placeholder: "Example: v0.1.0-alpha"
+      placeholder: "Example: v0.1.1-alpha"
     validations:
       required: true
   - type: input
@@ -44,4 +44,3 @@ body:
     attributes:
       label: Debug panel or console output
       description: Remove private roleplay content before posting.
-

@@ -152,6 +152,17 @@
   overflow-wrap: anywhere;
 }
 
+.vt-debug-warning {
+  margin: 10px 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(251, 202, 4, 0.35);
+  border-radius: 6px;
+  background: rgba(251, 202, 4, 0.1);
+  color: #f6d365;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .vt-copy-status {
   display: block;
   min-height: 18px;

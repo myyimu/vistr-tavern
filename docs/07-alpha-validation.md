@@ -10,7 +10,7 @@ Fill this table whenever you run a real manual validation pass.
 
 | Item | Value |
 | --- | --- |
-| VistrTavern version | `v0.1.0-alpha` |
+| VistrTavern version | `v0.1.1-alpha` |
 | SillyTavern version | TODO |
 | Browser | TODO |
 | OS | TODO |
@@ -93,7 +93,7 @@ Before sharing screenshots or exports:
 
 ## Alpha Feedback Issue
 
-Ask testers to use the `v0.1.0-alpha feedback` issue template and include:
+Ask testers to use the `alpha feedback` issue template and include:
 
 - SillyTavern version.
 - Install method.
@@ -102,4 +102,3 @@ Ask testers to use the `v0.1.0-alpha feedback` issue template and include:
 - Whether `Copy Latest Handoff` worked.
 - Which awareness mode and target were tested.
 - Console errors or screenshots, with private roleplay content removed.
-

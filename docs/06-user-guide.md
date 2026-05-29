@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to manually install and test VistrTavern `v0.1.0-alpha`.
+This guide describes how to manually install and test VistrTavern `v0.1.1-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -20,7 +20,7 @@ install extension
 - A chat with at least one character.
 - This repository placed inside the SillyTavern user extensions folder.
 
-The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.1.0-alpha`.
+The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.1.1-alpha`.
 
 ## Manual Installation
 
@@ -188,6 +188,8 @@ It shows:
 - `Interceptor`: last generation interceptor result.
 - `Last error`: latest runtime error recorded by VistrTavern.
 
+If a pending handoff exists but the prompt interceptor has not been called, the Debug panel shows a visible warning. Generate the next AI reply to trigger the interceptor, or use `Copy Latest Handoff` if automatic injection is unclear.
+
 Use this panel to verify whether the handoff flow is working:
 
 ```text
@@ -201,6 +203,8 @@ For browser console checks, the debug snapshot is also published on the extensio
 ```js
 JSON.parse(document.getElementById('vistr-tavern-root').dataset.vtDebugState)
 ```
+
+You can also click `Copy Debug Snapshot` and paste the copied JSON into an alpha feedback or bug report. Review it first and remove private roleplay content if needed.
 
 ## Manual Handoff Fallback
 
@@ -230,7 +234,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.1.0-alpha`, a successful test means:
+For `v0.1.1-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -270,7 +274,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.1.0-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.1.1-alpha` still needs real-environment verification.
 
 ## Privacy Note
 
