@@ -12,6 +12,16 @@ English | [中文](README.zh-CN.md)
 
 VistrTavern is not a general AI writing tool or a full chat platform. It focuses on what happens when a real person briefly takes control of one character inside an AI-driven cast, and how that abnormal behavior changes judgment, relationships, conflict, and world state.
 
+## Primary Use Cases
+
+VistrTavern is aimed at creator workflows where the interesting material comes from a controlled rupture in the story:
+
+- **Web novel and script drafting**: turn a human-tampered character line into conflict material, reversal points, relationship cracks, and follow-up scene hooks.
+- **AI murder mystery / script-kill games**: let a player briefly take over a role to contaminate clues, contradict testimony, or create identity drift that the AI cast must explain in-world.
+- **Virtual theater**: use the human as an outside director who interrupts an AI ensemble, then watch the cast repair continuity, misread the intrusion, or begin doubting reality.
+
+In short: it is less about making the AI write better on its own, and more about giving creators a tool for producing usable dramatic accidents.
+
 ## Positioning
 
 VistrTavern is an AI ensemble narrative disturbance system.
@@ -31,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.1.1-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+`v0.1.2-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
 
 ## Tested Environments
 
@@ -39,7 +49,15 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.1.1-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.1.2-alpha` | Awaiting public validation | TODO | TODO | TODO |
+
+## Example Outputs
+
+The best way to understand VistrTavern is to read the output shape:
+
+- [Web novel scene seed](examples/zh-CN/web-novel-scene.md)
+- [AI murder mystery clue contamination](examples/zh-CN/ai-murder-mystery.md)
+- [Virtual theater reality doubt](examples/zh-CN/virtual-theater.md)
 
 ## Core Principle
 
@@ -126,6 +144,7 @@ SillyTavern/
 - [Alpha Validation Guide](docs/07-alpha-validation.md)
 - [v0.1.1 Patch Plan](docs/08-v0.1.1-plan.md)
 - [Release Checklist](docs/release-checklist.md)
+- [Examples](examples/README.md)
 
 Chinese documentation:
 
@@ -140,6 +159,7 @@ Chinese documentation:
 - [发布检查清单](docs/zh-CN/08-发布检查清单.md)
 - [Alpha 验证指南](docs/zh-CN/09-alpha验证指南.md)
 - [v0.1.1 小版本计划](docs/zh-CN/10-v0.1.1计划.md)
+- [案例示例](examples/README.md)
 
 ## Changelog
 

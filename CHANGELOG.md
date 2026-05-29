@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.2-alpha
+
+Public positioning and creator-value update.
+
+### Added
+
+- README positioning for three primary scenarios: web novel/script drafting, AI murder mystery, and virtual theater.
+- Example output section on English and Chinese README files.
+- `examples/` directory with creator-facing narrative samples.
+- Chinese examples for web novel scene seeds, AI murder mystery clue contamination, and virtual theater reality doubt.
+
+### Changed
+
+- Extension version updated to `0.1.2-alpha`.
+- README wording now frames VistrTavern more clearly as a creator tool for producing usable dramatic accidents.
+
 ## v0.1.1-alpha
 
 Public alpha stabilization patch.

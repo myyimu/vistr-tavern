@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to manually install and test VistrTavern `v0.1.1-alpha`.
+This guide describes how to manually install and test VistrTavern `v0.1.2-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -20,7 +20,7 @@ install extension
 - A chat with at least one character.
 - This repository placed inside the SillyTavern user extensions folder.
 
-The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.1.1-alpha`.
+The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.1.2-alpha`.
 
 ## Manual Installation
 
@@ -234,7 +234,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.1.1-alpha`, a successful test means:
+For `v0.1.2-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -274,7 +274,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.1.1-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.1.2-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

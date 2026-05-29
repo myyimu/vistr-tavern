@@ -6,7 +6,7 @@ import { StorageAdapter } from './data/storageAdapter.js';
 import { Controller, MODULE_NAME, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
 import { UiOverlay } from './ui/uiOverlay.js';
 
-const EXTENSION_VERSION = '0.1.1-alpha';
+const EXTENSION_VERSION = '0.1.2-alpha';
 
 let storage;
 let narrativeMemory;

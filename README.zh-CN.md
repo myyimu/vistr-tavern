@@ -12,6 +12,16 @@
 
 VistrTavern 不是通用 AI 写作工具，也不是完整聊天平台。它关注的是：当一个真实的人短暂接管 AI 群像中的某个角色时，这种异常行为会如何改变其他角色的判断、关系、冲突和世界状态。
 
+## 主要使用场景
+
+VistrTavern 面向的是“可控地制造剧情裂缝”的创作工作流：
+
+- **网文剧本**：把真人篡改角色发言变成冲突素材、反转点、关系裂痕和后续剧情钩子。
+- **AI 剧本杀**：让玩家短暂接管某个角色，污染线索、制造证词矛盾或身份错位，再让 AI 群像在世界内解释这些异常。
+- **虚拟剧场**：把真人当成外来导演，打断 AI 群像的正常表演，再观察角色如何修复连续性、误读异常，甚至怀疑现实。
+
+简单说，它不是让 AI 自己写得更好，而是给创作者一个制造“可用戏剧事故”的工具。
+
 ## 项目定位
 
 VistrTavern 是一个 AI 群像叙事扰动系统。
@@ -31,7 +41,7 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.1.1-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
+`v0.1.2-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
 
 ## 已测试环境
 
@@ -39,7 +49,15 @@ AI 群像正常运行
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
-| `v0.1.1-alpha` | 等待公开验证 | TODO | TODO | TODO |
+| `v0.1.2-alpha` | 等待公开验证 | TODO | TODO | TODO |
+
+## 产出示例
+
+理解 VistrTavern 最直接的方式是看它能整理出什么样的创作素材：
+
+- [网文剧情种子](examples/zh-CN/web-novel-scene.md)
+- [AI 剧本杀线索污染](examples/zh-CN/ai-murder-mystery.md)
+- [虚拟剧场现实怀疑](examples/zh-CN/virtual-theater.md)
 
 ## 核心原则
 
@@ -127,6 +145,7 @@ SillyTavern/
 - [发布检查清单](docs/zh-CN/08-发布检查清单.md)
 - [Alpha 验证指南](docs/zh-CN/09-alpha验证指南.md)
 - [v0.1.1 小版本计划](docs/zh-CN/10-v0.1.1计划.md)
+- [案例示例](examples/README.md)
 
 英文文档：
 
@@ -140,6 +159,7 @@ SillyTavern/
 - [Alpha Validation Guide](docs/07-alpha-validation.md)
 - [v0.1.1 Patch Plan](docs/08-v0.1.1-plan.md)
 - [Release Checklist](docs/release-checklist.md)
+- [Examples](examples/README.md)
 
 ## 更新日志
 
