@@ -115,6 +115,75 @@ export class ExportWriter {
       '',
     ].join('\n');
   }
+
+  toCharacterSheetPrompt(memory) {
+    const humanMessages = memory.messages.filter((message) => message.controller === Controller.HUMAN);
+    const aiReactions = memory.messages.filter((message) => message.controller === Controller.AI && message.intrusionId);
+    const handoffs = memory.handoffs || [];
+    const branchPoints = memory.branchPoints || [];
+    const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
+    const characters = memory.characters || [];
+
+    return [
+      `# Character Sheet Extraction Prompt - ${memory.session.title}`,
+      '',
+      '你是一个角色设定整理助手。请根据下面的 VistrTavern 叙事记录，提取角色设定变化和可继续使用的人设素材。',
+      '',
+      '请输出以下结构：',
+      '',
+      '1. 角色基础印象',
+      '2. 真人异常介入前的稳定人设',
+      '3. 真人异常发言造成的行为偏移',
+      '4. AI 恢复后对异常的世界内解释',
+      '5. 新增人设标签',
+      '6. 关系变化与潜在冲突',
+      '7. 可继续写作的角色钩子',
+      '8. 需要避免的解释方式',
+      '',
+      '要求：',
+      '',
+      '- 不要把异常解释为“用户操作”或“插件行为”。',
+      '- 优先使用世界内解释，例如失言、记忆断片、隐藏身份、被误读、证词污染或现实规则松动。',
+      '- 区分角色原本性格和真人介入后产生的新素材。',
+      '- 输出适合写入角色卡、剧本人物小传或连载设定表的内容。',
+      '',
+      '## 角色列表',
+      characters.length ? characters.map((character) => `- ${character.name} (${character.id})`).join('\n') : '- 未记录角色',
+      '',
+      '## 真人异常发言',
+      humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
+      '',
+      '## AI 反应',
+      aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无 AI 反应',
+      '',
+      '## AI 恢复 Handoff',
+      handoffs.length ? handoffs.map((handoff) => `- ${handoff.characterName || handoff.characterId}: ${handoff.summary}`).join('\n') : '- 暂无 handoff',
+      '',
+      '## 异常察觉事件',
+      awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- 暂无异常察觉事件',
+      '',
+      '## 剧情分支',
+      branchPoints.length ? branchPoints.map(formatBranchPoint).join('\n\n') : '- 暂无剧情分支',
+      '',
+      '## 输出格式模板',
+      '',
+      '```markdown',
+      '# 角色设定提取',
+      '',
+      '## 角色：<角色名>',
+      '',
+      '- 基础印象：',
+      '- 稳定人设：',
+      '- 异常偏移：',
+      '- 世界内解释：',
+      '- 新增标签：',
+      '- 关系变化：',
+      '- 后续钩子：',
+      '- 避免解释：',
+      '```',
+      '',
+    ].join('\n');
+  }
 }
 
 function formatMessage(message) {

@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.3.0-alpha
+
+Installation and onboarding release.
+
+### Added
+
+- Character Sheet Prompt export for external model-based role profile extraction.
+- First-run guide inside the VT panel.
+- Compatibility snapshot in Debug.
+- Release zip packaging script via `npm run package:zip`.
+
+### Changed
+
+- Extension version updated to `0.3.0-alpha`.
+
+## v0.2.1-alpha
+
+Character extraction prompt milestone.
+
+### Added
+
+- Character Sheet Prompt export content for extracting stable persona, anomaly drift, in-world explanations, tags, conflicts, and future hooks.
+
 ## v0.2.0-alpha
 
 Creator tooling and engineering cleanup release.

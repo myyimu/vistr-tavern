@@ -1,13 +1,13 @@
 # Release Checklist
 
-Use this checklist before publishing `v0.2.0-alpha`.
+Use this checklist before publishing `v0.3.0-alpha`.
 
 ## Repository
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
 - [ ] `manifest.json` `homePage` points to `https://github.com/xiaoke5211-star/vistr-tavern`.
-- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.2.0-alpha`.
+- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.3.0-alpha`.
 - [ ] `README.md`, `README.zh-CN.md`, and user guides mention manual install.
 
 ## Local Verification
@@ -17,7 +17,9 @@ Use this checklist before publishing `v0.2.0-alpha`.
 - [ ] Confirm Markdown export includes the `AI 异常察觉` section when awareness is enabled.
 - [ ] Confirm Markdown export includes branch points when marked.
 - [ ] Confirm Creator Pack export includes anomaly lines, AI reactions, conflict hooks, branch routes, and handoff context.
+- [ ] Confirm Character Prompt export includes persona extraction instructions and recorded material.
 - [ ] Confirm JSON export includes `intrusions`, `messages`, `handoffs`, and `branchPoints`.
+- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.3.0-alpha.zip` is created.
 
 ## SillyTavern Manual Install
 
@@ -27,6 +29,8 @@ Use this checklist before publishing `v0.2.0-alpha`.
 - [ ] Floating `VT` button appears in a chat.
 - [ ] Character selector is populated.
 - [ ] `Debug` panel shows version and storage mode.
+- [ ] `Debug` panel shows compatibility status.
+- [ ] First-run guide appears on a fresh browser profile or after clearing `vistr-tavern:first-run-dismissed`.
 
 ## Core Flow
 
@@ -49,11 +53,12 @@ Use this checklist before publishing `v0.2.0-alpha`.
 - [ ] Markdown export downloads successfully.
 - [ ] JSON export downloads successfully.
 - [ ] Creator Pack export downloads successfully.
+- [ ] Character Prompt export downloads successfully.
 - [ ] Exports do not include unexpected private data beyond local session story content.
 
 ## GitHub Release
 
 - [ ] Commit all release changes.
-- [ ] Tag `v0.2.0-alpha`.
+- [ ] Tag `v0.3.0-alpha`.
 - [ ] Push branch and tag.
 - [ ] Create GitHub Release with alpha status and known limitations.

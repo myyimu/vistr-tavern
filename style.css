@@ -82,6 +82,27 @@
   margin: 10px 0;
 }
 
+.vt-first-run {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 14px;
+  padding: 10px;
+  border: 1px solid rgba(92, 187, 255, 0.32);
+  border-radius: 6px;
+  background: rgba(92, 187, 255, 0.08);
+  color: #d9ecff;
+  font-size: 12px;
+}
+
+.vt-first-run ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.vt-first-run code {
+  color: #ffffff;
+}
+
 .vt-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -41,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.2.0-alpha` means the extension can be installed manually for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+`v0.3.0-alpha` means the extension can be installed manually or from a release zip for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
 
 ## Tested Environments
 
@@ -49,7 +49,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.2.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.3.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 
@@ -87,7 +87,11 @@ VistrTavern records:
 - Manual `Copy Latest Handoff` fallback.
 - Markdown and JSON export.
 - Creator Pack export for reusable writing material, conflict hooks, branch routes, and handoff context.
+- Character Sheet Prompt export for整理 role definitions with an external model.
 - Branch Point marking for relationship, conspiracy, identity, world-fracture, clue-contamination, and emotional rupture routes.
+- First-run guide inside the VT panel.
+- Compatibility snapshot in Debug.
+- Release zip packaging via `npm run package:zip`.
 - Core module smoke test.
 
 ## Current Limitations
@@ -117,6 +121,19 @@ Manual install:
 3. Place it under your SillyTavern user extensions directory.
 4. Restart SillyTavern or reload the web UI.
 5. Open a chat and look for the floating `VT` button.
+
+Release zip install:
+
+1. Download `vistr-tavern-<version>.zip` from a GitHub Release.
+2. Extract it under your SillyTavern user extensions directory.
+3. Confirm the extracted folder is named `vistr-tavern`.
+4. Restart SillyTavern or reload the web UI.
+
+Build a local zip package:
+
+```bash
+npm run package:zip
+```
 
 Expected structure:
 

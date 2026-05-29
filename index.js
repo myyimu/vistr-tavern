@@ -23,6 +23,7 @@ const runtimeDebug = {
   lastConsumedHandoffId: null,
   lastConsumedAt: null,
   lastError: null,
+  compatibility: null,
 };
 
 function getContext() {
@@ -89,6 +90,7 @@ function initialize() {
   syncCharacters();
   bindIntrusionEvents();
   bindSillyTavernEvents();
+  runtimeDebug.compatibility = inspectCompatibility();
   ensureDefaultScene();
 
   overlay = new UiOverlay({
@@ -101,6 +103,7 @@ function initialize() {
     onCopyLatestHandoff: copyLatestHandoff,
     onExportMarkdown: () => exportWriter.toMarkdown(narrativeMemory.memory),
     onExportCreatorPack: () => exportWriter.toCreatorPack(narrativeMemory.memory),
+    onExportCharacterSheetPrompt: () => exportWriter.toCharacterSheetPrompt(narrativeMemory.memory),
     onExportJson: () => exportWriter.toJson(narrativeMemory.memory),
     getState,
     getDebugState,
@@ -407,6 +410,7 @@ function getDebugState() {
 
   return {
     version: EXTENSION_VERSION,
+    compatibility: runtimeDebug.compatibility,
     storageMode: storage?.getStorageMode?.() || 'unknown',
     activeIntrusions: intrusionEngine?.getActiveIntrusions?.() || [],
     pendingHandoff: summarizeHandoff(narrativeMemory?.getPendingHandoff?.() || null),
@@ -421,6 +425,23 @@ function getDebugState() {
     lastConsumedHandoffId: runtimeDebug.lastConsumedHandoffId,
     lastConsumedAt: runtimeDebug.lastConsumedAt,
     lastError: runtimeDebug.lastError,
+  };
+}
+
+function inspectCompatibility() {
+  const context = getContext();
+  const eventTypes = context?.event_types || {};
+
+  return {
+    hasSillyTavernContext: Boolean(context),
+    hasCharactersArray: Array.isArray(context?.characters),
+    hasChatArray: Array.isArray(context?.chat),
+    hasEventSource: Boolean(context?.eventSource),
+    hasMessageReceivedEvent: Boolean(eventTypes.MESSAGE_RECEIVED),
+    hasChatChangedEvent: Boolean(eventTypes.CHAT_CHANGED),
+    hasCharacterEditedEvent: Boolean(eventTypes.CHARACTER_EDITED),
+    hasPromptInterceptor: typeof globalThis.VistrTavernPromptInterceptor === 'function',
+    checkedAt: new Date().toISOString(),
   };
 }
 

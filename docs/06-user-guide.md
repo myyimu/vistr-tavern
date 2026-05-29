@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to manually install and test VistrTavern `v0.2.0-alpha`.
+This guide describes how to manually install and test VistrTavern `v0.3.0-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -20,7 +20,7 @@ install extension
 - A chat with at least one character.
 - This repository placed inside the SillyTavern user extensions folder.
 
-The extension currently targets manual local installation. Marketplace-style installation and automatic updates are not the focus of `v0.2.0-alpha`.
+The extension currently targets manual local installation or release zip installation. Marketplace-style installation and automatic updates are not the focus of `v0.3.0-alpha`.
 
 ## Manual Installation
 
@@ -180,6 +180,7 @@ It shows:
 
 - `Version`: extension version.
 - `Storage`: current persistence mode, usually `chatMetadata` or `localStorage`.
+- `Compatibility`: quick compatibility snapshot for SillyTavern context, character data, chat data, events, and prompt interceptor.
 - `Active intrusion`: currently human-controlled character names.
 - `Pending handoff`: latest unconsumed handoff.
 - `Last injected`: latest handoff inserted through the generation interceptor.
@@ -231,6 +232,7 @@ Click:
 
 - `Export Markdown` for creator-facing story material.
 - `Export Creator Pack` for a condensed writing pack with anomaly lines, AI reactions, conflict hooks, branch routes, awareness events, and handoff context.
+- `Export Character Prompt` for a copyable prompt that asks an external model to extract character sheets and persona changes.
 - `Export JSON` for raw structured memory.
 
 Markdown export includes:
@@ -249,7 +251,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.2.0-alpha`, a successful test means:
+For `v0.3.0-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -259,6 +261,7 @@ For `v0.2.0-alpha`, a successful test means:
 - pending handoff count changes
 - the next AI reply follows the changed story state
 - Markdown and JSON export contain the recorded material
+- Creator Pack and Character Prompt exports download successfully
 
 ## Troubleshooting
 
@@ -289,7 +292,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.2.0-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.3.0-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

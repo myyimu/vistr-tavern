@@ -89,6 +89,12 @@ assert.match(creatorPack, /冲突升级点/);
 assert.match(creatorPack, /剧情分支/);
 assert.match(creatorPack, /Forbidden bloodline reveal/);
 
+const characterPrompt = writer.toCharacterSheetPrompt(memory.memory);
+assert.match(characterPrompt, /Character Sheet Extraction Prompt/);
+assert.match(characterPrompt, /角色设定提取/);
+assert.match(characterPrompt, /真人异常发言/);
+assert.match(characterPrompt, /Forbidden bloodline reveal/);
+
 const subtleMemory = new NarrativeMemory(createEmptyMemory(new Date(now)));
 const subtleSceneManager = new SceneManager(subtleMemory.memory);
 const subtleEngine = new IntrusionEngine({ now: () => now });

@@ -1,11 +1,12 @@
 {
   "name": "vistr-tavern",
-  "version": "0.2.0-alpha",
+  "version": "0.3.0-alpha",
   "description": "AI ensemble narrative disturbance extension for SillyTavern.",
   "type": "module",
   "private": true,
   "scripts": {
-    "check": "node --check index.js && node --check core/narrativeMemory.js && node --check core/exportWriter.js && node --check ui/uiOverlay.js && node --check data/version.js && node --check scripts/smoke-test.mjs && node --check scripts/verify-version.mjs",
+    "check": "node --check index.js && node --check core/narrativeMemory.js && node --check core/exportWriter.js && node --check ui/uiOverlay.js && node --check data/version.js && node --check scripts/smoke-test.mjs && node --check scripts/verify-version.mjs && node --check scripts/create-package.mjs",
+    "package:zip": "node scripts/create-package.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "verify:version": "node scripts/verify-version.mjs",
     "verify": "npm run check && npm run smoke && npm run verify:version"

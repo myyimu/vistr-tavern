@@ -1,7 +1,7 @@
 import { AwarenessScope, BranchType, ControlMode, HandoffAwareness, Visibility } from '../data/schema.js';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportJson, getState, getDebugState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
@@ -11,6 +11,7 @@ export class UiOverlay {
     this.onCopyLatestHandoff = onCopyLatestHandoff;
     this.onExportMarkdown = onExportMarkdown;
     this.onExportCreatorPack = onExportCreatorPack;
+    this.onExportCharacterSheetPrompt = onExportCharacterSheetPrompt;
     this.onExportJson = onExportJson;
     this.getState = getState;
     this.getDebugState = getDebugState;
@@ -43,6 +44,7 @@ export class UiOverlay {
     const activeList = this.root.querySelector('[data-vt-active-list]');
     const status = this.root.querySelector('[data-vt-status]');
     const debugPanel = this.root.querySelector('[data-vt-debug]');
+    const guide = this.root.querySelector('[data-vt-first-run]');
 
     const selectedValue = characterSelect.value;
     characterSelect.innerHTML = '';
@@ -63,6 +65,7 @@ export class UiOverlay {
       : '<li>No active intrusion</li>';
 
     status.textContent = `${state.viewMode} · ${state.messageCount} messages · ${state.intrusionCount} intrusions · ${state.pendingHandoffCount || 0} pending handoffs`;
+    guide.hidden = Boolean(globalThis.localStorage?.getItem('vistr-tavern:first-run-dismissed'));
 
     debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {});
   }
@@ -74,6 +77,11 @@ export class UiOverlay {
     });
 
     this.root.querySelector('[data-vt-refresh]').addEventListener('click', () => this.refresh());
+
+    this.root.querySelector('[data-vt-dismiss-guide]').addEventListener('click', () => {
+      globalThis.localStorage?.setItem('vistr-tavern:first-run-dismissed', 'true');
+      this.root.querySelector('[data-vt-first-run]').hidden = true;
+    });
 
     this.root.querySelector('[data-vt-start]').addEventListener('click', async () => {
       const character = this.#selectedCharacter();
@@ -135,6 +143,10 @@ export class UiOverlay {
 
     this.root.querySelector('[data-vt-export-creator-pack]').addEventListener('click', () => {
       this.#download('vistr-tavern-creator-pack.md', this.onExportCreatorPack(), 'text/markdown');
+    });
+
+    this.root.querySelector('[data-vt-export-character-prompt]').addEventListener('click', () => {
+      this.#download('vistr-tavern-character-sheet-prompt.md', this.onExportCharacterSheetPrompt(), 'text/markdown');
     });
 
     this.root.querySelector('[data-vt-export-json]').addEventListener('click', () => {
@@ -228,6 +240,18 @@ export class UiOverlay {
           </div>
           <button type="button" data-vt-refresh>Refresh</button>
         </header>
+
+        <section class="vt-first-run" data-vt-first-run>
+          <strong>First Run Guide</strong>
+          <ol>
+            <li>Confirm this folder is named <code>vistr-tavern</code>.</li>
+            <li>Select a character and start an intrusion.</li>
+            <li>Record a human anomaly line.</li>
+            <li>End intrusion, then generate the next AI reply.</li>
+            <li>Use Debug or Copy Latest Handoff if automatic injection is unclear.</li>
+          </ol>
+          <button type="button" data-vt-dismiss-guide>Dismiss Guide</button>
+        </section>
 
         <div class="vt-field">
           <label>Character</label>
@@ -349,6 +373,7 @@ export class UiOverlay {
         <div class="vt-actions">
           <button type="button" data-vt-export-md>Export Markdown</button>
           <button type="button" data-vt-export-creator-pack>Export Creator Pack</button>
+          <button type="button" data-vt-export-character-prompt>Export Character Prompt</button>
           <button type="button" data-vt-export-json>Export JSON</button>
         </div>
       </section>
@@ -382,6 +407,7 @@ function formatDebugState(debug) {
 
   const rows = [
     ['Version', debug.version || 'unknown'],
+    ['Compatibility', formatCompatibility(debug.compatibility)],
     ['Storage', debug.storageMode || 'unknown'],
     ['Active intrusion', debug.activeIntrusions?.length ? debug.activeIntrusions.map((item) => item.characterName || item.characterId).join(', ') : 'none'],
     ['Pending handoff', formatHandoffSummary(debug.pendingHandoff)],
@@ -396,6 +422,23 @@ function formatDebugState(debug) {
   return rows
     .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
     .join('');
+}
+
+function formatCompatibility(compatibility) {
+  if (!compatibility) {
+    return 'unknown';
+  }
+
+  const missing = [
+    ['context', compatibility.hasSillyTavernContext],
+    ['characters', compatibility.hasCharactersArray],
+    ['chat', compatibility.hasChatArray],
+    ['events', compatibility.hasEventSource],
+    ['message event', compatibility.hasMessageReceivedEvent],
+    ['prompt interceptor', compatibility.hasPromptInterceptor],
+  ].filter(([, ok]) => !ok).map(([label]) => label);
+
+  return missing.length ? `check: ${missing.join(', ')}` : 'ok';
 }
 
 function debugWarning(debug) {

@@ -41,7 +41,7 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.2.0-alpha` 表示这个扩展可以用于本地手动安装和测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
+`v0.3.0-alpha` 表示这个扩展可以通过手动文件夹或 release zip 本地安装测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
 
 ## 已测试环境
 
@@ -49,7 +49,7 @@ AI 群像正常运行
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
-| `v0.2.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
+| `v0.3.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
 
 ## 产出示例
 
@@ -87,7 +87,11 @@ VistrTavern 重点记录：
 - 手动 `Copy Latest Handoff` fallback。
 - Markdown 和 JSON 导出。
 - Creator Pack 导出，用于整理可复用写作素材、冲突钩子、分支路线和 handoff 上下文。
+- Character Sheet Prompt 导出，用于把记录交给外部模型整理人设。
 - 剧情分支标记，支持关系线、阴谋线、身份揭露、世界观裂缝、线索污染和情绪破裂等路线。
+- VT 面板内置首次使用引导。
+- Debug 中显示兼容性快照。
+- 通过 `npm run package:zip` 生成 release zip 安装包。
 - 核心模块 smoke test。
 
 ## 当前限制
@@ -117,6 +121,19 @@ npm run verify
 3. 把目录放到 SillyTavern 的用户扩展目录下。
 4. 重启 SillyTavern 或刷新网页界面。
 5. 打开一个聊天，确认页面上出现浮动的 `VT` 按钮。
+
+Release zip 安装：
+
+1. 从 GitHub Release 下载 `vistr-tavern-<version>.zip`。
+2. 解压到 SillyTavern 用户扩展目录。
+3. 确认解压后的目录名是 `vistr-tavern`。
+4. 重启 SillyTavern 或刷新网页界面。
+
+本地生成 zip 包：
+
+```bash
+npm run package:zip
+```
 
 预期结构：
 

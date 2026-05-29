@@ -15,6 +15,7 @@ It runs:
 - `npm run check`: syntax checks for the browser entry, core modules, and scripts.
 - `npm run smoke`: behavioral smoke test for narrative memory, handoff, awareness events, and export.
 - `npm run verify:version`: version consistency check.
+- `npm run package:zip`: creates a release zip in `dist/`.
 
 ## Version Source
 
@@ -33,8 +34,9 @@ Before creating a release:
 1. Update the version in `package.json`, `manifest.json`, and `data/version.js`.
 2. Update `CHANGELOG.md`.
 3. Run `npm run verify`.
-4. Confirm README and release checklist point to the current alpha version.
-5. Tag and create a GitHub pre-release.
+4. Run `npm run package:zip` and attach the zip to the GitHub release if desired.
+5. Confirm README and release checklist point to the current alpha version.
+6. Tag and create a GitHub pre-release.
 
 ## Scope Control
 
