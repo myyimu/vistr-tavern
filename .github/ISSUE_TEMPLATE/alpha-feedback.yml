@@ -1,0 +1,63 @@
+name: v0.1.0-alpha feedback
+description: Report manual testing results for the alpha build.
+title: "[alpha feedback] "
+labels: ["alpha-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing VistrTavern. Please include enough environment detail for compatibility fixes.
+  - type: input
+    id: sillytavern-version
+    attributes:
+      label: SillyTavern version
+      description: Include commit, release version, or date if known.
+      placeholder: "Example: 1.12.x / staging commit ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Install method
+      options:
+        - Manual clone/download into data/default-user/extensions/vistr-tavern
+        - Git extension install
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: core-flow
+    attributes:
+      label: Core flow result
+      options:
+        - label: VT button appeared in chat.
+        - label: Character selector populated.
+        - label: Intrusion could be started.
+        - label: Human anomaly line could be recorded.
+        - label: Continuity handoff was created after recovery.
+        - label: Handoff was injected automatically.
+        - label: Copy Latest Handoff fallback worked.
+        - label: Markdown or JSON export worked.
+  - type: dropdown
+    id: awareness-mode
+    attributes:
+      label: Awareness mode tested
+      options:
+        - AI no awareness
+        - Memory fracture
+        - Reality doubt
+        - Multiple modes
+        - Not tested
+  - type: textarea
+    id: result
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior, including whether the AI reaction felt useful in roleplay.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console logs or screenshots
+      description: Paste errors or attach screenshots if available. Remove private roleplay content first.
+

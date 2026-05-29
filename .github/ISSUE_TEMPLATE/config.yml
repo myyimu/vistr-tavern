@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: v0.1.0-alpha release notes
+    url: https://github.com/xiaoke5211-star/vistr-tavern/releases/tag/v0.1.0-alpha
+    about: Read the current alpha release notes and known limitations.

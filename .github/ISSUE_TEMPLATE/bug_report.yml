@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible problem.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: VistrTavern version
+      placeholder: "Example: v0.1.0-alpha"
+    validations:
+      required: true
+  - type: input
+    id: sillytavern-version
+    attributes:
+      label: SillyTavern version
+      placeholder: "Example: 1.12.x / staging commit ..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Install extension...
+        2. Open chat...
+        3. Click...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug panel or console output
+      description: Remove private roleplay content before posting.
+

@@ -115,6 +115,8 @@ SillyTavern/
 - [Data Model](docs/04-data-model.md)
 - [Technical Concepts and Narrative Principles](docs/05-concepts.md)
 - [User Guide](docs/06-user-guide.md)
+- [Alpha Validation Guide](docs/07-alpha-validation.md)
+- [v0.1.1 Patch Plan](docs/08-v0.1.1-plan.md)
 - [Release Checklist](docs/release-checklist.md)
 
 Chinese documentation:
@@ -128,6 +130,8 @@ Chinese documentation:
 - [AI perspective narrative sample](docs/zh-CN/06-AI视角叙事样例.md) (Chinese)
 - [使用手册](docs/zh-CN/07-使用手册.md)
 - [发布检查清单](docs/zh-CN/08-发布检查清单.md)
+- [Alpha 验证指南](docs/zh-CN/09-alpha验证指南.md)
+- [v0.1.1 小版本计划](docs/zh-CN/10-v0.1.1计划.md)
 
 ## Changelog
 
