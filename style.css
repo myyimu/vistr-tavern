@@ -76,6 +76,24 @@
   width: 88px;
 }
 
+.vt-header-actions {
+  display: grid;
+  min-width: 122px;
+  gap: 6px;
+}
+
+.vt-header-actions label {
+  display: grid;
+  gap: 4px;
+  color: #a9afbc;
+  font-size: 12px;
+}
+
+.vt-header-actions select,
+.vt-header-actions button {
+  width: 100%;
+}
+
 .vt-field {
   display: grid;
   gap: 6px;

@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to manually install and test VistrTavern `v0.3.0-alpha`.
+This guide describes how to manually install and test VistrTavern `v0.3.1-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -20,7 +20,7 @@ install extension
 - A chat with at least one character.
 - This repository placed inside the SillyTavern user extensions folder.
 
-The extension currently targets manual local installation or release zip installation. Marketplace-style installation and automatic updates are not the focus of `v0.3.0-alpha`.
+The extension currently targets manual local installation or release zip installation. Marketplace-style installation and automatic updates are not the focus of `v0.3.1-alpha`.
 
 ## Manual Installation
 
@@ -66,6 +66,8 @@ The panel shows:
 - scene fields
 - human anomaly input
 - export buttons
+
+Use the `Language` selector in the panel header to switch between English and Chinese. The choice is saved locally in the browser through `localStorage`, so it should persist after reloads on the same browser profile.
 
 ### 2. Select a Character
 
@@ -251,7 +253,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.3.0-alpha`, a successful test means:
+For `v0.3.1-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -262,6 +264,7 @@ For `v0.3.0-alpha`, a successful test means:
 - the next AI reply follows the changed story state
 - Markdown and JSON export contain the recorded material
 - Creator Pack and Character Prompt exports download successfully
+- the panel can switch between English and Chinese
 
 ## Troubleshooting
 
@@ -292,7 +295,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.3.0-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.3.1-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

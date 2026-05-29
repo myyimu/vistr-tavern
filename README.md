@@ -41,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.3.0-alpha` means the extension can be installed manually or from a release zip for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+`v0.3.1-alpha` means the extension can be installed manually or from a release zip for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
 
 ## Tested Environments
 
@@ -49,7 +49,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.3.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.3.1-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 
@@ -74,6 +74,7 @@ VistrTavern records:
 
 - SillyTavern extension manifest.
 - Floating VistrTavern control panel.
+- UI language switch for Chinese and English.
 - Character selection.
 - Temporary human intrusion state.
 - Timeout-based AI recovery.
@@ -87,7 +88,7 @@ VistrTavern records:
 - Manual `Copy Latest Handoff` fallback.
 - Markdown and JSON export.
 - Creator Pack export for reusable writing material, conflict hooks, branch routes, and handoff context.
-- Character Sheet Prompt export for整理 role definitions with an external model.
+- Character Sheet Prompt export for organizing role definitions with an external model.
 - Branch Point marking for relationship, conspiracy, identity, world-fracture, clue-contamination, and emotional rupture routes.
 - First-run guide inside the VT panel.
 - Compatibility snapshot in Debug.

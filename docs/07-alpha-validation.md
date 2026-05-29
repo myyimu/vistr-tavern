@@ -10,7 +10,7 @@ Fill this table whenever you run a real manual validation pass.
 
 | Item | Value |
 | --- | --- |
-| VistrTavern version | `v0.3.0-alpha` |
+| VistrTavern version | `v0.3.1-alpha` |
 | SillyTavern version | TODO |
 | Browser | TODO |
 | OS | TODO |
@@ -37,15 +37,16 @@ Verify the minimum public-alpha loop:
 
 1. Open the `VT` panel.
 2. Confirm the character selector is populated.
-3. Keep awareness mode as `AI 无感`.
-4. Start an intrusion on one character.
-5. Record one human anomaly line.
-6. Let the AI reply while intrusion is active.
-7. End the intrusion.
-8. Confirm a pending continuity handoff appears in Debug.
-9. Trigger the next generation.
-10. Confirm Debug reports an interceptor call and the handoff becomes consumed.
-11. Export Markdown and JSON.
+3. Switch `Language` between Chinese and English, then continue in either language.
+4. Keep awareness mode as `AI 无感`.
+5. Start an intrusion on one character.
+6. Record one human anomaly line.
+7. Let the AI reply while intrusion is active.
+8. End the intrusion.
+9. Confirm a pending continuity handoff appears in Debug.
+10. Trigger the next generation.
+11. Confirm Debug reports an interceptor call and the handoff becomes consumed.
+12. Export Markdown and JSON.
 
 Screenshot placeholders:
 

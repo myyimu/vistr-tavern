@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.3.1-alpha
+
+Small usability patch.
+
+### Added
+
+- Chinese / English language switch inside the VT panel.
+- Local language preference persistence through browser `localStorage`.
+
+### Changed
+
+- Extension version updated to `0.3.1-alpha`.
+
 ## v0.3.0-alpha
 
 Installation and onboarding release.

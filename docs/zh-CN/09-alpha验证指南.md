@@ -10,7 +10,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| VistrTavern 版本 | `v0.3.0-alpha` |
+| VistrTavern 版本 | `v0.3.1-alpha` |
 | SillyTavern 版本 | TODO |
 | 浏览器 | TODO |
 | 系统 | TODO |
@@ -37,15 +37,16 @@ docs/assets/screenshots/vt-button.png
 
 1. 打开 `VT` 面板。
 2. 确认角色选择器能加载角色。
-3. Awareness mode 保持 `AI 无感`。
-4. 对一个角色开始 intrusion。
-5. 记录一条真人异常发言。
-6. intrusion 激活期间让 AI 回复。
-7. 结束 intrusion。
-8. 确认 Debug 中出现 pending continuity handoff。
-9. 触发下一次生成。
-10. 确认 Debug 显示 interceptor 被调用，并且 handoff 变为 consumed。
-11. 导出 Markdown 和 JSON。
+3. 将 `语言` 在中文和英文之间切换一次，然后任选一种语言继续测试。
+4. Awareness mode 保持 `AI 无感`。
+5. 对一个角色开始 intrusion。
+6. 记录一条真人异常发言。
+7. intrusion 激活期间让 AI 回复。
+8. 结束 intrusion。
+9. 确认 Debug 中出现 pending continuity handoff。
+10. 触发下一次生成。
+11. 确认 Debug 显示 interceptor 被调用，并且 handoff 变为 consumed。
+12. 导出 Markdown 和 JSON。
 
 截图占位：
 

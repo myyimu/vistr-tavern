@@ -1,5 +1,9 @@
 import { AwarenessScope, BranchType, ControlMode, HandoffAwareness, Visibility } from '../data/schema.js';
 
+const LANGUAGE_STORAGE_KEY = 'vistr-tavern:language';
+const FIRST_RUN_STORAGE_KEY = 'vistr-tavern:first-run-dismissed';
+const DEFAULT_LANGUAGE = 'zh-CN';
+
 export class UiOverlay {
   constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
@@ -15,6 +19,7 @@ export class UiOverlay {
     this.onExportJson = onExportJson;
     this.getState = getState;
     this.getDebugState = getDebugState;
+    this.language = getStoredLanguage();
     this.root = null;
     this.panel = null;
   }
@@ -26,12 +31,9 @@ export class UiOverlay {
 
     this.root = document.createElement('div');
     this.root.id = 'vistr-tavern-root';
-    this.root.innerHTML = this.#template();
     document.body.append(this.root);
 
-    this.panel = this.root.querySelector('[data-vt-panel]');
-    this.#bind();
-    this.refresh();
+    this.#render(true);
   }
 
   refresh() {
@@ -61,13 +63,26 @@ export class UiOverlay {
     }
 
     activeList.innerHTML = state.activeIntrusions.length
-      ? state.activeIntrusions.map((intrusion) => `<li>${escapeHtml(intrusion.characterName || intrusion.characterId)} · ${escapeHtml(intrusion.visibility)} · until ${new Date(intrusion.endsAt).toLocaleTimeString()}</li>`).join('')
-      : '<li>No active intrusion</li>';
+      ? state.activeIntrusions.map((intrusion) => `<li>${escapeHtml(intrusion.characterName || intrusion.characterId)} · ${escapeHtml(intrusion.visibility)} · ${this.#t('until')} ${new Date(intrusion.endsAt).toLocaleTimeString()}</li>`).join('')
+      : `<li>${escapeHtml(this.#t('noActiveIntrusion'))}</li>`;
 
-    status.textContent = `${state.viewMode} · ${state.messageCount} messages · ${state.intrusionCount} intrusions · ${state.pendingHandoffCount || 0} pending handoffs`;
-    guide.hidden = Boolean(globalThis.localStorage?.getItem('vistr-tavern:first-run-dismissed'));
+    status.textContent = this.#t('statusLine', {
+      mode: state.viewMode,
+      messages: state.messageCount,
+      intrusions: state.intrusionCount,
+      handoffs: state.pendingHandoffCount || 0,
+    });
+    guide.hidden = Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
 
-    debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {});
+    debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {}, this.language);
+  }
+
+  #render(panelHidden = this.panel?.hidden ?? true) {
+    this.root.innerHTML = this.#template();
+    this.panel = this.root.querySelector('[data-vt-panel]');
+    this.panel.hidden = panelHidden;
+    this.#bind();
+    this.refresh();
   }
 
   #bind() {
@@ -78,8 +93,14 @@ export class UiOverlay {
 
     this.root.querySelector('[data-vt-refresh]').addEventListener('click', () => this.refresh());
 
+    this.root.querySelector('[data-vt-language]').addEventListener('change', (event) => {
+      this.language = normalizeLanguage(event.target.value);
+      writeLocalStorage(LANGUAGE_STORAGE_KEY, this.language);
+      this.#render(false);
+    });
+
     this.root.querySelector('[data-vt-dismiss-guide]').addEventListener('click', () => {
-      globalThis.localStorage?.setItem('vistr-tavern:first-run-dismissed', 'true');
+      writeLocalStorage(FIRST_RUN_STORAGE_KEY, 'true');
       this.root.querySelector('[data-vt-first-run]').hidden = true;
     });
 
@@ -157,15 +178,15 @@ export class UiOverlay {
       const status = this.root.querySelector('[data-vt-copy-status]');
       const content = this.onCopyLatestHandoff?.() || '';
       if (!content) {
-        status.textContent = 'No handoff available';
+        status.textContent = this.#t('noHandoffAvailable');
         return;
       }
 
       try {
         await copyText(content);
-        status.textContent = 'Latest handoff copied';
+        status.textContent = this.#t('latestHandoffCopied');
       } catch (error) {
-        status.textContent = 'Copy failed';
+        status.textContent = this.#t('copyFailed');
         console.warn('[VistrTavern] Failed to copy handoff.', error);
       }
     });
@@ -177,9 +198,9 @@ export class UiOverlay {
 
       try {
         await copyText(content);
-        status.textContent = 'Debug snapshot copied';
+        status.textContent = this.#t('debugSnapshotCopied');
       } catch (error) {
-        status.textContent = 'Copy failed';
+        status.textContent = this.#t('copyFailed');
         console.warn('[VistrTavern] Failed to copy debug snapshot.', error);
       }
     });
@@ -200,7 +221,7 @@ export class UiOverlay {
       });
 
       if (!branchPoint) {
-        status.textContent = 'Branch title and summary are required';
+        status.textContent = this.#t('branchRequired');
         return;
       }
 
@@ -209,7 +230,7 @@ export class UiOverlay {
       for (const input of optionInputs) {
         input.value = '';
       }
-      status.textContent = 'Branch point marked';
+      status.textContent = this.#t('branchMarked');
       this.refresh();
     });
   }
@@ -236,148 +257,161 @@ export class UiOverlay {
         <header class="vt-panel__header">
           <div>
             <strong>VistrTavern</strong>
-            <span data-vt-status>loading</span>
+            <span data-vt-status>${this.#t('loading')}</span>
           </div>
-          <button type="button" data-vt-refresh>Refresh</button>
+          <div class="vt-header-actions">
+            <label>
+              ${this.#t('language')}
+              <select data-vt-language>
+                <option value="zh-CN" ${this.language === 'zh-CN' ? 'selected' : ''}>中文</option>
+                <option value="en" ${this.language === 'en' ? 'selected' : ''}>English</option>
+              </select>
+            </label>
+            <button type="button" data-vt-refresh>${this.#t('refresh')}</button>
+          </div>
         </header>
 
         <section class="vt-first-run" data-vt-first-run>
-          <strong>First Run Guide</strong>
+          <strong>${this.#t('firstRunTitle')}</strong>
           <ol>
-            <li>Confirm this folder is named <code>vistr-tavern</code>.</li>
-            <li>Select a character and start an intrusion.</li>
-            <li>Record a human anomaly line.</li>
-            <li>End intrusion, then generate the next AI reply.</li>
-            <li>Use Debug or Copy Latest Handoff if automatic injection is unclear.</li>
+            <li>${this.#t('firstRunFolder')} <code>vistr-tavern</code>.</li>
+            <li>${this.#t('firstRunStart')}</li>
+            <li>${this.#t('firstRunRecord')}</li>
+            <li>${this.#t('firstRunRecover')}</li>
+            <li>${this.#t('firstRunFallback')}</li>
           </ol>
-          <button type="button" data-vt-dismiss-guide>Dismiss Guide</button>
+          <button type="button" data-vt-dismiss-guide>${this.#t('dismissGuide')}</button>
         </section>
 
         <div class="vt-field">
-          <label>Character</label>
+          <label>${this.#t('character')}</label>
           <select data-vt-character></select>
         </div>
 
         <div class="vt-grid">
           <label>
-            Duration min
+            ${this.#t('durationMin')}
             <input type="number" min="1" max="120" value="5" data-vt-duration>
           </label>
           <label>
-            Tension
+            ${this.#t('tension')}
             <input type="number" min="0" max="100" value="50" data-vt-tension>
           </label>
         </div>
 
         <div class="vt-toggles">
-          <label><input type="checkbox" data-vt-anonymous checked> Anonymous</label>
-          <label><input type="checkbox" data-vt-director> Director</label>
+          <label><input type="checkbox" data-vt-anonymous checked> ${this.#t('anonymous')}</label>
+          <label><input type="checkbox" data-vt-director> ${this.#t('director')}</label>
         </div>
 
         <label class="vt-field">
-          Awareness after recovery
+          ${this.#t('awarenessAfterRecovery')}
           <select data-vt-awareness>
-            <option value="${HandoffAwareness.NONE}">AI 无感</option>
-            <option value="${HandoffAwareness.SUBTLE}">断片</option>
-            <option value="${HandoffAwareness.EXPLICIT}">怀疑</option>
+            <option value="${HandoffAwareness.NONE}">${this.#t('awarenessNone')}</option>
+            <option value="${HandoffAwareness.SUBTLE}">${this.#t('awarenessSubtle')}</option>
+            <option value="${HandoffAwareness.EXPLICIT}">${this.#t('awarenessExplicit')}</option>
           </select>
         </label>
 
         <label class="vt-field">
-          Awareness target
+          ${this.#t('awarenessTarget')}
           <select data-vt-awareness-scope>
-            <option value="${AwarenessScope.CONTROLLED}">Controlled character</option>
-            <option value="${AwarenessScope.OBSERVERS}">Observers</option>
-            <option value="${AwarenessScope.BOTH}">Both</option>
+            <option value="${AwarenessScope.CONTROLLED}">${this.#t('targetControlled')}</option>
+            <option value="${AwarenessScope.OBSERVERS}">${this.#t('targetObservers')}</option>
+            <option value="${AwarenessScope.BOTH}">${this.#t('targetBoth')}</option>
           </select>
         </label>
 
         <div class="vt-actions">
-          <button type="button" data-vt-start>Start Intrusion</button>
-          <button type="button" data-vt-end>End</button>
+          <button type="button" data-vt-start>${this.#t('startIntrusion')}</button>
+          <button type="button" data-vt-end>${this.#t('end')}</button>
         </div>
 
         <hr>
 
         <div class="vt-grid">
           <label>
-            Scene
-            <input type="text" placeholder="Royal Banquet" data-vt-scene-name>
+            ${this.#t('scene')}
+            <input type="text" placeholder="${this.#t('scenePlaceholder')}" data-vt-scene-name>
           </label>
           <label>
-            Mood
-            <input type="text" placeholder="oppressive" data-vt-scene-mood>
+            ${this.#t('mood')}
+            <input type="text" placeholder="${this.#t('moodPlaceholder')}" data-vt-scene-mood>
           </label>
         </div>
-        <button type="button" data-vt-save-scene>Save Scene</button>
+        <button type="button" data-vt-save-scene>${this.#t('saveScene')}</button>
 
         <hr>
 
         <label class="vt-field">
-          Human anomaly line
-          <textarea rows="4" data-vt-human-line placeholder="Record the human-controlled character line here."></textarea>
+          ${this.#t('humanAnomalyLine')}
+          <textarea rows="4" data-vt-human-line placeholder="${this.#t('humanLinePlaceholder')}"></textarea>
         </label>
-        <button type="button" data-vt-record-line>Record Human Line</button>
+        <button type="button" data-vt-record-line>${this.#t('recordHumanLine')}</button>
 
         <hr>
 
-        <strong>Branch Point</strong>
+        <strong>${this.#t('branchPoint')}</strong>
         <div class="vt-grid">
           <label>
-            Title
-            <input type="text" placeholder="Identity reveal" data-vt-branch-title>
+            ${this.#t('title')}
+            <input type="text" placeholder="${this.#t('titlePlaceholder')}" data-vt-branch-title>
           </label>
           <label>
-            Type
+            ${this.#t('type')}
             <select data-vt-branch-type>
-              <option value="${BranchType.RELATIONSHIP}">Relationship</option>
-              <option value="${BranchType.CONSPIRACY}">Conspiracy</option>
-              <option value="${BranchType.IDENTITY}">Identity reveal</option>
-              <option value="${BranchType.WORLD_FRACTURE}">World fracture</option>
-              <option value="${BranchType.CLUE_CONTAMINATION}">Clue contamination</option>
-              <option value="${BranchType.EMOTIONAL_RUPTURE}">Emotional rupture</option>
-              <option value="${BranchType.OTHER}">Other</option>
+              <option value="${BranchType.RELATIONSHIP}">${this.#t('branchRelationship')}</option>
+              <option value="${BranchType.CONSPIRACY}">${this.#t('branchConspiracy')}</option>
+              <option value="${BranchType.IDENTITY}">${this.#t('branchIdentity')}</option>
+              <option value="${BranchType.WORLD_FRACTURE}">${this.#t('branchWorldFracture')}</option>
+              <option value="${BranchType.CLUE_CONTAMINATION}">${this.#t('branchClueContamination')}</option>
+              <option value="${BranchType.EMOTIONAL_RUPTURE}">${this.#t('branchEmotionalRupture')}</option>
+              <option value="${BranchType.OTHER}">${this.#t('branchOther')}</option>
             </select>
           </label>
         </div>
         <label class="vt-field">
-          Branch summary
-          <textarea rows="3" data-vt-branch-summary placeholder="What new route did this intrusion open?"></textarea>
+          ${this.#t('branchSummary')}
+          <textarea rows="3" data-vt-branch-summary placeholder="${this.#t('branchSummaryPlaceholder')}"></textarea>
         </label>
         <div class="vt-grid">
-          <input type="text" placeholder="Option A" data-vt-branch-option>
-          <input type="text" placeholder="Option B" data-vt-branch-option>
+          <input type="text" placeholder="${this.#t('optionA')}" data-vt-branch-option>
+          <input type="text" placeholder="${this.#t('optionB')}" data-vt-branch-option>
         </div>
-        <input type="text" placeholder="Option C" data-vt-branch-option>
-        <button type="button" data-vt-mark-branch>Mark Branch Point</button>
+        <input type="text" placeholder="${this.#t('optionC')}" data-vt-branch-option>
+        <button type="button" data-vt-mark-branch>${this.#t('markBranchPoint')}</button>
         <span class="vt-copy-status" data-vt-branch-status></span>
 
         <hr>
 
-        <strong>Active Intrusions</strong>
+        <strong>${this.#t('activeIntrusions')}</strong>
         <ul class="vt-active-list" data-vt-active-list></ul>
 
         <hr>
 
         <details class="vt-debug" open>
-          <summary>Debug</summary>
+          <summary>${this.#t('debug')}</summary>
           <p class="vt-debug-warning" data-vt-debug-warning></p>
           <dl data-vt-debug></dl>
           <div class="vt-actions">
-            <button type="button" data-vt-copy-handoff>Copy Latest Handoff</button>
-            <button type="button" data-vt-copy-debug>Copy Debug Snapshot</button>
+            <button type="button" data-vt-copy-handoff>${this.#t('copyLatestHandoff')}</button>
+            <button type="button" data-vt-copy-debug>${this.#t('copyDebugSnapshot')}</button>
           </div>
           <span class="vt-copy-status" data-vt-copy-status></span>
         </details>
 
         <div class="vt-actions">
-          <button type="button" data-vt-export-md>Export Markdown</button>
-          <button type="button" data-vt-export-creator-pack>Export Creator Pack</button>
-          <button type="button" data-vt-export-character-prompt>Export Character Prompt</button>
-          <button type="button" data-vt-export-json>Export JSON</button>
+          <button type="button" data-vt-export-md>${this.#t('exportMarkdown')}</button>
+          <button type="button" data-vt-export-creator-pack>${this.#t('exportCreatorPack')}</button>
+          <button type="button" data-vt-export-character-prompt>${this.#t('exportCharacterPrompt')}</button>
+          <button type="button" data-vt-export-json>${this.#t('exportJson')}</button>
         </div>
       </section>
     `;
+  }
+
+  #t(key, values = {}) {
+    return translate(this.language, key, values);
   }
 }
 
@@ -398,25 +432,25 @@ async function copyText(value) {
   textarea.remove();
 }
 
-function formatDebugState(debug) {
+function formatDebugState(debug, language) {
   const warning = document.querySelector('#vistr-tavern-root [data-vt-debug-warning]');
   if (warning) {
-    warning.textContent = debugWarning(debug);
+    warning.textContent = debugWarning(debug, language);
     warning.hidden = !warning.textContent;
   }
 
   const rows = [
-    ['Version', debug.version || 'unknown'],
-    ['Compatibility', formatCompatibility(debug.compatibility)],
-    ['Storage', debug.storageMode || 'unknown'],
-    ['Active intrusion', debug.activeIntrusions?.length ? debug.activeIntrusions.map((item) => item.characterName || item.characterId).join(', ') : 'none'],
-    ['Pending handoff', formatHandoffSummary(debug.pendingHandoff)],
-    ['Last injected', formatHandoffSummary(debug.lastInjectedHandoff)],
-    ['Last consumed', formatHandoffSummary(debug.lastConsumedHandoff)],
-    ['Awareness events', debug.awarenessEventCount ?? 0],
-    ['Last AI message', debug.lastCapturedAiMessage ? `${debug.lastCapturedAiMessage.speakerName} · ${debug.lastCapturedAiMessage.createdAt}` : 'none'],
-    ['Interceptor', debug.lastInterceptorCallAt ? `${debug.lastInjectionResult} · ${debug.lastInterceptorCallAt}` : debug.lastInjectionResult || 'not-called'],
-    ['Last error', debug.lastError ? `${debug.lastError.type}: ${debug.lastError.message}` : debug.lastInjectionError || 'none'],
+    [translate(language, 'debugVersion'), debug.version || translate(language, 'unknown')],
+    [translate(language, 'debugCompatibility'), formatCompatibility(debug.compatibility, language)],
+    [translate(language, 'debugStorage'), debug.storageMode || translate(language, 'unknown')],
+    [translate(language, 'debugActiveIntrusion'), debug.activeIntrusions?.length ? debug.activeIntrusions.map((item) => item.characterName || item.characterId).join(', ') : translate(language, 'none')],
+    [translate(language, 'debugPendingHandoff'), formatHandoffSummary(debug.pendingHandoff, language)],
+    [translate(language, 'debugLastInjected'), formatHandoffSummary(debug.lastInjectedHandoff, language)],
+    [translate(language, 'debugLastConsumed'), formatHandoffSummary(debug.lastConsumedHandoff, language)],
+    [translate(language, 'debugAwarenessEvents'), debug.awarenessEventCount ?? 0],
+    [translate(language, 'debugLastAiMessage'), debug.lastCapturedAiMessage ? `${debug.lastCapturedAiMessage.speakerName} · ${debug.lastCapturedAiMessage.createdAt}` : translate(language, 'none')],
+    [translate(language, 'debugInterceptor'), debug.lastInterceptorCallAt ? `${debug.lastInjectionResult} · ${debug.lastInterceptorCallAt}` : debug.lastInjectionResult || translate(language, 'notCalled')],
+    [translate(language, 'debugLastError'), debug.lastError ? `${debug.lastError.type}: ${debug.lastError.message}` : debug.lastInjectionError || translate(language, 'none')],
   ];
 
   return rows
@@ -424,47 +458,283 @@ function formatDebugState(debug) {
     .join('');
 }
 
-function formatCompatibility(compatibility) {
+function formatCompatibility(compatibility, language) {
   if (!compatibility) {
-    return 'unknown';
+    return translate(language, 'unknown');
   }
 
   const missing = [
-    ['context', compatibility.hasSillyTavernContext],
-    ['characters', compatibility.hasCharactersArray],
-    ['chat', compatibility.hasChatArray],
-    ['events', compatibility.hasEventSource],
-    ['message event', compatibility.hasMessageReceivedEvent],
-    ['prompt interceptor', compatibility.hasPromptInterceptor],
+    [translate(language, 'compatContext'), compatibility.hasSillyTavernContext],
+    [translate(language, 'compatCharacters'), compatibility.hasCharactersArray],
+    [translate(language, 'compatChat'), compatibility.hasChatArray],
+    [translate(language, 'compatEvents'), compatibility.hasEventSource],
+    [translate(language, 'compatMessageEvent'), compatibility.hasMessageReceivedEvent],
+    [translate(language, 'compatPromptInterceptor'), compatibility.hasPromptInterceptor],
   ].filter(([, ok]) => !ok).map(([label]) => label);
 
-  return missing.length ? `check: ${missing.join(', ')}` : 'ok';
+  return missing.length
+    ? translate(language, 'compatCheck', { items: missing.join(', ') })
+    : translate(language, 'ok');
 }
 
-function debugWarning(debug) {
+function debugWarning(debug, language) {
   if (debug.pendingHandoff && !debug.lastInterceptorCallAt) {
-    return 'Pending handoff is waiting, but the prompt interceptor has not been called yet. Generate the next reply or use Copy Latest Handoff.';
+    return translate(language, 'warningInterceptorNotCalled');
   }
 
   if (debug.pendingHandoff && debug.lastInjectionResult?.startsWith('skipped')) {
-    return `Pending handoff still exists. Last injection result: ${debug.lastInjectionResult}. Use Copy Latest Handoff if automatic injection is unclear.`;
+    return translate(language, 'warningInjectionSkipped', { result: debug.lastInjectionResult });
   }
 
   if (debug.lastInjectionResult === 'error') {
-    return 'Prompt injection failed. Copy the Debug Snapshot when reporting this issue.';
+    return translate(language, 'warningInjectionError');
   }
 
   return '';
 }
 
-function formatHandoffSummary(handoff) {
+function formatHandoffSummary(handoff, language) {
   if (!handoff) {
-    return 'none';
+    return translate(language, 'none');
   }
 
-  const status = handoff.consumedAt ? 'consumed' : handoff.lastInjectedAt ? 'injected' : 'pending';
+  const status = handoff.consumedAt
+    ? translate(language, 'handoffConsumed')
+    : handoff.lastInjectedAt
+      ? translate(language, 'handoffInjected')
+      : translate(language, 'handoffPending');
   return `${handoff.characterName || handoff.id} · ${status} · ${handoff.awareness}/${handoff.awarenessScope || 'controlled'}`;
 }
+
+function getStoredLanguage() {
+  return normalizeLanguage(readLocalStorage(LANGUAGE_STORAGE_KEY) || DEFAULT_LANGUAGE);
+}
+
+function normalizeLanguage(value) {
+  return value === 'en' ? 'en' : 'zh-CN';
+}
+
+function readLocalStorage(key) {
+  try {
+    return globalThis.localStorage?.getItem(key) || '';
+  } catch {
+    return '';
+  }
+}
+
+function writeLocalStorage(key, value) {
+  try {
+    globalThis.localStorage?.setItem(key, value);
+  } catch {
+    // Ignore storage failures. Language switching remains usable for the current render.
+  }
+}
+
+function translate(language, key, values = {}) {
+  const dictionary = I18N[language] || I18N[DEFAULT_LANGUAGE];
+  const template = dictionary[key] || I18N.en[key] || key;
+  return Object.entries(values).reduce(
+    (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+    template,
+  );
+}
+
+const I18N = {
+  en: {
+    activeIntrusions: 'Active Intrusions',
+    anonymous: 'Anonymous',
+    awarenessAfterRecovery: 'Awareness after recovery',
+    awarenessExplicit: 'Reality doubt',
+    awarenessNone: 'AI no awareness',
+    awarenessSubtle: 'Memory fracture',
+    awarenessTarget: 'Awareness target',
+    branchClueContamination: 'Clue contamination',
+    branchConspiracy: 'Conspiracy',
+    branchEmotionalRupture: 'Emotional rupture',
+    branchIdentity: 'Identity reveal',
+    branchMarked: 'Branch point marked',
+    branchOther: 'Other',
+    branchPoint: 'Branch Point',
+    branchRelationship: 'Relationship',
+    branchRequired: 'Branch title and summary are required',
+    branchSummary: 'Branch summary',
+    branchSummaryPlaceholder: 'What new route did this intrusion open?',
+    branchWorldFracture: 'World fracture',
+    character: 'Character',
+    compatCharacters: 'characters',
+    compatChat: 'chat',
+    compatCheck: 'check: {items}',
+    compatContext: 'context',
+    compatEvents: 'events',
+    compatMessageEvent: 'message event',
+    compatPromptInterceptor: 'prompt interceptor',
+    copyDebugSnapshot: 'Copy Debug Snapshot',
+    copyFailed: 'Copy failed',
+    copyLatestHandoff: 'Copy Latest Handoff',
+    debug: 'Debug',
+    debugActiveIntrusion: 'Active intrusion',
+    debugAwarenessEvents: 'Awareness events',
+    debugCompatibility: 'Compatibility',
+    debugInterceptor: 'Interceptor',
+    debugLastAiMessage: 'Last AI message',
+    debugLastConsumed: 'Last consumed',
+    debugLastError: 'Last error',
+    debugLastInjected: 'Last injected',
+    debugPendingHandoff: 'Pending handoff',
+    debugSnapshotCopied: 'Debug snapshot copied',
+    debugStorage: 'Storage',
+    debugVersion: 'Version',
+    director: 'Director',
+    dismissGuide: 'Dismiss Guide',
+    durationMin: 'Duration min',
+    end: 'End',
+    exportCharacterPrompt: 'Export Character Prompt',
+    exportCreatorPack: 'Export Creator Pack',
+    exportJson: 'Export JSON',
+    exportMarkdown: 'Export Markdown',
+    firstRunFallback: 'Use Debug or Copy Latest Handoff if automatic injection is unclear.',
+    firstRunFolder: 'Confirm this folder is named',
+    firstRunRecord: 'Record a human anomaly line.',
+    firstRunRecover: 'End intrusion, then generate the next AI reply.',
+    firstRunStart: 'Select a character and start an intrusion.',
+    firstRunTitle: 'First Run Guide',
+    handoffConsumed: 'consumed',
+    handoffInjected: 'injected',
+    handoffPending: 'pending',
+    humanAnomalyLine: 'Human anomaly line',
+    humanLinePlaceholder: 'Record the human-controlled character line here.',
+    language: 'Language',
+    latestHandoffCopied: 'Latest handoff copied',
+    loading: 'loading',
+    markBranchPoint: 'Mark Branch Point',
+    mood: 'Mood',
+    moodPlaceholder: 'oppressive',
+    noActiveIntrusion: 'No active intrusion',
+    noHandoffAvailable: 'No handoff available',
+    none: 'none',
+    notCalled: 'not-called',
+    ok: 'ok',
+    optionA: 'Option A',
+    optionB: 'Option B',
+    optionC: 'Option C',
+    recordHumanLine: 'Record Human Line',
+    refresh: 'Refresh',
+    saveScene: 'Save Scene',
+    scene: 'Scene',
+    scenePlaceholder: 'Royal Banquet',
+    startIntrusion: 'Start Intrusion',
+    statusLine: '{mode} · {messages} messages · {intrusions} intrusions · {handoffs} pending handoffs',
+    targetBoth: 'Both',
+    targetControlled: 'Controlled character',
+    targetObservers: 'Observers',
+    tension: 'Tension',
+    title: 'Title',
+    titlePlaceholder: 'Identity reveal',
+    type: 'Type',
+    unknown: 'unknown',
+    until: 'until',
+    warningInjectionError: 'Prompt injection failed. Copy the Debug Snapshot when reporting this issue.',
+    warningInjectionSkipped: 'Pending handoff still exists. Last injection result: {result}. Use Copy Latest Handoff if automatic injection is unclear.',
+    warningInterceptorNotCalled: 'Pending handoff is waiting, but the prompt interceptor has not been called yet. Generate the next reply or use Copy Latest Handoff.',
+  },
+  'zh-CN': {
+    activeIntrusions: '进行中的接管',
+    anonymous: '匿名',
+    awarenessAfterRecovery: '恢复后异常察觉',
+    awarenessExplicit: '怀疑',
+    awarenessNone: 'AI 无感',
+    awarenessSubtle: '断片',
+    awarenessTarget: '察觉对象',
+    branchClueContamination: '线索污染',
+    branchConspiracy: '阴谋线',
+    branchEmotionalRupture: '情绪破裂',
+    branchIdentity: '身份揭露',
+    branchMarked: '剧情分支已标记',
+    branchOther: '其他',
+    branchPoint: '剧情分支',
+    branchRelationship: '关系线',
+    branchRequired: '需要填写分支标题和说明',
+    branchSummary: '分支说明',
+    branchSummaryPlaceholder: '这次 intrusion 打开了什么新路线？',
+    branchWorldFracture: '世界观裂缝',
+    character: '角色',
+    compatCharacters: '角色数据',
+    compatChat: '聊天数据',
+    compatCheck: '需检查：{items}',
+    compatContext: '上下文',
+    compatEvents: '事件系统',
+    compatMessageEvent: '消息事件',
+    compatPromptInterceptor: 'prompt interceptor',
+    copyDebugSnapshot: '复制 Debug 快照',
+    copyFailed: '复制失败',
+    copyLatestHandoff: '复制最新 Handoff',
+    debug: 'Debug',
+    debugActiveIntrusion: '进行中的接管',
+    debugAwarenessEvents: '异常察觉事件',
+    debugCompatibility: '兼容性',
+    debugInterceptor: 'Interceptor',
+    debugLastAiMessage: '最近 AI 消息',
+    debugLastConsumed: '最近消费',
+    debugLastError: '最近错误',
+    debugLastInjected: '最近注入',
+    debugPendingHandoff: '待处理 Handoff',
+    debugSnapshotCopied: 'Debug 快照已复制',
+    debugStorage: '存储',
+    debugVersion: '版本',
+    director: '导演模式',
+    dismissGuide: '关闭引导',
+    durationMin: '持续分钟',
+    end: '结束',
+    exportCharacterPrompt: '导出人设 Prompt',
+    exportCreatorPack: '导出创作包',
+    exportJson: '导出 JSON',
+    exportMarkdown: '导出 Markdown',
+    firstRunFallback: '如果自动注入不明确，查看 Debug 或复制最新 Handoff。',
+    firstRunFolder: '确认扩展目录名为',
+    firstRunRecord: '记录一条真人异常发言。',
+    firstRunRecover: '结束接管，然后生成下一条 AI 回复。',
+    firstRunStart: '选择角色并开始接管。',
+    firstRunTitle: '首次使用引导',
+    handoffConsumed: '已消费',
+    handoffInjected: '已注入',
+    handoffPending: '待处理',
+    humanAnomalyLine: '真人异常发言',
+    humanLinePlaceholder: '在这里记录真人接管角色说出的内容。',
+    language: '语言',
+    latestHandoffCopied: '最新 Handoff 已复制',
+    loading: '加载中',
+    markBranchPoint: '标记剧情分支',
+    mood: '氛围',
+    moodPlaceholder: '压迫',
+    noActiveIntrusion: '暂无进行中的接管',
+    noHandoffAvailable: '暂无可复制的 handoff',
+    none: '无',
+    notCalled: '未调用',
+    ok: '正常',
+    optionA: '路线 A',
+    optionB: '路线 B',
+    optionC: '路线 C',
+    recordHumanLine: '记录真人发言',
+    refresh: '刷新',
+    saveScene: '保存场景',
+    scene: '场景',
+    scenePlaceholder: '王都宴会',
+    startIntrusion: '开始接管',
+    statusLine: '{mode} · {messages} 条消息 · {intrusions} 次接管 · {handoffs} 个待处理 handoff',
+    targetBoth: '两者',
+    targetControlled: '被接管角色',
+    targetObservers: '旁观者',
+    tension: '张力',
+    title: '标题',
+    titlePlaceholder: '身份揭露',
+    type: '类型',
+    unknown: '未知',
+    until: '至',
+    warningInjectionError: 'Prompt 注入失败。反馈问题时请复制 Debug 快照。',
+    warningInjectionSkipped: '仍存在待处理 handoff。最近注入结果：{result}。如果自动注入不明确，请使用复制最新 Handoff。',
+    warningInterceptorNotCalled: '存在待处理 handoff，但 prompt interceptor 还没有被调用。请生成下一条回复，或使用复制最新 Handoff。',
+  },
+};
 
 function escapeHtml(value) {
   return String(value)
