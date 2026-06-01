@@ -48,6 +48,14 @@ export const ScenarioPreset = Object.freeze({
   VIRTUAL_THEATER: 'virtual_theater',
 });
 
+export const BrainstormKind = Object.freeze({
+  SPARK: 'spark',
+  CHARACTER_DRIFT: 'character_drift',
+  CONFLICT: 'conflict',
+  WRITABLE_SCENE: 'writable_scene',
+  NEXT_CAMEO: 'next_cameo',
+});
+
 export function createId(prefix) {
   const random = Math.random().toString(36).slice(2, 10);
   return `${prefix}_${Date.now().toString(36)}_${random}`;
@@ -66,6 +74,12 @@ export function createEmptyMemory(now = new Date()) {
       mode: ViewMode.IMMERSION,
       activeSceneId: null,
       scenarioPreset: ScenarioPreset.WEB_NOVEL,
+      room: {
+        worldview: '',
+        background: '',
+        roleSlots: '',
+        aiWorldRules: '',
+      },
     },
     characters: [],
     scenes: [],
@@ -74,6 +88,8 @@ export function createEmptyMemory(now = new Date()) {
     messages: [],
     disturbanceEvents: [],
     branchPoints: [],
+    brainstormNotes: [],
+    inspirationCaptures: [],
     relationshipDeltas: [],
     worldStateDeltas: [],
   };

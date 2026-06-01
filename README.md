@@ -41,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.4.0-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
+`v0.5.0-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
 
 ## Tested Environments
 
@@ -49,7 +49,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.4.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.5.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 
@@ -62,6 +62,10 @@ The best way to understand VistrTavern is to read the output shape:
 ## Core Principle
 
 If a feature does not strengthen the dramatic tension caused by a human anomaly entering an AI ensemble, it is not a first-priority feature.
+
+Multi-character AI interaction is powerful, but it can become fake in a specific way: every character is still ultimately shaped by one model rhythm. VistrTavern treats the human cameo as the rupture that breaks that sameness. AI maintains the world. Humans create the unpredictable intent, resistance, and confrontation that can turn a smooth ensemble scene into usable creative material.
+
+The long-term direction is closer to a roleplay scene space than a generic AI tavern: a room has a worldview, roles, and plot background; a stranger can briefly cameo as one role; the AI cast keeps continuity; the resulting chat becomes script material, prose fragments, character-growth records, and co-creation logs.
 
 VistrTavern records:
 
@@ -80,6 +84,8 @@ VistrTavern records:
 - Timeout-based AI recovery.
 - Scene and tension fields.
 - Scenario presets for web novel/script drafting, AI murder mystery, and virtual theater.
+- Roleplay Room metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
+- Human Intent fields for the creator's desired confrontation, target, disruption, and reveal.
 - Human anomaly line recording.
 - AI reaction capture during active intrusion windows.
 - AI recovery continuity handoff for preserving the context that the story has already been changed by the human.
@@ -90,6 +96,8 @@ VistrTavern records:
 - Markdown and JSON export.
 - Creator Pack export for reusable writing material, conflict hooks, branch routes, and handoff context.
 - Material Workbench for one-click organized creator material.
+- Inspiration Capture for turning an intrusion into next-scene creative prompts.
+- Creator Brainstorm Space for private notes that do not enter the chat.
 - Character Sheet Prompt export for organizing role definitions with an external model.
 - Branch Point marking for relationship, conspiracy, identity, world-fracture, clue-contamination, and emotional rupture routes.
 - Read-only saved Branch Points list in the VT panel.

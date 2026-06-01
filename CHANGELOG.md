@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5.0-alpha
+
+Creator brainstorm and roleplay-room release.
+
+### Added
+
+- Roleplay Room metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
+- Human Intent fields before starting an intrusion: goal, target, intended disruption, and secret/reveal.
+- Inspiration Capture after an intrusion, summarizing why the human cameo broke AI ensemble smoothness and what to write next.
+- Creator Brainstorm Space for private creator notes that do not enter chat history.
+- Markdown exports now include room setup, human intent, inspiration captures, and brainstorm notes.
+
+### Changed
+
+- Product positioning now emphasizes VistrTavern as a roleplay scene space where AI maintains the world and humans create dramatic rupture.
+- Extension version updated to `0.5.0-alpha`.
+
 ## v0.4.0-alpha
 
 Creator workspace release.

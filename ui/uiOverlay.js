@@ -1,17 +1,20 @@
-import { AwarenessScope, BranchType, ControlMode, HandoffAwareness, ScenarioPreset, Visibility } from '../data/schema.js';
+import { AwarenessScope, BrainstormKind, BranchType, ControlMode, HandoffAwareness, ScenarioPreset, Visibility } from '../data/schema.js';
 
 const LANGUAGE_STORAGE_KEY = 'vistr-tavern:language';
 const FIRST_RUN_STORAGE_KEY = 'vistr-tavern:first-run-dismissed';
 const DEFAULT_LANGUAGE = 'zh-CN';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onSaveRoom, onCaptureInspiration, onSaveBrainstormNote, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
     this.onRecordHumanLine = onRecordHumanLine;
     this.onMarkBranchPoint = onMarkBranchPoint;
     this.onSetScenarioPreset = onSetScenarioPreset;
+    this.onSaveRoom = onSaveRoom;
+    this.onCaptureInspiration = onCaptureInspiration;
+    this.onSaveBrainstormNote = onSaveBrainstormNote;
     this.onSaveScene = onSaveScene;
     this.onCopyLatestHandoff = onCopyLatestHandoff;
     this.onExportMarkdown = onExportMarkdown;
@@ -51,6 +54,8 @@ export class UiOverlay {
     const guide = this.root.querySelector('[data-vt-first-run]');
     const scenarioSelect = this.root.querySelector('[data-vt-scenario]');
     const branchList = this.root.querySelector('[data-vt-branch-list]');
+    const inspirationList = this.root.querySelector('[data-vt-inspiration-list]');
+    const brainstormList = this.root.querySelector('[data-vt-brainstorm-list]');
 
     const selectedValue = characterSelect.value;
     characterSelect.innerHTML = '';
@@ -79,6 +84,12 @@ export class UiOverlay {
     guide.hidden = Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
     scenarioSelect.value = state.scenarioPreset || ScenarioPreset.WEB_NOVEL;
     branchList.innerHTML = formatBranchList(state.branchPoints || [], this.language);
+    inspirationList.innerHTML = formatInspirationList(state.inspirationCaptures || [], this.language);
+    brainstormList.innerHTML = formatBrainstormList(state.brainstormNotes || [], this.language);
+    setInputValue(this.root, '[data-vt-room-worldview]', state.room?.worldview);
+    setInputValue(this.root, '[data-vt-room-background]', state.room?.background);
+    setInputValue(this.root, '[data-vt-room-role-slots]', state.room?.roleSlots);
+    setInputValue(this.root, '[data-vt-room-ai-rules]', state.room?.aiWorldRules);
 
     debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {}, this.language);
   }
@@ -110,6 +121,17 @@ export class UiOverlay {
       this.#render(false);
     });
 
+    this.root.querySelector('[data-vt-save-room]').addEventListener('click', async () => {
+      await this.onSaveRoom?.({
+        worldview: this.root.querySelector('[data-vt-room-worldview]').value,
+        background: this.root.querySelector('[data-vt-room-background]').value,
+        roleSlots: this.root.querySelector('[data-vt-room-role-slots]').value,
+        aiWorldRules: this.root.querySelector('[data-vt-room-ai-rules]').value,
+      });
+      this.root.querySelector('[data-vt-room-status]').textContent = this.#t('roomSaved');
+      this.refresh();
+    });
+
     this.root.querySelector('[data-vt-dismiss-guide]').addEventListener('click', () => {
       writeLocalStorage(FIRST_RUN_STORAGE_KEY, 'true');
       this.root.querySelector('[data-vt-first-run]').hidden = true;
@@ -135,6 +157,12 @@ export class UiOverlay {
         mode,
         awareness,
         awarenessScope,
+        humanIntent: {
+          goal: this.root.querySelector('[data-vt-intent-goal]').value,
+          target: this.root.querySelector('[data-vt-intent-target]').value,
+          disrupt: this.root.querySelector('[data-vt-intent-disrupt]').value,
+          secret: this.root.querySelector('[data-vt-intent-secret]').value,
+        },
       });
       this.refresh();
     });
@@ -272,6 +300,35 @@ export class UiOverlay {
       status.textContent = this.#t('branchMarked');
       this.refresh();
     });
+
+    this.root.querySelector('[data-vt-capture-inspiration]').addEventListener('click', async () => {
+      const character = this.#selectedCharacter();
+      const status = this.root.querySelector('[data-vt-inspiration-status]');
+      const capture = await this.onCaptureInspiration?.(character?.id || null);
+      status.textContent = capture ? this.#t('inspirationCaptured') : this.#t('noInspirationAvailable');
+      this.refresh();
+    });
+
+    this.root.querySelector('[data-vt-save-brainstorm]').addEventListener('click', async () => {
+      const character = this.#selectedCharacter();
+      const textarea = this.root.querySelector('[data-vt-brainstorm-content]');
+      const status = this.root.querySelector('[data-vt-brainstorm-status]');
+      const note = await this.onSaveBrainstormNote?.({
+        kind: this.root.querySelector('[data-vt-brainstorm-kind]').value,
+        content: textarea.value,
+        characterId: character?.id || null,
+        characterName: character?.name || null,
+      });
+
+      if (!note) {
+        status.textContent = this.#t('brainstormRequired');
+        return;
+      }
+
+      textarea.value = '';
+      status.textContent = this.#t('brainstormSaved');
+      this.refresh();
+    });
   }
 
   #selectedCharacter() {
@@ -336,6 +393,28 @@ export class UiOverlay {
           </select>
         </label>
 
+        <details class="vt-room" open>
+          <summary>${this.#t('roleplayRoom')}</summary>
+          <label class="vt-field">
+            ${this.#t('roomWorldview')}
+            <textarea rows="2" data-vt-room-worldview placeholder="${this.#t('roomWorldviewPlaceholder')}"></textarea>
+          </label>
+          <label class="vt-field">
+            ${this.#t('roomBackground')}
+            <textarea rows="2" data-vt-room-background placeholder="${this.#t('roomBackgroundPlaceholder')}"></textarea>
+          </label>
+          <label class="vt-field">
+            ${this.#t('roomRoleSlots')}
+            <textarea rows="2" data-vt-room-role-slots placeholder="${this.#t('roomRoleSlotsPlaceholder')}"></textarea>
+          </label>
+          <label class="vt-field">
+            ${this.#t('roomAiRules')}
+            <textarea rows="2" data-vt-room-ai-rules placeholder="${this.#t('roomAiRulesPlaceholder')}"></textarea>
+          </label>
+          <button type="button" data-vt-save-room>${this.#t('saveRoom')}</button>
+          <span class="vt-copy-status" data-vt-room-status></span>
+        </details>
+
         <div class="vt-grid">
           <label>
             ${this.#t('durationMin')}
@@ -369,6 +448,26 @@ export class UiOverlay {
             <option value="${AwarenessScope.BOTH}">${this.#t('targetBoth')}</option>
           </select>
         </label>
+
+        <details class="vt-room">
+          <summary>${this.#t('humanIntent')}</summary>
+          <label class="vt-field">
+            ${this.#t('intentGoal')}
+            <textarea rows="2" data-vt-intent-goal placeholder="${this.#t('intentGoalPlaceholder')}"></textarea>
+          </label>
+          <label class="vt-field">
+            ${this.#t('intentTarget')}
+            <input type="text" data-vt-intent-target placeholder="${this.#t('intentTargetPlaceholder')}">
+          </label>
+          <label class="vt-field">
+            ${this.#t('intentDisrupt')}
+            <textarea rows="2" data-vt-intent-disrupt placeholder="${this.#t('intentDisruptPlaceholder')}"></textarea>
+          </label>
+          <label class="vt-field">
+            ${this.#t('intentSecret')}
+            <textarea rows="2" data-vt-intent-secret placeholder="${this.#t('intentSecretPlaceholder')}"></textarea>
+          </label>
+        </details>
 
         <div class="vt-actions">
           <button type="button" data-vt-start>${this.#t('startIntrusion')}</button>
@@ -449,6 +548,34 @@ export class UiOverlay {
 
         <hr>
 
+        <strong>${this.#t('inspirationCapture')}</strong>
+        <p class="vt-help">${this.#t('inspirationHelp')}</p>
+        <button type="button" data-vt-capture-inspiration>${this.#t('captureInspiration')}</button>
+        <span class="vt-copy-status" data-vt-inspiration-status></span>
+        <div data-vt-inspiration-list></div>
+
+        <hr>
+
+        <strong>${this.#t('brainstormSpace')}</strong>
+        <div class="vt-grid">
+          <label>
+            ${this.#t('brainstormKind')}
+            <select data-vt-brainstorm-kind>
+              <option value="${BrainstormKind.SPARK}">${this.#t('brainstormSpark')}</option>
+              <option value="${BrainstormKind.CHARACTER_DRIFT}">${this.#t('brainstormCharacterDrift')}</option>
+              <option value="${BrainstormKind.CONFLICT}">${this.#t('brainstormConflict')}</option>
+              <option value="${BrainstormKind.WRITABLE_SCENE}">${this.#t('brainstormWritableScene')}</option>
+              <option value="${BrainstormKind.NEXT_CAMEO}">${this.#t('brainstormNextCameo')}</option>
+            </select>
+          </label>
+        </div>
+        <textarea rows="4" data-vt-brainstorm-content placeholder="${this.#t('brainstormPlaceholder')}"></textarea>
+        <button type="button" data-vt-save-brainstorm>${this.#t('saveBrainstorm')}</button>
+        <span class="vt-copy-status" data-vt-brainstorm-status></span>
+        <div data-vt-brainstorm-list></div>
+
+        <hr>
+
         <strong>${this.#t('activeIntrusions')}</strong>
         <ul class="vt-active-list" data-vt-active-list></ul>
 
@@ -513,6 +640,8 @@ function formatDebugState(debug, language) {
     [translate(language, 'debugLastInjected'), formatHandoffSummary(debug.lastInjectedHandoff, language)],
     [translate(language, 'debugLastConsumed'), formatHandoffSummary(debug.lastConsumedHandoff, language)],
     [translate(language, 'debugAwarenessEvents'), debug.awarenessEventCount ?? 0],
+    [translate(language, 'debugInspirationCaptures'), debug.inspirationCaptureCount ?? 0],
+    [translate(language, 'debugBrainstormNotes'), debug.brainstormNoteCount ?? 0],
     [translate(language, 'debugLastAiMessage'), debug.lastCapturedAiMessage ? `${debug.lastCapturedAiMessage.speakerName} · ${debug.lastCapturedAiMessage.createdAt}` : translate(language, 'none')],
     [translate(language, 'debugInterceptor'), debug.lastInterceptorCallAt ? `${debug.lastInjectionResult} · ${debug.lastInterceptorCallAt}` : debug.lastInjectionResult || translate(language, 'notCalled')],
     [translate(language, 'debugLastError'), debug.lastError ? `${debug.lastError.type}: ${debug.lastError.message}` : debug.lastInjectionError || translate(language, 'none')],
@@ -544,6 +673,44 @@ function formatBranchList(branchPoints, language) {
       '</article>',
     ].join('');
   }).join('');
+}
+
+function formatInspirationList(captures, language) {
+  if (!captures.length) {
+    return `<p class="vt-help">${escapeHtml(translate(language, 'noInspirationCaptures'))}</p>`;
+  }
+
+  return captures.map((capture) => [
+    '<article class="vt-branch-card">',
+    `<strong>${escapeHtml(capture.characterName || capture.characterId || translate(language, 'unknown'))}</strong>`,
+    `<p>${escapeHtml(capture.summary || '')}</p>`,
+    `<p>${escapeHtml(capture.antiRoutine || '')}</p>`,
+    capture.nextDirections?.length
+      ? `<ul>${capture.nextDirections.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+      : '',
+    '</article>',
+  ].join('')).join('');
+}
+
+function formatBrainstormList(notes, language) {
+  if (!notes.length) {
+    return `<p class="vt-help">${escapeHtml(translate(language, 'noBrainstormNotes'))}</p>`;
+  }
+
+  return notes.map((note) => [
+    '<article class="vt-branch-card">',
+    `<strong>${escapeHtml(translate(language, `brainstormKind_${note.kind}`) || note.kind)}</strong>`,
+    `<span>${escapeHtml(note.characterName || note.characterId || translate(language, 'general'))}</span>`,
+    `<p>${escapeHtml(note.content)}</p>`,
+    '</article>',
+  ].join('')).join('');
+}
+
+function setInputValue(root, selector, value = '') {
+  const input = root.querySelector(selector);
+  if (input && document.activeElement !== input) {
+    input.value = value || '';
+  }
 }
 
 function formatCompatibility(compatibility, language) {
@@ -638,6 +805,21 @@ const I18N = {
     awarenessTarget: 'Awareness target',
     branchClueContamination: 'Clue contamination',
     branchConspiracy: 'Conspiracy',
+    brainstormCharacterDrift: 'Character drift',
+    brainstormConflict: 'Conflict escalation',
+    brainstormKind: 'Note type',
+    brainstormKind_character_drift: 'Character drift',
+    brainstormKind_conflict: 'Conflict escalation',
+    brainstormKind_next_cameo: 'Next cameo',
+    brainstormKind_spark: 'Spark',
+    brainstormKind_writable_scene: 'Writable scene',
+    brainstormNextCameo: 'Next cameo',
+    brainstormPlaceholder: 'Write creator-only notes here. These notes do not enter the chat.',
+    brainstormRequired: 'Brainstorm content is required',
+    brainstormSaved: 'Brainstorm note saved',
+    brainstormSpace: 'Creator Brainstorm Space',
+    brainstormSpark: 'Spark',
+    brainstormWritableScene: 'Writable scene',
     branchEmotionalRupture: 'Emotional rupture',
     branchIdentity: 'Identity reveal',
     branchMarked: 'Branch point marked',
@@ -660,10 +842,13 @@ const I18N = {
     copyDebugSnapshot: 'Copy Debug Snapshot',
     copyFailed: 'Copy failed',
     copyLatestHandoff: 'Copy Latest Handoff',
+    captureInspiration: 'Capture Inspiration',
     debug: 'Debug',
     debugActiveIntrusion: 'Active intrusion',
     debugAwarenessEvents: 'Awareness events',
+    debugBrainstormNotes: 'Brainstorm notes',
     debugCompatibility: 'Compatibility',
+    debugInspirationCaptures: 'Inspiration captures',
     debugInterceptor: 'Interceptor',
     debugLastAiMessage: 'Last AI message',
     debugLastConsumed: 'Last consumed',
@@ -688,11 +873,24 @@ const I18N = {
     firstRunRecover: 'End intrusion, then generate the next AI reply.',
     firstRunStart: 'Select a character and start an intrusion.',
     firstRunTitle: 'First Run Guide',
+    general: 'general',
     handoffConsumed: 'consumed',
     handoffInjected: 'injected',
     handoffPending: 'pending',
     humanAnomalyLine: 'Human anomaly line',
+    humanIntent: 'Human Intent',
     humanLinePlaceholder: 'Record the human-controlled character line here.',
+    inspirationCapture: 'Inspiration Capture',
+    inspirationCaptured: 'Inspiration captured',
+    inspirationHelp: 'After an intrusion ends, capture why the real human cameo felt different from normal AI ensemble output.',
+    intentDisrupt: 'Relationship or rule to disrupt',
+    intentDisruptPlaceholder: 'Break trust, contaminate testimony, expose a contradiction...',
+    intentGoal: 'What does the human want to create?',
+    intentGoalPlaceholder: 'A confrontation, rumor, reversal, secret, betrayal...',
+    intentSecret: 'Secret / reveal',
+    intentSecretPlaceholder: 'What hidden fact or impossible knowledge might leak?',
+    intentTarget: 'Target',
+    intentTargetPlaceholder: 'Who should feel pressure?',
     language: 'Language',
     latestHandoffCopied: 'Latest handoff copied',
     loading: 'loading',
@@ -705,7 +903,10 @@ const I18N = {
     mood: 'Mood',
     moodPlaceholder: 'oppressive',
     noActiveIntrusion: 'No active intrusion',
+    noBrainstormNotes: 'No brainstorm notes yet',
     noHandoffAvailable: 'No handoff available',
+    noInspirationAvailable: 'No completed intrusion to capture',
+    noInspirationCaptures: 'No inspiration captures yet',
     noMaterialAvailable: 'No material available',
     noSavedBranchPoints: 'No branch points marked',
     none: 'none',
@@ -716,6 +917,18 @@ const I18N = {
     optionC: 'Option C',
     recordHumanLine: 'Record Human Line',
     refresh: 'Refresh',
+    roleplayRoom: 'Roleplay Room',
+    roomAiRules: 'AI world rules',
+    roomAiRulesPlaceholder: 'AI maintains continuity, NPC reactions, world consequences...',
+    roomBackground: 'Plot background',
+    roomBackgroundPlaceholder: 'What is happening before strangers cameo as roles?',
+    roomRoleSlots: 'Cameo role slots',
+    roomRoleSlotsPlaceholder: 'Which roles can a human guest briefly play?',
+    roomSaved: 'Room saved',
+    roomWorldview: 'Worldview',
+    roomWorldviewPlaceholder: 'Court intrigue, haunted city, closed manor, virtual stage...',
+    saveBrainstorm: 'Save Brainstorm Note',
+    saveRoom: 'Save Room',
     saveScene: 'Save Scene',
     scene: 'Scene',
     scenePlaceholder: 'Royal Banquet',
@@ -751,6 +964,21 @@ const I18N = {
     awarenessTarget: '察觉对象',
     branchClueContamination: '线索污染',
     branchConspiracy: '阴谋线',
+    brainstormCharacterDrift: '角色人格变化',
+    brainstormConflict: '冲突升级',
+    brainstormKind: '笔记类型',
+    brainstormKind_character_drift: '角色人格变化',
+    brainstormKind_conflict: '冲突升级',
+    brainstormKind_next_cameo: '下次客串',
+    brainstormKind_spark: '灵感火花',
+    brainstormKind_writable_scene: '可写片段',
+    brainstormNextCameo: '下次客串',
+    brainstormPlaceholder: '在这里写创作者侧笔记。这些内容不会进入聊天。',
+    brainstormRequired: '需要填写脑暴内容',
+    brainstormSaved: '脑暴笔记已保存',
+    brainstormSpace: '创作者脑暴空间',
+    brainstormSpark: '灵感火花',
+    brainstormWritableScene: '可写片段',
     branchEmotionalRupture: '情绪破裂',
     branchIdentity: '身份揭露',
     branchMarked: '剧情分支已标记',
@@ -773,10 +1001,13 @@ const I18N = {
     copyDebugSnapshot: '复制 Debug 快照',
     copyFailed: '复制失败',
     copyLatestHandoff: '复制最新 Handoff',
+    captureInspiration: '捕获灵感',
     debug: 'Debug',
     debugActiveIntrusion: '进行中的接管',
     debugAwarenessEvents: '异常察觉事件',
+    debugBrainstormNotes: '脑暴笔记',
     debugCompatibility: '兼容性',
+    debugInspirationCaptures: '灵感捕获',
     debugInterceptor: 'Interceptor',
     debugLastAiMessage: '最近 AI 消息',
     debugLastConsumed: '最近消费',
@@ -801,11 +1032,24 @@ const I18N = {
     firstRunRecover: '结束接管，然后生成下一条 AI 回复。',
     firstRunStart: '选择角色并开始接管。',
     firstRunTitle: '首次使用引导',
+    general: '通用',
     handoffConsumed: '已消费',
     handoffInjected: '已注入',
     handoffPending: '待处理',
     humanAnomalyLine: '真人异常发言',
+    humanIntent: '真人意图',
     humanLinePlaceholder: '在这里记录真人接管角色说出的内容。',
+    inspirationCapture: '互动灵感捕获',
+    inspirationCaptured: '灵感已捕获',
+    inspirationHelp: 'intrusion 结束后，捕获这次真人客串为什么不同于普通 AI 群像输出。',
+    intentDisrupt: '想破坏的关系或规则',
+    intentDisruptPlaceholder: '破坏信任、污染证词、暴露矛盾……',
+    intentGoal: '真人想制造什么？',
+    intentGoalPlaceholder: '对抗、谣言、反转、秘密、背叛……',
+    intentSecret: '秘密 / 揭露',
+    intentSecretPlaceholder: '可能泄露什么隐藏事实或不可能知道的信息？',
+    intentTarget: '针对对象',
+    intentTargetPlaceholder: '想让谁感到压力？',
     language: '语言',
     latestHandoffCopied: '最新 Handoff 已复制',
     loading: '加载中',
@@ -818,7 +1062,10 @@ const I18N = {
     mood: '氛围',
     moodPlaceholder: '压迫',
     noActiveIntrusion: '暂无进行中的接管',
+    noBrainstormNotes: '暂无脑暴笔记',
     noHandoffAvailable: '暂无可复制的 handoff',
+    noInspirationAvailable: '暂无已结束 intrusion 可捕获',
+    noInspirationCaptures: '暂无灵感捕获',
     noMaterialAvailable: '暂无可用素材',
     noSavedBranchPoints: '暂无已标记剧情分支',
     none: '无',
@@ -829,6 +1076,18 @@ const I18N = {
     optionC: '路线 C',
     recordHumanLine: '记录真人发言',
     refresh: '刷新',
+    roleplayRoom: '角色对戏房间',
+    roomAiRules: 'AI 世界维护规则',
+    roomAiRulesPlaceholder: 'AI 负责维持连续性、NPC 反应和世界后果……',
+    roomBackground: '剧情背景',
+    roomBackgroundPlaceholder: '陌生人客串角色前，房间里正在发生什么？',
+    roomRoleSlots: '可客串角色槽位',
+    roomRoleSlotsPlaceholder: '哪些角色可以被人类访客短暂客串？',
+    roomSaved: '房间已保存',
+    roomWorldview: '世界观',
+    roomWorldviewPlaceholder: '宫廷阴谋、闹鬼城市、封闭庄园、虚拟舞台……',
+    saveBrainstorm: '保存脑暴笔记',
+    saveRoom: '保存房间',
     saveScene: '保存场景',
     scene: '场景',
     scenePlaceholder: '王都宴会',

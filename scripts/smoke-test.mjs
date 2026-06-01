@@ -3,7 +3,7 @@ import { ExportWriter } from '../core/exportWriter.js';
 import { IntrusionEngine } from '../core/intrusionEngine.js';
 import { NarrativeMemory } from '../core/narrativeMemory.js';
 import { SceneManager } from '../core/sceneManager.js';
-import { AwarenessScope, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory } from '../data/schema.js';
+import { AwarenessScope, BrainstormKind, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory } from '../data/schema.js';
 
 let now = Date.parse('2026-05-27T12:00:00.000Z');
 const engine = new IntrusionEngine({ now: () => now });
@@ -13,6 +13,12 @@ const writer = new ExportWriter();
 
 memory.syncCharacters([{ name: 'Eileen' }, { name: 'Chancellor' }]);
 const scene = sceneManager.setScene({ name: 'Royal Banquet', mood: 'oppressive', tension: 82 });
+memory.updateRoom({
+  worldview: 'A court where every rumor can become law.',
+  background: 'The king may already be dead.',
+  roleSlots: 'Princess, chancellor, foreign envoy',
+  aiWorldRules: 'AI maintains court continuity while humans create dramatic ruptures.',
+});
 
 engine.addEventListener('intrusion:start', (event) => memory.recordIntrusionStarted(event.detail));
 engine.addEventListener('intrusion:end', (event) => memory.recordIntrusionEnded(event.detail));
@@ -22,6 +28,12 @@ const intrusion = engine.startIntrusion({
   characterName: 'Eileen',
   durationMs: 60_000,
   visibility: Visibility.ANONYMOUS,
+  humanIntent: {
+    goal: 'force a treasonous suspicion into the banquet',
+    target: 'Chancellor',
+    disrupt: 'break court trust',
+    secret: 'the king may be dead',
+  },
 });
 
 const humanMessage = memory.recordMessage({
@@ -55,6 +67,7 @@ assert.equal(memory.memory.handoffs.length, 1);
 assert.equal(memory.memory.disturbanceEvents.filter((event) => event.type.includes('anomaly_awareness')).length, 0);
 assert.match(memory.memory.handoffs[0].prompt, /These events are canonical/);
 assert.match(memory.memory.handoffs[0].prompt, /Do not mention human control/);
+assert.match(memory.memory.handoffs[0].prompt, /Human creative intent/);
 assert.equal(memory.getPendingHandoff().id, memory.memory.handoffs[0].id);
 memory.recordHandoffInjected(memory.memory.handoffs[0].id);
 assert.equal(memory.getInjectedHandoff().id, memory.memory.handoffs[0].id);
@@ -76,12 +89,30 @@ assert.equal(branchPoint.type, BranchType.IDENTITY);
 assert.equal(memory.setScenarioPreset(ScenarioPreset.MURDER_MYSTERY), ScenarioPreset.MURDER_MYSTERY);
 assert.equal(memory.memory.session.scenarioPreset, ScenarioPreset.MURDER_MYSTERY);
 
+const inspiration = memory.captureInspiration({ intrusion: memory.memory.intrusions[0], scene });
+assert.equal(memory.memory.inspirationCaptures.length, 1);
+assert.match(inspiration.summary, /Eileen/);
+assert.match(inspiration.antiRoutine, /real human intent/);
+const brainstorm = memory.recordBrainstormNote({
+  kind: BrainstormKind.CONFLICT,
+  content: 'Let the chancellor weaponize the rumor as false testimony.',
+  characterId: 'Chancellor',
+  characterName: 'Chancellor',
+  scene,
+  intrusion,
+});
+assert.equal(memory.memory.brainstormNotes.length, 2);
+assert.equal(brainstorm.kind, BrainstormKind.CONFLICT);
+
 const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
 assert.match(markdown, /Do you really believe/);
 assert.match(markdown, /AI 接管连续性/);
 assert.match(markdown, /AI 异常察觉/);
 assert.match(markdown, /剧情分支标记/);
+assert.match(markdown, /角色对戏房间/);
+assert.match(markdown, /互动灵感捕获/);
+assert.match(markdown, /创作者脑暴笔记/);
 assert.match(markdown, /Forbidden bloodline reveal/);
 assert.match(markdown, /Status: consumed/);
 
@@ -90,17 +121,20 @@ assert.match(creatorPack, /Creator Pack/);
 assert.match(creatorPack, /冲突升级点/);
 assert.match(creatorPack, /剧情分支/);
 assert.match(creatorPack, /AI 剧本杀/);
+assert.match(creatorPack, /真人意图/);
 assert.match(creatorPack, /Forbidden bloodline reveal/);
 
 const organizedMaterial = writer.toOrganizedMaterial(memory.memory);
 assert.match(organizedMaterial, /素材整理/);
 assert.match(organizedMaterial, /AI 剧本杀/);
+assert.match(organizedMaterial, /互动灵感捕获/);
 assert.match(organizedMaterial, /剧情分支路线/);
 assert.match(organizedMaterial, /Forbidden bloodline reveal/);
 
 const englishOrganizedMaterial = writer.toOrganizedMaterial(memory.memory, { language: 'en' });
 assert.match(englishOrganizedMaterial, /Organized Material/);
 assert.match(englishOrganizedMaterial, /AI murder mystery/);
+assert.match(englishOrganizedMaterial, /Human Intent/);
 
 const characterPrompt = writer.toCharacterSheetPrompt(memory.memory);
 assert.match(characterPrompt, /Character Sheet Extraction Prompt/);

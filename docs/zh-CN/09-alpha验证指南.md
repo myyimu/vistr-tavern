@@ -10,7 +10,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| VistrTavern 版本 | `v0.4.0-alpha` |
+| VistrTavern 版本 | `v0.5.0-alpha` |
 | SillyTavern 版本 | TODO |
 | 浏览器 | TODO |
 | 系统 | TODO |
@@ -39,17 +39,21 @@ docs/assets/screenshots/vt-button.png
 2. 确认角色选择器能加载角色。
 3. 将 `语言` 在中文和英文之间切换一次，然后任选一种语言继续测试。
 4. 在三种场景类型之间切换一次。
-5. Awareness mode 保持 `AI 无感`。
-6. 对一个角色开始 intrusion。
-7. 记录一条真人异常发言。
-8. intrusion 激活期间让 AI 回复。
-9. 结束 intrusion。
-10. 确认 Debug 中出现 pending continuity handoff。
-11. 触发下一次生成。
-12. 确认 Debug 显示 interceptor 被调用，并且 handoff 变为 consumed。
-13. 标记一个剧情分支。
-14. 确认分支出现在已保存剧情分支列表。
-15. 点击 `整理素材`，并导出 Markdown / JSON。
+5. 保存角色对戏房间信息。
+6. 填写真人意图字段。
+7. Awareness mode 保持 `AI 无感`。
+8. 对一个角色开始 intrusion。
+9. 记录一条真人异常发言。
+10. intrusion 激活期间让 AI 回复。
+11. 结束 intrusion。
+12. 捕获灵感。
+13. 保存一条创作者脑暴笔记。
+14. 确认 Debug 中出现 pending continuity handoff。
+15. 触发下一次生成。
+16. 确认 Debug 显示 interceptor 被调用，并且 handoff 变为 consumed。
+17. 标记一个剧情分支。
+18. 确认分支出现在已保存剧情分支列表。
+19. 点击 `整理素材`，并导出 Markdown / JSON。
 
 截图占位：
 

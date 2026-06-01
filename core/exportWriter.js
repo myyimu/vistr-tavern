@@ -18,12 +18,17 @@ export class ExportWriter {
     const handoffs = memory.handoffs || [];
     const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
     const branchPoints = memory.branchPoints || [];
+    const inspirationCaptures = memory.inspirationCaptures || [];
+    const brainstormNotes = memory.brainstormNotes || [];
 
     return [
       `# ${memory.session.title}`,
       '',
       '## 核心命题',
       '真人异常源混入 AI 群像后，观察并记录它如何改变戏剧张力、人物关系和世界状态。',
+      '',
+      '## 角色对戏房间',
+      formatRoom(memory.session.room),
       '',
       '## 当前场景',
       activeScene ? `- 场景：${activeScene.name}` : '- 场景：未设置',
@@ -47,6 +52,12 @@ export class ExportWriter {
       '',
       '## 剧情分支标记',
       branchPoints.length ? branchPoints.map(formatBranchPoint).join('\n\n') : '- 暂无剧情分支标记',
+      '',
+      '## 互动灵感捕获',
+      inspirationCaptures.length ? inspirationCaptures.map(formatInspirationCapture).join('\n\n') : '- 暂无互动灵感捕获',
+      '',
+      '## 创作者脑暴笔记',
+      brainstormNotes.length ? brainstormNotes.map(formatBrainstormNote).join('\n') : '- 暂无脑暴笔记',
       '',
       '## 高张力对话',
       highTensionMessages.length ? highTensionMessages.map(formatMessage).join('\n') : '- 暂无高张力对话',
@@ -75,6 +86,8 @@ export class ExportWriter {
     const aiReactions = memory.messages.filter((message) => message.controller === Controller.AI && message.intrusionId);
     const handoffs = memory.handoffs || [];
     const branchPoints = memory.branchPoints || [];
+    const inspirationCaptures = memory.inspirationCaptures || [];
+    const brainstormNotes = memory.brainstormNotes || [];
     const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
     const profile = materialProfile(memory.session.scenarioPreset);
     const conflictHooks = [
@@ -95,6 +108,11 @@ export class ExportWriter {
       '## 真人异常素材',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
       '',
+      '## 真人意图 / 对抗感',
+      memory.intrusions.some((intrusion) => intrusion.humanIntent)
+        ? memory.intrusions.filter((intrusion) => intrusion.humanIntent).map(formatHumanIntent).join('\n\n')
+        : '- 暂无真人意图记录',
+      '',
       '## AI 误读 / 抵抗 / 修复',
       aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无 AI 反应',
       '',
@@ -106,6 +124,12 @@ export class ExportWriter {
       '',
       '## AI 异常察觉',
       awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- 暂无 AI 异常察觉事件',
+      '',
+      '## 互动灵感捕获',
+      inspirationCaptures.length ? inspirationCaptures.map(formatInspirationCapture).join('\n\n') : '- 暂无互动灵感捕获',
+      '',
+      '## 创作者脑暴空间',
+      brainstormNotes.length ? brainstormNotes.map(formatBrainstormNote).join('\n') : '- 暂无脑暴笔记',
       '',
       '## 可继续写作的钩子',
       branchPoints.length
@@ -126,6 +150,8 @@ export class ExportWriter {
     const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
     const branchPoints = memory.branchPoints || [];
     const handoffs = memory.handoffs || [];
+    const inspirationCaptures = memory.inspirationCaptures || [];
+    const brainstormNotes = memory.brainstormNotes || [];
     const profile = materialProfile(memory.session.scenarioPreset);
     const conflictHooks = uniqueItems([
       ...memory.disturbanceEvents.filter((event) => event.severity >= 3).map((event) => event.summary),
@@ -143,11 +169,18 @@ export class ExportWriter {
         '## Scenario Package',
         `- Preset: ${profile.enName}`,
         `- Focus: ${profile.enFocus}`,
+        `- Room worldview: ${memory.session.room?.worldview || 'not set'}`,
+        `- Room background: ${memory.session.room?.background || 'not set'}`,
         activeScene ? `- Active scene: ${activeScene.name}` : '- Active scene: not set',
         activeScene ? `- Mood / tension: ${activeScene.mood || 'not set'} / ${activeScene.tension}` : '- Mood / tension: not set',
         '',
         '## Human Anomaly Lines',
         humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- None recorded',
+        '',
+        '## Human Intent / Confrontation',
+        memory.intrusions.some((intrusion) => intrusion.humanIntent)
+          ? memory.intrusions.filter((intrusion) => intrusion.humanIntent).map(formatHumanIntent).join('\n\n')
+          : '- No human intent recorded',
         '',
         '## AI Reactions',
         aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- None recorded',
@@ -164,6 +197,12 @@ export class ExportWriter {
         '## Awareness Material',
         awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- No anomaly awareness events',
         '',
+        '## Inspiration Captures',
+        inspirationCaptures.length ? inspirationCaptures.map(formatInspirationCapture).join('\n\n') : '- No inspiration captures',
+        '',
+        '## Creator Brainstorm Notes',
+        brainstormNotes.length ? brainstormNotes.map(formatBrainstormNote).join('\n') : '- No brainstorm notes',
+        '',
         '## Next Writing Moves',
         continuationHooks.length
           ? continuationHooks.map((hook) => `- ${hook}`).join('\n')
@@ -178,11 +217,18 @@ export class ExportWriter {
       '## 场景包装',
       `- 类型：${profile.zhName}`,
       `- 整理重点：${profile.zhFocus}`,
+      `- 房间世界观：${memory.session.room?.worldview || '未设置'}`,
+      `- 剧情背景：${memory.session.room?.background || '未设置'}`,
       activeScene ? `- 当前场景：${activeScene.name}` : '- 当前场景：未设置',
       activeScene ? `- 氛围 / 张力：${activeScene.mood || '未设置'} / ${activeScene.tension}` : '- 氛围 / 张力：未设置',
       '',
       '## 真人异常发言',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
+      '',
+      '## 真人意图 / 对抗感',
+      memory.intrusions.some((intrusion) => intrusion.humanIntent)
+        ? memory.intrusions.filter((intrusion) => intrusion.humanIntent).map(formatHumanIntent).join('\n\n')
+        : '- 暂无真人意图记录',
       '',
       '## AI 反应',
       aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无 AI 反应',
@@ -199,6 +245,12 @@ export class ExportWriter {
       '## 异常察觉素材',
       awarenessEvents.length ? awarenessEvents.map(formatAwarenessEvent).join('\n') : '- 暂无 AI 异常察觉事件',
       '',
+      '## 互动灵感捕获',
+      inspirationCaptures.length ? inspirationCaptures.map(formatInspirationCapture).join('\n\n') : '- 暂无互动灵感捕获',
+      '',
+      '## 创作者脑暴笔记',
+      brainstormNotes.length ? brainstormNotes.map(formatBrainstormNote).join('\n') : '- 暂无脑暴笔记',
+      '',
       '## 下一步可写方向',
       continuationHooks.length
         ? continuationHooks.map((hook) => `- ${hook}`).join('\n')
@@ -214,6 +266,7 @@ export class ExportWriter {
     const branchPoints = memory.branchPoints || [];
     const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
     const characters = memory.characters || [];
+    const inspirationCaptures = memory.inspirationCaptures || [];
 
     return [
       `# Character Sheet Extraction Prompt - ${memory.session.title}`,
@@ -243,6 +296,9 @@ export class ExportWriter {
       '',
       '## 真人异常发言',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
+      '',
+      '## 真人意图和灵感捕获',
+      inspirationCaptures.length ? inspirationCaptures.map(formatInspirationCapture).join('\n\n') : '- 暂无灵感捕获',
       '',
       '## AI 反应',
       aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无 AI 反应',
@@ -318,6 +374,46 @@ function formatBranchPoint(branch) {
   }
 
   return lines.join('\n');
+}
+
+function formatRoom(room = {}) {
+  return [
+    `- 世界观：${room.worldview || '未设置'}`,
+    `- 剧情背景：${room.background || '未设置'}`,
+    `- 可客串角色槽位：${room.roleSlots || '未设置'}`,
+    `- AI 世界维护规则：${room.aiWorldRules || '未设置'}`,
+  ].join('\n');
+}
+
+function formatHumanIntent(intrusion) {
+  const intent = intrusion.humanIntent;
+  if (!intent) {
+    return `### ${intrusion.characterName || intrusion.characterId}\n- No human intent recorded.`;
+  }
+
+  return [
+    `### ${intrusion.characterName || intrusion.characterId}`,
+    `- Goal: ${intent.goal || 'not recorded'}`,
+    `- Target: ${intent.target || 'not recorded'}`,
+    `- Disruption: ${intent.disrupt || 'not recorded'}`,
+    `- Secret / reveal: ${intent.secret || 'not recorded'}`,
+  ].join('\n');
+}
+
+function formatInspirationCapture(capture) {
+  return [
+    `### ${capture.characterName || capture.characterId}`,
+    `- Summary: ${capture.summary}`,
+    `- Why it broke routine: ${capture.antiRoutine}`,
+    `- Confrontation: ${capture.confrontation}`,
+    `- Relationship crack: ${capture.relationshipCrack}`,
+    '- Next directions:',
+    ...(capture.nextDirections?.length ? capture.nextDirections.map((item) => `  - ${item}`) : ['  - 暂无']),
+  ].join('\n');
+}
+
+function formatBrainstormNote(note) {
+  return `- [${note.kind}] ${note.characterName || note.characterId || 'general'}: ${note.content}`;
 }
 
 function materialProfile(preset) {

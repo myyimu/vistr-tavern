@@ -1,4 +1,4 @@
-import { AwarenessScope, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
+import { AwarenessScope, BrainstormKind, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
 
 export class NarrativeMemory {
   constructor(memory = createEmptyMemory()) {
@@ -157,6 +157,95 @@ export class NarrativeMemory {
     return branchPoint;
   }
 
+  updateRoom(roomInput = {}) {
+    const current = this.memory.session.room || {};
+    this.memory.session.room = {
+      worldview: roomInput.worldview?.trim?.() ?? current.worldview ?? '',
+      background: roomInput.background?.trim?.() ?? current.background ?? '',
+      roleSlots: roomInput.roleSlots?.trim?.() ?? current.roleSlots ?? '',
+      aiWorldRules: roomInput.aiWorldRules?.trim?.() ?? current.aiWorldRules ?? '',
+    };
+    this.memory.session.updatedAt = new Date().toISOString();
+    return this.memory.session.room;
+  }
+
+  recordBrainstormNote({
+    kind = BrainstormKind.SPARK,
+    content,
+    characterId = null,
+    characterName = null,
+    scene = null,
+    intrusion = null,
+  }) {
+    const trimmedContent = content?.trim();
+    if (!trimmedContent) {
+      return null;
+    }
+
+    const note = {
+      id: createId('brainstorm'),
+      sessionId: this.memory.session.id,
+      sceneId: scene?.id || this.memory.session.activeSceneId,
+      intrusionId: intrusion?.id || null,
+      characterId,
+      characterName,
+      kind: Object.values(BrainstormKind).includes(kind) ? kind : BrainstormKind.SPARK,
+      content: trimmedContent,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.memory.brainstormNotes.push(note);
+    return note;
+  }
+
+  captureInspiration({ intrusion = null, scene = null } = {}) {
+    const targetIntrusion = intrusion || latestEndedIntrusion(this.memory.intrusions);
+    if (!targetIntrusion?.id) {
+      return null;
+    }
+
+    const existing = this.memory.inspirationCaptures.find((capture) => capture.intrusionId === targetIntrusion.id);
+    if (existing) {
+      return existing;
+    }
+
+    const relatedMessages = this.memory.messages.filter((message) => message.intrusionId === targetIntrusion.id);
+    const humanMessages = relatedMessages.filter((message) => message.controller === Controller.HUMAN);
+    const aiReactions = relatedMessages.filter((message) => message.controller === Controller.AI);
+    const branchPoints = this.memory.branchPoints.filter((branch) => branch.intrusionId === targetIntrusion.id);
+    const intent = targetIntrusion.humanIntent || null;
+    const strongestHumanLine = humanMessages[0]?.content || '';
+    const summary = this.#inspirationSummary({ targetIntrusion, intent, humanMessages, aiReactions, branchPoints });
+
+    const capture = {
+      id: createId('inspiration'),
+      sessionId: this.memory.session.id,
+      sceneId: scene?.id || targetIntrusion.sceneId || this.memory.session.activeSceneId,
+      intrusionId: targetIntrusion.id,
+      characterId: targetIntrusion.characterId,
+      characterName: targetIntrusion.characterName || targetIntrusion.characterId,
+      humanIntent: intent,
+      anomalyLine: strongestHumanLine,
+      antiRoutine: this.#antiRoutineLine(intent, strongestHumanLine),
+      confrontation: this.#confrontationLine(intent, aiReactions),
+      relationshipCrack: this.#relationshipCrackLine(branchPoints, targetIntrusion),
+      nextDirections: this.#nextDirections({ targetIntrusion, intent, branchPoints, strongestHumanLine }),
+      summary,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.memory.inspirationCaptures.push(capture);
+    this.recordBrainstormNote({
+      kind: BrainstormKind.SPARK,
+      content: summary,
+      characterId: capture.characterId,
+      characterName: capture.characterName,
+      scene,
+      intrusion: targetIntrusion,
+    });
+    return capture;
+  }
+
   setScenarioPreset(preset) {
     if (!Object.values(ScenarioPreset).includes(preset)) {
       return this.memory.session.scenarioPreset;
@@ -279,6 +368,8 @@ export class NarrativeMemory {
       messages: memory.messages || [],
       disturbanceEvents: memory.disturbanceEvents || [],
       branchPoints: memory.branchPoints || [],
+      brainstormNotes: memory.brainstormNotes || [],
+      inspirationCaptures: memory.inspirationCaptures || [],
       relationshipDeltas: memory.relationshipDeltas || [],
       worldStateDeltas: memory.worldStateDeltas || [],
     };
@@ -305,6 +396,8 @@ export class NarrativeMemory {
       'Human-controlled character actions:',
       ...this.#formatHandoffMessages(humanMessages),
       '',
+      ...this.#formatHumanIntent(intrusion.humanIntent),
+      '',
       'AI reactions during the intrusion:',
       ...this.#formatHandoffMessages(aiReactions),
       '',
@@ -325,6 +418,20 @@ export class NarrativeMemory {
     }
 
     return messages.map((message) => `- ${message.speakerName}: ${message.content}`);
+  }
+
+  #formatHumanIntent(intent) {
+    if (!intent) {
+      return ['Human creative intent: not recorded.'];
+    }
+
+    return [
+      'Human creative intent:',
+      intent.goal ? `- Goal: ${intent.goal}` : '- Goal: not recorded',
+      intent.target ? `- Target: ${intent.target}` : '- Target: not recorded',
+      intent.disrupt ? `- Intended disruption: ${intent.disrupt}` : '- Intended disruption: not recorded',
+      intent.secret ? `- Secret / reveal: ${intent.secret}` : '- Secret / reveal: not recorded',
+    ];
   }
 
   #awarenessRule(awareness) {
@@ -426,4 +533,62 @@ export class NarrativeMemory {
 
     return `Observer AI characters may notice that ${name}'s recent behavior felt wrong, inconsistent, or hard to explain in-world.`;
   }
+
+  #inspirationSummary({ targetIntrusion, intent, humanMessages, aiReactions, branchPoints }) {
+    const name = targetIntrusion.characterName || targetIntrusion.characterId || 'The controlled character';
+    const intentLine = intent?.goal ? ` The human intent was to ${intent.goal}.` : '';
+    return `${name} became a live human anomaly for ${humanMessages.length} line(s), causing ${aiReactions.length} AI reaction(s) and ${branchPoints.length} branch point(s).${intentLine}`;
+  }
+
+  #antiRoutineLine(intent, strongestHumanLine) {
+    if (intent?.goal) {
+      return `The moment feels non-routine because a real human intent entered the role: ${intent.goal}`;
+    }
+
+    if (strongestHumanLine) {
+      return `The anomaly line resists the usual AI ensemble smoothness: ${strongestHumanLine}`;
+    }
+
+    return 'The controlled role briefly stopped behaving like a purely model-smoothed ensemble voice.';
+  }
+
+  #confrontationLine(intent, aiReactions) {
+    if (intent?.target) {
+      return `The cameo creates direct pressure toward ${intent.target}.`;
+    }
+
+    if (aiReactions.length) {
+      return `The AI ensemble had to answer the intrusion instead of continuing its prior rhythm.`;
+    }
+
+    return 'The confrontation is still latent; let the next AI response expose who resists the anomaly.';
+  }
+
+  #relationshipCrackLine(branchPoints, intrusion) {
+    if (branchPoints.length) {
+      return branchPoints.map((branch) => branch.summary).join(' / ');
+    }
+
+    const name = intrusion.characterName || intrusion.characterId || 'the controlled character';
+    return `Track who now distrusts, misreads, or follows ${name} after the human cameo.`;
+  }
+
+  #nextDirections({ targetIntrusion, intent, branchPoints, strongestHumanLine }) {
+    if (branchPoints.length) {
+      return branchPoints.flatMap((branch) => branch.options?.length ? branch.options : [branch.summary]).slice(0, 3);
+    }
+
+    const name = targetIntrusion.characterName || targetIntrusion.characterId || 'the controlled character';
+    return [
+      intent?.secret ? `Force the room to interpret the secret: ${intent.secret}` : `Ask another character what they think ${name} really meant.`,
+      strongestHumanLine ? `Turn the anomaly line into a rumor: ${strongestHumanLine}` : `Let an observer accuse ${name} of acting unlike themself.`,
+      intent?.disrupt ? `Push the disrupted relation further: ${intent.disrupt}` : 'Mark the first relationship crack as a branch point.',
+    ];
+  }
+}
+
+function latestEndedIntrusion(intrusions = []) {
+  return [...intrusions]
+    .filter((intrusion) => intrusion.endedAt)
+    .sort((left, right) => new Date(right.endedAt).getTime() - new Date(left.endedAt).getTime())[0] || null;
 }

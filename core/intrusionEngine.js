@@ -15,6 +15,7 @@ export class IntrusionEngine extends EventTarget {
     mode = ControlMode.INTRUSION,
     awareness = HandoffAwareness.NONE,
     awarenessScope = AwarenessScope.CONTROLLED,
+    humanIntent = null,
   }) {
     if (!characterId) {
       throw new Error('characterId is required to start an intrusion.');
@@ -30,6 +31,7 @@ export class IntrusionEngine extends EventTarget {
       controller: Controller.HUMAN,
       awareness,
       awarenessScope,
+      humanIntent: normalizeHumanIntent(humanIntent),
       startedAt: new Date(startedAtMs).toISOString(),
       endsAt: new Date(startedAtMs + durationMs).toISOString(),
       endedAt: null,
@@ -103,5 +105,20 @@ export class IntrusionEngine extends EventTarget {
   #emit(type, detail) {
     this.dispatchEvent(new CustomEvent(type, { detail }));
   }
+}
+
+function normalizeHumanIntent(intent) {
+  if (!intent || typeof intent !== 'object') {
+    return null;
+  }
+
+  const normalized = {
+    goal: intent.goal?.trim?.() || '',
+    target: intent.target?.trim?.() || '',
+    disrupt: intent.disrupt?.trim?.() || '',
+    secret: intent.secret?.trim?.() || '',
+  };
+
+  return Object.values(normalized).some(Boolean) ? normalized : null;
 }
 

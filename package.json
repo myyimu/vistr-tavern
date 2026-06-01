@@ -1,6 +1,6 @@
 {
   "name": "vistr-tavern",
-  "version": "0.4.0-alpha",
+  "version": "0.5.0-alpha",
   "description": "AI ensemble narrative disturbance extension for SillyTavern.",
   "type": "module",
   "private": true,

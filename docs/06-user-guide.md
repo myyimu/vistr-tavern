@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to install and test VistrTavern `v0.4.0-alpha`.
+This guide describes how to install and test VistrTavern `v0.5.0-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -95,7 +95,18 @@ Choose one of the three scenario presets:
 
 The preset affects Creator Pack and Organized Material output. It does not change SillyTavern's model settings.
 
-### 4. Set Scene and Tension
+### 4. Define the Roleplay Room
+
+Use `Roleplay Room` to describe the local co-creation space:
+
+- `Worldview`: the rules, genre, or setting.
+- `Plot background`: what is already happening in the room.
+- `Cameo role slots`: which roles a human guest can briefly play.
+- `AI world rules`: what the AI should maintain, such as continuity, NPC reactions, and world consequences.
+
+This is local creator metadata for exports and brainstorming. It does not create an online room yet.
+
+### 5. Set Scene and Tension
 
 Fill in:
 
@@ -107,7 +118,7 @@ Click `Save Scene`.
 
 These fields are saved into narrative memory and attached to later messages.
 
-### 5. Choose Intrusion Options
+### 6. Choose Intrusion Options
 
 Before starting an intrusion, choose:
 
@@ -130,13 +141,26 @@ Awareness target:
 
 For normal immersive testing, use `Anonymous` + `AI 无感` + `Controlled character`.
 
-### 6. Start Intrusion
+### 7. Add Human Intent
+
+Open `Human Intent` before starting an intrusion if you want to record why the human cameo exists.
+
+Useful prompts:
+
+- What does the human want to create?
+- Who should feel pressure?
+- What relationship or rule should be disrupted?
+- What secret or impossible knowledge might leak?
+
+Human Intent is saved as creator material and included in exports. It is not a fake AI message.
+
+### 8. Start Intrusion
 
 Click `Start Intrusion`.
 
 The selected character becomes human-controlled inside VistrTavern's state. This does not replace SillyTavern's normal chat UI. It marks the narrative control state and starts a timed intrusion window.
 
-### 7. Record a Human Anomaly Line
+### 9. Record a Human Anomaly Line
 
 Type a human-controlled line into `Human anomaly line`, then click `Record Human Line`.
 
@@ -156,7 +180,7 @@ This records a structured message with:
 
 It also creates a disturbance event.
 
-### 8. Let AI React
+### 10. Let AI React
 
 Continue the SillyTavern chat and let AI characters respond.
 
@@ -164,7 +188,7 @@ During an active intrusion window, VistrTavern attempts to capture AI responses 
 
 This part depends on SillyTavern runtime events and should be verified in your local environment.
 
-### 9. End Intrusion
+### 11. End Intrusion
 
 The intrusion can end in two ways:
 
@@ -173,7 +197,7 @@ The intrusion can end in two ways:
 
 When intrusion ends, VistrTavern returns the character to AI control and creates a continuity handoff.
 
-### 10. Continue the Chat
+### 12. Continue the Chat
 
 On the next generation, VistrTavern attempts to inject the pending continuity handoff through SillyTavern's `generate_interceptor`.
 
@@ -266,6 +290,33 @@ It collects:
 
 Click `Copy Material` to place the generated material on the clipboard, or `Export Organized Material` to download it as Markdown.
 
+## Inspiration Capture
+
+After an intrusion ends, click `Capture Inspiration`.
+
+VistrTavern will summarize:
+
+- why the cameo felt less routine than normal AI ensemble output
+- what confrontation it created
+- which relationship crack or branch route became visible
+- three possible next writing moves
+
+This is designed for the moment when a real person briefly made a role feel like a separate will instead of another voice from the same model.
+
+## Creator Brainstorm Space
+
+Use `Creator Brainstorm Space` for private notes that should not enter the SillyTavern chat.
+
+Note types:
+
+- `Spark`
+- `Character drift`
+- `Conflict escalation`
+- `Writable scene`
+- `Next cameo`
+
+Brainstorm notes are included in exports and Creator Pack output.
+
 ## Exporting
 
 Click:
@@ -279,11 +330,15 @@ Click:
 Markdown export includes:
 
 - current scene
+- roleplay room setup
 - intrusion timeline
+- human intent
 - human anomaly lines
 - AI reactions
 - AI recovery continuity handoffs
 - AI anomaly awareness events
+- inspiration captures
+- creator brainstorm notes
 - branch points
 - high-tension dialogue
 - disturbance events
@@ -292,7 +347,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.4.0-alpha`, a successful test means:
+For `v0.5.0-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -306,6 +361,9 @@ For `v0.4.0-alpha`, a successful test means:
 - the panel can switch between English and Chinese
 - scenario preset changes persist and affect organized material
 - saved branch points are visible in the panel
+- roleplay room metadata can be saved
+- Human Intent is included in handoff/export material
+- Inspiration Capture and Creator Brainstorm notes appear in exports
 
 ## Troubleshooting
 
@@ -336,7 +394,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.4.0-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.5.0-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

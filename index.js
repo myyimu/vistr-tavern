@@ -100,6 +100,9 @@ function initialize() {
     onRecordHumanLine: recordHumanLine,
     onMarkBranchPoint: markBranchPoint,
     onSetScenarioPreset: setScenarioPreset,
+    onSaveRoom: saveRoom,
+    onCaptureInspiration: captureInspiration,
+    onSaveBrainstormNote: saveBrainstormNote,
     onSaveScene: saveScene,
     onCopyLatestHandoff: copyLatestHandoff,
     onExportMarkdown: () => exportWriter.toMarkdown(narrativeMemory.memory),
@@ -242,6 +245,52 @@ async function markBranchPoint({ characterId, characterName, title, type, summar
 async function setScenarioPreset(preset) {
   narrativeMemory.setScenarioPreset(preset);
   await persist();
+}
+
+async function saveRoom(roomInput) {
+  narrativeMemory.updateRoom(roomInput);
+  await persist();
+}
+
+async function captureInspiration(characterId = null) {
+  const activeScene = sceneManager.getActiveScene();
+  const intrusion = latestIntrusionForCharacter(characterId);
+  const capture = narrativeMemory.captureInspiration({ intrusion, scene: activeScene });
+  if (!capture) {
+    return null;
+  }
+
+  narrativeMemory.recordDisturbanceEvent({
+    type: 'inspiration_captured',
+    severity: 2,
+    summary: `Creator captured interaction inspiration from ${capture.characterName || capture.characterId}.`,
+    scene: activeScene,
+    intrusion,
+    characterId: capture.characterId,
+  });
+
+  await persist();
+  return capture;
+}
+
+async function saveBrainstormNote({ kind, content, characterId, characterName }) {
+  const activeScene = sceneManager.getActiveScene();
+  const intrusion = latestIntrusionForCharacter(characterId);
+  const note = narrativeMemory.recordBrainstormNote({
+    kind,
+    content,
+    characterId,
+    characterName,
+    scene: activeScene,
+    intrusion,
+  });
+
+  if (!note) {
+    return null;
+  }
+
+  await persist();
+  return note;
 }
 
 async function captureAiMessage(eventData) {
@@ -411,6 +460,9 @@ function getState() {
     scenarioPreset: Object.values(ScenarioPreset).includes(narrativeMemory.memory.session.scenarioPreset)
       ? narrativeMemory.memory.session.scenarioPreset
       : ScenarioPreset.WEB_NOVEL,
+    room: narrativeMemory.memory.session.room || {},
+    brainstormNotes: narrativeMemory.memory.brainstormNotes || [],
+    inspirationCaptures: narrativeMemory.memory.inspirationCaptures || [],
     awarenessEventCount: awarenessEvents().length,
     debug: getDebugState(),
   };
@@ -428,6 +480,8 @@ function getDebugState() {
     lastInjectedHandoff: summarizeHandoff(latestBy(handoffs, 'lastInjectedAt')),
     lastConsumedHandoff: summarizeHandoff(latestBy(handoffs, 'consumedAt')),
     awarenessEventCount: awarenessEvents().length,
+    brainstormNoteCount: narrativeMemory?.memory?.brainstormNotes?.length || 0,
+    inspirationCaptureCount: narrativeMemory?.memory?.inspirationCaptures?.length || 0,
     lastCapturedAiMessage: runtimeDebug.lastCapturedAiMessage,
     lastInterceptorCallAt: runtimeDebug.lastInterceptorCallAt,
     lastInjectionResult: runtimeDebug.lastInjectionResult,

@@ -16,11 +16,19 @@ Do not store only raw chat messages. Every important record should carry control
   "updatedAt": "2026-05-27T12:30:00.000Z",
   "mode": "immersion",
   "activeSceneId": "scene_001",
-  "scenarioPreset": "web_novel"
+  "scenarioPreset": "web_novel",
+  "room": {
+    "worldview": "A court where rumors can become law.",
+    "background": "The king may already be dead.",
+    "roleSlots": "Princess, chancellor, envoy",
+    "aiWorldRules": "AI maintains continuity while humans create rupture."
+  }
 }
 ```
 
 `scenarioPreset` controls creator-facing organization and export focus. Supported values are `web_novel`, `murder_mystery`, and `virtual_theater`.
+
+`room` describes the local roleplay scene space. It is not an online room yet; it records worldview, plot background, cameo role slots, and AI world-maintenance rules for export and brainstorming.
 
 ## Character
 
@@ -60,6 +68,12 @@ Do not store only raw chat messages. Every important record should carry control
   "mode": "intrusion",
   "visibility": "anonymous",
   "controller": "human",
+  "humanIntent": {
+    "goal": "force a treasonous suspicion into the banquet",
+    "target": "Chancellor",
+    "disrupt": "break court trust",
+    "secret": "the king may be dead"
+  },
   "startedAt": "2026-05-27T12:05:00.000Z",
   "endsAt": "2026-05-27T12:10:00.000Z",
   "endedAt": "2026-05-27T12:10:03.000Z",
@@ -164,6 +178,40 @@ Branch points mark creator-facing story routes opened by an intrusion. They do n
 }
 ```
 
+## Inspiration Capture
+
+```json
+{
+  "id": "inspiration_001",
+  "sessionId": "session_001",
+  "intrusionId": "intrusion_001",
+  "characterId": "char_eileen",
+  "characterName": "Eileen",
+  "antiRoutine": "The moment feels non-routine because a real human intent entered the role.",
+  "confrontation": "The cameo creates direct pressure toward Chancellor.",
+  "relationshipCrack": "Court trust is damaged.",
+  "nextDirections": [
+    "Turn the anomaly line into a rumor.",
+    "Let an observer accuse Eileen.",
+    "Mark the first relationship crack."
+  ],
+  "createdAt": "2026-05-27T12:16:00.000Z"
+}
+```
+
+## Brainstorm Note
+
+```json
+{
+  "id": "brainstorm_001",
+  "sessionId": "session_001",
+  "kind": "conflict",
+  "content": "Let the chancellor weaponize the rumor as false testimony.",
+  "characterId": "char_chancellor",
+  "createdAt": "2026-05-27T12:17:00.000Z"
+}
+```
+
 Branch types:
 
 - `relationship`
@@ -216,6 +264,9 @@ Every export should include:
 - AI recovery continuity handoffs.
 - AI anomaly awareness events.
 - Branch points.
+- Human intent.
+- Inspiration captures.
+- Creator brainstorm notes.
 - Creator Pack Markdown for reusable writing material, conflict hooks, branch routes, and continuity handoff context.
 - Organized Material Markdown for scenario-focused anomaly lines, AI reactions, conflict hooks, branch routes, awareness material, and next writing moves.
 - High-tension dialogue.
