@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.4.0-alpha
+
+Creator workspace release.
+
+### Added
+
+- Scenario presets for `web novel / script`, `AI murder mystery`, and `virtual theater`.
+- Material Workbench in the VT panel for one-click organized creator material.
+- Read-only saved branch point list in the VT panel.
+- Organized Material Markdown export with anomaly lines, AI reactions, conflict hooks, branch routes, awareness material, and next writing moves.
+
+### Changed
+
+- Documentation now treats SillyTavern GitHub URL installation as the recommended install path, with manual folder and release zip install as fallbacks.
+- Creator Pack export now includes the selected scenario package focus.
+- Extension version updated to `0.4.0-alpha`.
+
 ## v0.3.1-alpha
 
 Small usability patch.

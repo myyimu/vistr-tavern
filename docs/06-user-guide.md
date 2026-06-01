@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to manually install and test VistrTavern `v0.3.1-alpha`.
+This guide describes how to install and test VistrTavern `v0.4.0-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -20,9 +20,18 @@ install extension
 - A chat with at least one character.
 - This repository placed inside the SillyTavern user extensions folder.
 
-The extension currently targets manual local installation or release zip installation. Marketplace-style installation and automatic updates are not the focus of `v0.3.1-alpha`.
+The recommended path is SillyTavern's GitHub extension installer. Manual folder installation and release zip installation remain useful fallbacks for local testing.
 
-## Manual Installation
+## GitHub Installation
+
+1. Open SillyTavern's extensions panel.
+2. Use the GitHub extension installer.
+3. Paste `https://github.com/xiaoke5211-star/vistr-tavern`.
+4. Install the extension.
+5. Restart SillyTavern or reload the browser UI.
+6. Open a chat and look for the floating `VT` button.
+
+## Manual Folder Installation
 
 1. Clone or download this repository.
 2. Rename the folder to `vistr-tavern` if needed.
@@ -62,6 +71,7 @@ The panel shows:
 - pending handoff count
 - debug status
 - character selector
+- scenario preset selector
 - intrusion controls
 - scene fields
 - human anomaly input
@@ -75,7 +85,17 @@ Choose the character that will be temporarily controlled by a human.
 
 The character list is read from the current SillyTavern context. If it is empty, reload the chat or confirm that SillyTavern exposes character data to extensions.
 
-### 3. Set Scene and Tension
+### 3. Select a Scenario Preset
+
+Choose one of the three scenario presets:
+
+- `Web novel / script`: emphasizes conflict escalation, reversals, relationship cracks, and next-chapter hooks.
+- `AI murder mystery`: emphasizes clue contamination, testimony conflict, identity misdirection, and suspicious motives.
+- `Virtual theater`: emphasizes performance failure, character self-awareness, reality doubt, and stage-rule fractures.
+
+The preset affects Creator Pack and Organized Material output. It does not change SillyTavern's model settings.
+
+### 4. Set Scene and Tension
 
 Fill in:
 
@@ -87,7 +107,7 @@ Click `Save Scene`.
 
 These fields are saved into narrative memory and attached to later messages.
 
-### 4. Choose Intrusion Options
+### 5. Choose Intrusion Options
 
 Before starting an intrusion, choose:
 
@@ -110,13 +130,13 @@ Awareness target:
 
 For normal immersive testing, use `Anonymous` + `AI 无感` + `Controlled character`.
 
-### 5. Start Intrusion
+### 6. Start Intrusion
 
 Click `Start Intrusion`.
 
 The selected character becomes human-controlled inside VistrTavern's state. This does not replace SillyTavern's normal chat UI. It marks the narrative control state and starts a timed intrusion window.
 
-### 6. Record a Human Anomaly Line
+### 7. Record a Human Anomaly Line
 
 Type a human-controlled line into `Human anomaly line`, then click `Record Human Line`.
 
@@ -136,7 +156,7 @@ This records a structured message with:
 
 It also creates a disturbance event.
 
-### 7. Let AI React
+### 8. Let AI React
 
 Continue the SillyTavern chat and let AI characters respond.
 
@@ -144,7 +164,7 @@ During an active intrusion window, VistrTavern attempts to capture AI responses 
 
 This part depends on SillyTavern runtime events and should be verified in your local environment.
 
-### 8. End Intrusion
+### 9. End Intrusion
 
 The intrusion can end in two ways:
 
@@ -153,7 +173,7 @@ The intrusion can end in two ways:
 
 When intrusion ends, VistrTavern returns the character to AI control and creates a continuity handoff.
 
-### 9. Continue the Chat
+### 10. Continue the Chat
 
 On the next generation, VistrTavern attempts to inject the pending continuity handoff through SillyTavern's `generate_interceptor`.
 
@@ -228,12 +248,31 @@ Use `Branch Point` when an intrusion opens a route worth developing later.
 
 Branch points are saved into local memory. They appear in JSON export, Markdown export, and Creator Pack export. They do not create chat messages.
 
+The saved Branch Points list in the panel is read-only for now. Use it to confirm which routes have already been marked before exporting.
+
+## Material Workbench
+
+Use `Organize Material` when you want a compact creator-facing summary from the current memory.
+
+It collects:
+
+- human anomaly lines
+- AI reactions
+- conflict hooks
+- character / relationship drift
+- branch routes
+- anomaly awareness material
+- next writing moves based on the selected scenario preset
+
+Click `Copy Material` to place the generated material on the clipboard, or `Export Organized Material` to download it as Markdown.
+
 ## Exporting
 
 Click:
 
 - `Export Markdown` for creator-facing story material.
 - `Export Creator Pack` for a condensed writing pack with anomaly lines, AI reactions, conflict hooks, branch routes, awareness events, and handoff context.
+- `Export Organized Material` from the Material Workbench for a scenario-focused creator summary.
 - `Export Character Prompt` for a copyable prompt that asks an external model to extract character sheets and persona changes.
 - `Export JSON` for raw structured memory.
 
@@ -253,7 +292,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.3.1-alpha`, a successful test means:
+For `v0.4.0-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -265,12 +304,14 @@ For `v0.3.1-alpha`, a successful test means:
 - Markdown and JSON export contain the recorded material
 - Creator Pack and Character Prompt exports download successfully
 - the panel can switch between English and Chinese
+- scenario preset changes persist and affect organized material
+- saved branch points are visible in the panel
 
 ## Troubleshooting
 
 ### The extension does not install from GitHub
 
-If the repository is private, SillyTavern may not be able to pull it. Use manual installation or make the repository public.
+If the repository is private or GitHub access fails, SillyTavern may not be able to pull it. Use manual folder installation or release zip installation as a fallback.
 
 ### The `VT` button does not appear
 
@@ -295,7 +336,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.3.1-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.4.0-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

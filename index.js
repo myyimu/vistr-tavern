@@ -3,7 +3,7 @@ import { IntrusionEngine } from './core/intrusionEngine.js';
 import { NarrativeMemory } from './core/narrativeMemory.js';
 import { SceneManager } from './core/sceneManager.js';
 import { StorageAdapter } from './data/storageAdapter.js';
-import { Controller, MODULE_NAME, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
+import { Controller, MODULE_NAME, ScenarioPreset, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
 import { EXTENSION_VERSION } from './data/version.js';
 import { UiOverlay } from './ui/uiOverlay.js';
 
@@ -99,10 +99,12 @@ function initialize() {
     onEndIntrusion: endIntrusion,
     onRecordHumanLine: recordHumanLine,
     onMarkBranchPoint: markBranchPoint,
+    onSetScenarioPreset: setScenarioPreset,
     onSaveScene: saveScene,
     onCopyLatestHandoff: copyLatestHandoff,
     onExportMarkdown: () => exportWriter.toMarkdown(narrativeMemory.memory),
     onExportCreatorPack: () => exportWriter.toCreatorPack(narrativeMemory.memory),
+    onExportOrganizedMaterial: (language) => exportWriter.toOrganizedMaterial(narrativeMemory.memory, { language }),
     onExportCharacterSheetPrompt: () => exportWriter.toCharacterSheetPrompt(narrativeMemory.memory),
     onExportJson: () => exportWriter.toJson(narrativeMemory.memory),
     getState,
@@ -235,6 +237,11 @@ async function markBranchPoint({ characterId, characterName, title, type, summar
 
   await persist();
   return branchPoint;
+}
+
+async function setScenarioPreset(preset) {
+  narrativeMemory.setScenarioPreset(preset);
+  await persist();
 }
 
 async function captureAiMessage(eventData) {
@@ -400,6 +407,10 @@ function getState() {
     intrusionCount: narrativeMemory.memory.intrusions.length,
     pendingHandoffCount: narrativeMemory.memory.handoffs.filter((handoff) => !handoff.consumedAt).length,
     branchPointCount: narrativeMemory.memory.branchPoints?.length || 0,
+    branchPoints: narrativeMemory.memory.branchPoints || [],
+    scenarioPreset: Object.values(ScenarioPreset).includes(narrativeMemory.memory.session.scenarioPreset)
+      ? narrativeMemory.memory.session.scenarioPreset
+      : ScenarioPreset.WEB_NOVEL,
     awarenessEventCount: awarenessEvents().length,
     debug: getDebugState(),
   };

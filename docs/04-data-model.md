@@ -15,9 +15,12 @@ Do not store only raw chat messages. Every important record should carry control
   "createdAt": "2026-05-27T12:00:00.000Z",
   "updatedAt": "2026-05-27T12:30:00.000Z",
   "mode": "immersion",
-  "activeSceneId": "scene_001"
+  "activeSceneId": "scene_001",
+  "scenarioPreset": "web_novel"
 }
 ```
+
+`scenarioPreset` controls creator-facing organization and export focus. Supported values are `web_novel`, `murder_mystery`, and `virtual_theater`.
 
 ## Character
 
@@ -214,6 +217,7 @@ Every export should include:
 - AI anomaly awareness events.
 - Branch points.
 - Creator Pack Markdown for reusable writing material, conflict hooks, branch routes, and continuity handoff context.
+- Organized Material Markdown for scenario-focused anomaly lines, AI reactions, conflict hooks, branch routes, awareness material, and next writing moves.
 - High-tension dialogue.
 - AI reactions to the intrusion.
 - Relationship changes.

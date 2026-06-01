@@ -1,4 +1,4 @@
-import { AwarenessScope, BranchType, Controller, HandoffAwareness, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
+import { AwarenessScope, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
 
 export class NarrativeMemory {
   constructor(memory = createEmptyMemory()) {
@@ -155,6 +155,16 @@ export class NarrativeMemory {
 
     this.memory.branchPoints.push(branchPoint);
     return branchPoint;
+  }
+
+  setScenarioPreset(preset) {
+    if (!Object.values(ScenarioPreset).includes(preset)) {
+      return this.memory.session.scenarioPreset;
+    }
+
+    this.memory.session.scenarioPreset = preset;
+    this.memory.session.updatedAt = new Date().toISOString();
+    return preset;
   }
 
   recordContinuityHandoff(intrusion) {

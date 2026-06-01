@@ -1,20 +1,22 @@
-import { AwarenessScope, BranchType, ControlMode, HandoffAwareness, Visibility } from '../data/schema.js';
+import { AwarenessScope, BranchType, ControlMode, HandoffAwareness, ScenarioPreset, Visibility } from '../data/schema.js';
 
 const LANGUAGE_STORAGE_KEY = 'vistr-tavern:language';
 const FIRST_RUN_STORAGE_KEY = 'vistr-tavern:first-run-dismissed';
 const DEFAULT_LANGUAGE = 'zh-CN';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
     this.onRecordHumanLine = onRecordHumanLine;
     this.onMarkBranchPoint = onMarkBranchPoint;
+    this.onSetScenarioPreset = onSetScenarioPreset;
     this.onSaveScene = onSaveScene;
     this.onCopyLatestHandoff = onCopyLatestHandoff;
     this.onExportMarkdown = onExportMarkdown;
     this.onExportCreatorPack = onExportCreatorPack;
+    this.onExportOrganizedMaterial = onExportOrganizedMaterial;
     this.onExportCharacterSheetPrompt = onExportCharacterSheetPrompt;
     this.onExportJson = onExportJson;
     this.getState = getState;
@@ -47,6 +49,8 @@ export class UiOverlay {
     const status = this.root.querySelector('[data-vt-status]');
     const debugPanel = this.root.querySelector('[data-vt-debug]');
     const guide = this.root.querySelector('[data-vt-first-run]');
+    const scenarioSelect = this.root.querySelector('[data-vt-scenario]');
+    const branchList = this.root.querySelector('[data-vt-branch-list]');
 
     const selectedValue = characterSelect.value;
     characterSelect.innerHTML = '';
@@ -73,6 +77,8 @@ export class UiOverlay {
       handoffs: state.pendingHandoffCount || 0,
     });
     guide.hidden = Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
+    scenarioSelect.value = state.scenarioPreset || ScenarioPreset.WEB_NOVEL;
+    branchList.innerHTML = formatBranchList(state.branchPoints || [], this.language);
 
     debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {}, this.language);
   }
@@ -96,6 +102,11 @@ export class UiOverlay {
     this.root.querySelector('[data-vt-language]').addEventListener('change', (event) => {
       this.language = normalizeLanguage(event.target.value);
       writeLocalStorage(LANGUAGE_STORAGE_KEY, this.language);
+      this.#render(false);
+    });
+
+    this.root.querySelector('[data-vt-scenario]').addEventListener('change', async (event) => {
+      await this.onSetScenarioPreset?.(event.target.value);
       this.#render(false);
     });
 
@@ -164,6 +175,34 @@ export class UiOverlay {
 
     this.root.querySelector('[data-vt-export-creator-pack]').addEventListener('click', () => {
       this.#download('vistr-tavern-creator-pack.md', this.onExportCreatorPack(), 'text/markdown');
+    });
+
+    this.root.querySelector('[data-vt-organize-material]').addEventListener('click', () => {
+      const output = this.root.querySelector('[data-vt-material-output]');
+      output.value = this.onExportOrganizedMaterial?.(this.language) || '';
+      this.root.querySelector('[data-vt-material-status]').textContent = this.#t('materialOrganized');
+    });
+
+    this.root.querySelector('[data-vt-copy-material]').addEventListener('click', async () => {
+      const status = this.root.querySelector('[data-vt-material-status]');
+      const output = this.root.querySelector('[data-vt-material-output]');
+      const content = output.value || this.onExportOrganizedMaterial?.(this.language) || '';
+      if (!content) {
+        status.textContent = this.#t('noMaterialAvailable');
+        return;
+      }
+
+      try {
+        await copyText(content);
+        status.textContent = this.#t('materialCopied');
+      } catch (error) {
+        status.textContent = this.#t('copyFailed');
+        console.warn('[VistrTavern] Failed to copy organized material.', error);
+      }
+    });
+
+    this.root.querySelector('[data-vt-export-material]').addEventListener('click', () => {
+      this.#download('vistr-tavern-organized-material.md', this.onExportOrganizedMaterial?.(this.language) || '', 'text/markdown');
     });
 
     this.root.querySelector('[data-vt-export-character-prompt]').addEventListener('click', () => {
@@ -288,6 +327,15 @@ export class UiOverlay {
           <select data-vt-character></select>
         </div>
 
+        <label class="vt-field">
+          ${this.#t('scenarioPreset')}
+          <select data-vt-scenario>
+            <option value="${ScenarioPreset.WEB_NOVEL}">${this.#t('scenarioWebNovel')}</option>
+            <option value="${ScenarioPreset.MURDER_MYSTERY}">${this.#t('scenarioMurderMystery')}</option>
+            <option value="${ScenarioPreset.VIRTUAL_THEATER}">${this.#t('scenarioVirtualTheater')}</option>
+          </select>
+        </label>
+
         <div class="vt-grid">
           <label>
             ${this.#t('durationMin')}
@@ -382,6 +430,23 @@ export class UiOverlay {
         <button type="button" data-vt-mark-branch>${this.#t('markBranchPoint')}</button>
         <span class="vt-copy-status" data-vt-branch-status></span>
 
+        <details class="vt-branch-list" open>
+          <summary>${this.#t('savedBranchPoints')}</summary>
+          <div data-vt-branch-list></div>
+        </details>
+
+        <hr>
+
+        <strong>${this.#t('materialWorkbench')}</strong>
+        <p class="vt-help">${this.#t('materialWorkbenchHelp')}</p>
+        <textarea rows="8" readonly data-vt-material-output placeholder="${this.#t('materialPlaceholder')}"></textarea>
+        <div class="vt-actions">
+          <button type="button" data-vt-organize-material>${this.#t('organizeMaterial')}</button>
+          <button type="button" data-vt-copy-material>${this.#t('copyMaterial')}</button>
+        </div>
+        <button type="button" data-vt-export-material>${this.#t('exportOrganizedMaterial')}</button>
+        <span class="vt-copy-status" data-vt-material-status></span>
+
         <hr>
 
         <strong>${this.#t('activeIntrusions')}</strong>
@@ -456,6 +521,29 @@ function formatDebugState(debug, language) {
   return rows
     .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
     .join('');
+}
+
+function formatBranchList(branchPoints, language) {
+  if (!branchPoints.length) {
+    return `<p class="vt-help">${escapeHtml(translate(language, 'noSavedBranchPoints'))}</p>`;
+  }
+
+  return branchPoints.map((branch) => {
+    const options = branch.options?.length
+      ? `<ul>${branch.options.map((option) => `<li>${escapeHtml(option)}</li>`).join('')}</ul>`
+      : '';
+    return [
+      '<article class="vt-branch-card">',
+      `<strong>${escapeHtml(branch.title)}</strong>`,
+      `<span>${escapeHtml(translate(language, 'branchListMeta', {
+        type: branch.type,
+        character: branch.characterName || branch.characterId || translate(language, 'unknown'),
+      }))}</span>`,
+      `<p>${escapeHtml(branch.summary)}</p>`,
+      options,
+      '</article>',
+    ].join('');
+  }).join('');
 }
 
 function formatCompatibility(compatibility, language) {
@@ -557,6 +645,7 @@ const I18N = {
     branchPoint: 'Branch Point',
     branchRelationship: 'Relationship',
     branchRequired: 'Branch title and summary are required',
+    branchListMeta: '{type} · {character}',
     branchSummary: 'Branch summary',
     branchSummaryPlaceholder: 'What new route did this intrusion open?',
     branchWorldFracture: 'World fracture',
@@ -592,6 +681,7 @@ const I18N = {
     exportCreatorPack: 'Export Creator Pack',
     exportJson: 'Export JSON',
     exportMarkdown: 'Export Markdown',
+    exportOrganizedMaterial: 'Export Organized Material',
     firstRunFallback: 'Use Debug or Copy Latest Handoff if automatic injection is unclear.',
     firstRunFolder: 'Confirm this folder is named',
     firstRunRecord: 'Record a human anomaly line.',
@@ -607,10 +697,17 @@ const I18N = {
     latestHandoffCopied: 'Latest handoff copied',
     loading: 'loading',
     markBranchPoint: 'Mark Branch Point',
+    materialCopied: 'Organized material copied',
+    materialOrganized: 'Material organized',
+    materialPlaceholder: 'Click Organize Material to generate a creator-ready summary.',
+    materialWorkbench: 'Material Workbench',
+    materialWorkbenchHelp: 'Collect anomaly lines, AI reactions, conflict hooks, branch routes, and next writing moves from the current memory.',
     mood: 'Mood',
     moodPlaceholder: 'oppressive',
     noActiveIntrusion: 'No active intrusion',
     noHandoffAvailable: 'No handoff available',
+    noMaterialAvailable: 'No material available',
+    noSavedBranchPoints: 'No branch points marked',
     none: 'none',
     notCalled: 'not-called',
     ok: 'ok',
@@ -622,6 +719,13 @@ const I18N = {
     saveScene: 'Save Scene',
     scene: 'Scene',
     scenePlaceholder: 'Royal Banquet',
+    scenarioMurderMystery: 'AI murder mystery',
+    scenarioPreset: 'Scenario preset',
+    scenarioVirtualTheater: 'Virtual theater',
+    scenarioWebNovel: 'Web novel / script',
+    savedBranchPoints: 'Saved Branch Points',
+    copyMaterial: 'Copy Material',
+    organizeMaterial: 'Organize Material',
     startIntrusion: 'Start Intrusion',
     statusLine: '{mode} · {messages} messages · {intrusions} intrusions · {handoffs} pending handoffs',
     targetBoth: 'Both',
@@ -654,6 +758,7 @@ const I18N = {
     branchPoint: '剧情分支',
     branchRelationship: '关系线',
     branchRequired: '需要填写分支标题和说明',
+    branchListMeta: '{type} · {character}',
     branchSummary: '分支说明',
     branchSummaryPlaceholder: '这次 intrusion 打开了什么新路线？',
     branchWorldFracture: '世界观裂缝',
@@ -689,6 +794,7 @@ const I18N = {
     exportCreatorPack: '导出创作包',
     exportJson: '导出 JSON',
     exportMarkdown: '导出 Markdown',
+    exportOrganizedMaterial: '导出整理素材',
     firstRunFallback: '如果自动注入不明确，查看 Debug 或复制最新 Handoff。',
     firstRunFolder: '确认扩展目录名为',
     firstRunRecord: '记录一条真人异常发言。',
@@ -704,10 +810,17 @@ const I18N = {
     latestHandoffCopied: '最新 Handoff 已复制',
     loading: '加载中',
     markBranchPoint: '标记剧情分支',
+    materialCopied: '整理素材已复制',
+    materialOrganized: '素材已整理',
+    materialPlaceholder: '点击“整理素材”生成创作者可用摘要。',
+    materialWorkbench: '素材工作台',
+    materialWorkbenchHelp: '从当前 memory 中整理异常发言、AI 反应、冲突钩子、分支路线和下一步可写方向。',
     mood: '氛围',
     moodPlaceholder: '压迫',
     noActiveIntrusion: '暂无进行中的接管',
     noHandoffAvailable: '暂无可复制的 handoff',
+    noMaterialAvailable: '暂无可用素材',
+    noSavedBranchPoints: '暂无已标记剧情分支',
     none: '无',
     notCalled: '未调用',
     ok: '正常',
@@ -719,6 +832,13 @@ const I18N = {
     saveScene: '保存场景',
     scene: '场景',
     scenePlaceholder: '王都宴会',
+    scenarioMurderMystery: 'AI 剧本杀',
+    scenarioPreset: '场景类型',
+    scenarioVirtualTheater: '虚拟剧场',
+    scenarioWebNovel: '网文剧本',
+    savedBranchPoints: '已保存剧情分支',
+    copyMaterial: '复制素材',
+    organizeMaterial: '整理素材',
     startIntrusion: '开始接管',
     statusLine: '{mode} · {messages} 条消息 · {intrusions} 次接管 · {handoffs} 个待处理 handoff',
     targetBoth: '两者',

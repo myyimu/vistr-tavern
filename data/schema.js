@@ -42,6 +42,12 @@ export const BranchType = Object.freeze({
   OTHER: 'other',
 });
 
+export const ScenarioPreset = Object.freeze({
+  WEB_NOVEL: 'web_novel',
+  MURDER_MYSTERY: 'murder_mystery',
+  VIRTUAL_THEATER: 'virtual_theater',
+});
+
 export function createId(prefix) {
   const random = Math.random().toString(36).slice(2, 10);
   return `${prefix}_${Date.now().toString(36)}_${random}`;
@@ -59,6 +65,7 @@ export function createEmptyMemory(now = new Date()) {
       updatedAt: createdAt,
       mode: ViewMode.IMMERSION,
       activeSceneId: null,
+      scenarioPreset: ScenarioPreset.WEB_NOVEL,
     },
     characters: [],
     scenes: [],

@@ -41,7 +41,7 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.3.1-alpha` 表示这个扩展可以通过手动文件夹或 release zip 本地安装测试。它还不适合扩展市场式安装、自动更新或大规模终端用户支持。
+`v0.4.0-alpha` 表示这个扩展可以通过 SillyTavern 的 GitHub 扩展安装、手动文件夹或 release zip 本地安装测试。它还不适合大规模终端用户支持。
 
 ## 已测试环境
 
@@ -49,7 +49,7 @@ AI 群像正常运行
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
-| `v0.3.1-alpha` | 等待公开验证 | TODO | TODO | TODO |
+| `v0.4.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
 
 ## 产出示例
 
@@ -79,6 +79,7 @@ VistrTavern 重点记录：
 - 临时真人接管状态。
 - 基于倒计时的 AI 自动恢复。
 - 场景和张力字段。
+- 网文剧本、AI 剧本杀、虚拟剧场三种场景类型。
 - 真人异常发言记录。
 - 入侵窗口内的 AI 反应捕获。
 - AI 接管连续性 handoff，用于保存“剧情已经被真人改变”的上下文。
@@ -88,8 +89,10 @@ VistrTavern 重点记录：
 - 手动 `Copy Latest Handoff` fallback。
 - Markdown 和 JSON 导出。
 - Creator Pack 导出，用于整理可复用写作素材、冲突钩子、分支路线和 handoff 上下文。
+- 素材工作台，一键整理创作者可用素材。
 - Character Sheet Prompt 导出，用于把记录交给外部模型整理人设。
 - 剧情分支标记，支持关系线、阴谋线、身份揭露、世界观裂缝、线索污染和情绪破裂等路线。
+- VT 面板内可回看已保存剧情分支。
 - VT 面板内置首次使用引导。
 - Debug 中显示兼容性快照。
 - 通过 `npm run package:zip` 生成 release zip 安装包。
@@ -113,9 +116,17 @@ npm run verify
 
 ## 安装形态
 
-这个仓库本身就是扩展目录。测试时可以把它放到 SillyTavern 的扩展目录下，目录名建议为 `vistr-tavern`。
+这个仓库本身就是扩展目录。
 
-手动安装：
+推荐 GitHub 安装：
+
+1. 打开 SillyTavern 的扩展面板。
+2. 使用 GitHub 扩展安装功能。
+3. 粘贴 `https://github.com/xiaoke5211-star/vistr-tavern`。
+4. 安装后重启 SillyTavern 或刷新网页界面。
+5. 打开一个聊天，确认页面上出现浮动的 `VT` 按钮。
+
+手动文件夹安装：
 
 1. 克隆或下载这个仓库。
 2. 如果需要，把目录名改成 `vistr-tavern`。

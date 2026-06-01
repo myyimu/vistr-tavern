@@ -41,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.3.1-alpha` means the extension can be installed manually or from a release zip for local testing. It is not ready for marketplace-style installation, automatic updates, or broad end-user support.
+`v0.4.0-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
 
 ## Tested Environments
 
@@ -49,7 +49,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.3.1-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.4.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 
@@ -79,6 +79,7 @@ VistrTavern records:
 - Temporary human intrusion state.
 - Timeout-based AI recovery.
 - Scene and tension fields.
+- Scenario presets for web novel/script drafting, AI murder mystery, and virtual theater.
 - Human anomaly line recording.
 - AI reaction capture during active intrusion windows.
 - AI recovery continuity handoff for preserving the context that the story has already been changed by the human.
@@ -88,8 +89,10 @@ VistrTavern records:
 - Manual `Copy Latest Handoff` fallback.
 - Markdown and JSON export.
 - Creator Pack export for reusable writing material, conflict hooks, branch routes, and handoff context.
+- Material Workbench for one-click organized creator material.
 - Character Sheet Prompt export for organizing role definitions with an external model.
 - Branch Point marking for relationship, conspiracy, identity, world-fracture, clue-contamination, and emotional rupture routes.
+- Read-only saved Branch Points list in the VT panel.
 - First-run guide inside the VT panel.
 - Compatibility snapshot in Debug.
 - Release zip packaging via `npm run package:zip`.
@@ -113,9 +116,17 @@ npm run verify
 
 ## Installation Shape
 
-This repository is structured as the extension folder itself. For local testing, place it under the SillyTavern extensions directory and name the folder `vistr-tavern`.
+This repository is structured as the extension folder itself.
 
-Manual install:
+Recommended GitHub install:
+
+1. Open SillyTavern's extensions panel.
+2. Use the GitHub extension installer.
+3. Paste `https://github.com/xiaoke5211-star/vistr-tavern`.
+4. Install, then restart SillyTavern or reload the web UI.
+5. Open a chat and look for the floating `VT` button.
+
+Manual folder install:
 
 1. Clone or download this repository.
 2. Rename the folder to `vistr-tavern` if needed.

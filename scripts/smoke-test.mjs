@@ -3,7 +3,7 @@ import { ExportWriter } from '../core/exportWriter.js';
 import { IntrusionEngine } from '../core/intrusionEngine.js';
 import { NarrativeMemory } from '../core/narrativeMemory.js';
 import { SceneManager } from '../core/sceneManager.js';
-import { AwarenessScope, BranchType, Controller, HandoffAwareness, Visibility, createEmptyMemory } from '../data/schema.js';
+import { AwarenessScope, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory } from '../data/schema.js';
 
 let now = Date.parse('2026-05-27T12:00:00.000Z');
 const engine = new IntrusionEngine({ now: () => now });
@@ -73,6 +73,8 @@ const branchPoint = memory.recordBranchPoint({
 });
 assert.equal(memory.memory.branchPoints.length, 1);
 assert.equal(branchPoint.type, BranchType.IDENTITY);
+assert.equal(memory.setScenarioPreset(ScenarioPreset.MURDER_MYSTERY), ScenarioPreset.MURDER_MYSTERY);
+assert.equal(memory.memory.session.scenarioPreset, ScenarioPreset.MURDER_MYSTERY);
 
 const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
@@ -87,7 +89,18 @@ const creatorPack = writer.toCreatorPack(memory.memory);
 assert.match(creatorPack, /Creator Pack/);
 assert.match(creatorPack, /冲突升级点/);
 assert.match(creatorPack, /剧情分支/);
+assert.match(creatorPack, /AI 剧本杀/);
 assert.match(creatorPack, /Forbidden bloodline reveal/);
+
+const organizedMaterial = writer.toOrganizedMaterial(memory.memory);
+assert.match(organizedMaterial, /素材整理/);
+assert.match(organizedMaterial, /AI 剧本杀/);
+assert.match(organizedMaterial, /剧情分支路线/);
+assert.match(organizedMaterial, /Forbidden bloodline reveal/);
+
+const englishOrganizedMaterial = writer.toOrganizedMaterial(memory.memory, { language: 'en' });
+assert.match(englishOrganizedMaterial, /Organized Material/);
+assert.match(englishOrganizedMaterial, /AI murder mystery/);
 
 const characterPrompt = writer.toCharacterSheetPrompt(memory.memory);
 assert.match(characterPrompt, /Character Sheet Extraction Prompt/);

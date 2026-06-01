@@ -1,14 +1,14 @@
 # Release Checklist
 
-Use this checklist before publishing `v0.3.1-alpha`.
+Use this checklist before publishing `v0.4.0-alpha`.
 
 ## Repository
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
 - [ ] `manifest.json` `homePage` points to `https://github.com/xiaoke5211-star/vistr-tavern`.
-- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.3.1-alpha`.
-- [ ] `README.md`, `README.zh-CN.md`, and user guides mention manual install.
+- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.4.0-alpha`.
+- [ ] `README.md`, `README.zh-CN.md`, and user guides mention GitHub URL install plus manual/zip fallbacks.
 
 ## Local Verification
 
@@ -17,17 +17,20 @@ Use this checklist before publishing `v0.3.1-alpha`.
 - [ ] Confirm Markdown export includes the `AI 异常察觉` section when awareness is enabled.
 - [ ] Confirm Markdown export includes branch points when marked.
 - [ ] Confirm Creator Pack export includes anomaly lines, AI reactions, conflict hooks, branch routes, and handoff context.
+- [ ] Confirm Organized Material export changes focus based on the selected scenario preset.
 - [ ] Confirm Character Prompt export includes persona extraction instructions and recorded material.
 - [ ] Confirm JSON export includes `intrusions`, `messages`, `handoffs`, and `branchPoints`.
-- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.3.1-alpha.zip` is created.
+- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.4.0-alpha.zip` is created.
 
-## SillyTavern Manual Install
+## SillyTavern Install
 
+- [ ] GitHub installer accepts `https://github.com/xiaoke5211-star/vistr-tavern`.
 - [ ] Install folder is `data/default-user/extensions/vistr-tavern`.
 - [ ] No duplicate `VistrTavern` extension folder remains.
 - [ ] SillyTavern loads the extension without console errors.
 - [ ] Floating `VT` button appears in a chat.
 - [ ] The language selector switches the panel between Chinese and English.
+- [ ] The scenario preset selector offers web novel/script, AI murder mystery, and virtual theater.
 - [ ] Character selector is populated.
 - [ ] `Debug` panel shows version and storage mode.
 - [ ] `Debug` panel shows compatibility status.
@@ -47,12 +50,16 @@ Use this checklist before publishing `v0.3.1-alpha`.
 - [ ] Confirm handoff does not persist as normal chat history.
 - [ ] Select `Memory fracture`/`断片` with `Controlled character` and confirm the handoff asks for a short italic inner monologue.
 - [ ] Select `Reality doubt`/`怀疑` with `Both` and confirm self and observer awareness events are exported.
+- [ ] Mark a branch point and confirm it appears in the saved Branch Points list.
 
 ## Fallback and Export
 
 - [ ] `Copy Latest Handoff` copies handoff text.
+- [ ] `Organize Material` fills the Material Workbench preview.
+- [ ] `Copy Material` copies the organized material.
 - [ ] Markdown export downloads successfully.
 - [ ] JSON export downloads successfully.
+- [ ] Organized Material export downloads successfully.
 - [ ] Creator Pack export downloads successfully.
 - [ ] Character Prompt export downloads successfully.
 - [ ] Exports do not include unexpected private data beyond local session story content.
@@ -60,6 +67,6 @@ Use this checklist before publishing `v0.3.1-alpha`.
 ## GitHub Release
 
 - [ ] Commit all release changes.
-- [ ] Tag `v0.3.1-alpha`.
+- [ ] Tag `v0.4.0-alpha`.
 - [ ] Push branch and tag.
 - [ ] Create GitHub Release with alpha status and known limitations.

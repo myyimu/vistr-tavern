@@ -10,17 +10,17 @@
 
 | 项目 | 值 |
 | --- | --- |
-| VistrTavern 版本 | `v0.3.1-alpha` |
+| VistrTavern 版本 | `v0.4.0-alpha` |
 | SillyTavern 版本 | TODO |
 | 浏览器 | TODO |
 | 系统 | TODO |
-| 安装方式 | 手动文件夹安装 |
+| 安装方式 | GitHub 链接安装 |
 | 扩展目录 | `data/default-user/extensions/vistr-tavern` |
 
 ## 干净安装
 
-1. 从公开仓库 clone 或下载代码。
-2. 把仓库目录放到 `SillyTavern/data/default-user/extensions/vistr-tavern`。
+1. 打开 SillyTavern 的扩展安装器。
+2. 从 `https://github.com/xiaoke5211-star/vistr-tavern` 安装。
 3. 重启 SillyTavern 或刷新网页界面。
 4. 打开任意聊天。
 5. 确认页面出现浮动 `VT` 按钮。
@@ -38,15 +38,18 @@ docs/assets/screenshots/vt-button.png
 1. 打开 `VT` 面板。
 2. 确认角色选择器能加载角色。
 3. 将 `语言` 在中文和英文之间切换一次，然后任选一种语言继续测试。
-4. Awareness mode 保持 `AI 无感`。
-5. 对一个角色开始 intrusion。
-6. 记录一条真人异常发言。
-7. intrusion 激活期间让 AI 回复。
-8. 结束 intrusion。
-9. 确认 Debug 中出现 pending continuity handoff。
-10. 触发下一次生成。
-11. 确认 Debug 显示 interceptor 被调用，并且 handoff 变为 consumed。
-12. 导出 Markdown 和 JSON。
+4. 在三种场景类型之间切换一次。
+5. Awareness mode 保持 `AI 无感`。
+6. 对一个角色开始 intrusion。
+7. 记录一条真人异常发言。
+8. intrusion 激活期间让 AI 回复。
+9. 结束 intrusion。
+10. 确认 Debug 中出现 pending continuity handoff。
+11. 触发下一次生成。
+12. 确认 Debug 显示 interceptor 被调用，并且 handoff 变为 consumed。
+13. 标记一个剧情分支。
+14. 确认分支出现在已保存剧情分支列表。
+15. 点击 `整理素材`，并导出 Markdown / JSON。
 
 截图占位：
 

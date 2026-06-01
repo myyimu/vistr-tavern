@@ -163,6 +163,44 @@
   color: #c9ced8;
 }
 
+.vt-help {
+  margin: 6px 0 10px;
+  color: #a9afbc;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.vt-branch-list {
+  margin: 10px 0 0;
+}
+
+.vt-branch-list summary {
+  cursor: pointer;
+  color: #f5f2ea;
+  font-weight: 700;
+}
+
+.vt-branch-card {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: #151821;
+  color: #c9ced8;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.vt-branch-card strong {
+  display: block;
+  color: #f5f2ea;
+}
+
+.vt-branch-card ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
 .vt-debug {
   margin: 10px 0;
 }
