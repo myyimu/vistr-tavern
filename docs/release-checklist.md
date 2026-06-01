@@ -1,13 +1,13 @@
 # Release Checklist
 
-Use this checklist before publishing `v0.5.0-alpha`.
+Use this checklist before publishing `v0.6.0-alpha`.
 
 ## Repository
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
 - [ ] `manifest.json` `homePage` points to `https://github.com/xiaoke5211-star/vistr-tavern`.
-- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.5.0-alpha`.
+- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.6.0-alpha`.
 - [ ] `README.md`, `README.zh-CN.md`, and user guides mention GitHub URL install plus manual/zip fallbacks.
 
 ## Local Verification
@@ -18,10 +18,10 @@ Use this checklist before publishing `v0.5.0-alpha`.
 - [ ] Confirm Markdown export includes branch points when marked.
 - [ ] Confirm Creator Pack export includes anomaly lines, AI reactions, conflict hooks, branch routes, and handoff context.
 - [ ] Confirm Organized Material export changes focus based on the selected scenario preset.
-- [ ] Confirm exports include roleplay room setup, human intent, inspiration captures, and brainstorm notes.
+- [ ] Confirm exports include Creator Context Card setup, human intent, inspiration captures, and brainstorm notes.
 - [ ] Confirm Character Prompt export includes persona extraction instructions and recorded material.
 - [ ] Confirm JSON export includes `intrusions`, `messages`, `handoffs`, and `branchPoints`.
-- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.5.0-alpha.zip` is created.
+- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.6.0-alpha.zip` is created.
 
 ## SillyTavern Install
 
@@ -32,7 +32,7 @@ Use this checklist before publishing `v0.5.0-alpha`.
 - [ ] Floating `VT` button appears in a chat.
 - [ ] The language selector switches the panel between Chinese and English.
 - [ ] The scenario preset selector offers web novel/script, AI murder mystery, and virtual theater.
-- [ ] Roleplay Room fields save and reload.
+- [ ] Creator Context Card fields save and reload.
 - [ ] Human Intent fields can be recorded with an intrusion.
 - [ ] Character selector is populated.
 - [ ] `Debug` panel shows version and storage mode.
@@ -42,7 +42,10 @@ Use this checklist before publishing `v0.5.0-alpha`.
 ## Core Flow
 
 - [ ] Start intrusion on a character.
-- [ ] Record a human anomaly line.
+- [ ] Use `Send as Character & Record` and confirm the line appears in SillyTavern as the selected character.
+- [ ] Change `Intrusion type` to `Clue contamination` or `Relationship sabotage` and confirm it appears in export/handoff output.
+- [ ] Confirm Debug shows the latest takeover send method.
+- [ ] Use `Record Only` once and confirm it records memory without inserting a chat message.
 - [ ] Let AI reply while intrusion is active.
 - [ ] End intrusion manually or by timeout.
 - [ ] Confirm continuity handoff is created.
@@ -72,6 +75,6 @@ Use this checklist before publishing `v0.5.0-alpha`.
 ## GitHub Release
 
 - [ ] Commit all release changes.
-- [ ] Tag `v0.5.0-alpha`.
+- [ ] Tag `v0.6.0-alpha`.
 - [ ] Push branch and tag.
 - [ ] Create GitHub Release with alpha status and known limitations.

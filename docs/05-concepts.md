@@ -137,6 +137,27 @@ after AI recovery
 
 The product value comes from recording how a short human disturbance changes the downstream story.
 
+### Character Message Insertion
+
+During an active intrusion, VistrTavern can insert the human-written line into the current SillyTavern chat as the selected character. The preferred path calls SillyTavern's built-in `/sendas` command through `getContext().executeSlashCommandsWithOptions(...)`; if that API is missing, VistrTavern falls back to the exposed chat rendering APIs.
+
+This makes the takeover visible to the group as a normal character message while VistrTavern records the same line with `controller: human` for exports, handoff generation, and later analysis.
+
+### Intrusion Types
+
+VistrTavern does not treat every takeover line the same. Each line can be tagged as a specific intrusion type:
+
+- `character_takeover`
+- `anomaly_line`
+- `memory_fracture`
+- `external_will`
+- `plot_hook`
+- `relationship_sabotage`
+- `clue_contamination`
+- `world_rule_break`
+
+The tag is stored on the message and disturbance event, then carried into continuity handoffs and exports. This is the layer that turns ordinary chat editing into a designed narrative disturbance.
+
 ### Identity Uncertainty
 
 Anonymous intrusion preserves in-world uncertainty. Other characters do not need to know that a human is controlling the character.

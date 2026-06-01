@@ -41,7 +41,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.5.0-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
+`v0.6.0-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
 
 ## Tested Environments
 
@@ -49,7 +49,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.5.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.6.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 
@@ -78,15 +78,18 @@ VistrTavern records:
 
 - SillyTavern extension manifest.
 - Floating VistrTavern control panel.
+- Low-friction main panel: select a character, start intrusion, send one takeover line as that character, capture inspiration.
 - UI language switch for Chinese and English.
 - Character selection.
 - Temporary human intrusion state.
 - Timeout-based AI recovery.
 - Scene and tension fields.
 - Scenario presets for web novel/script drafting, AI murder mystery, and virtual theater.
-- Roleplay Room metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
+- Creator Context Card metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
 - Human Intent fields for the creator's desired confrontation, target, disruption, and reveal.
+- Human takeover line delivery through SillyTavern `/sendas`, with direct chat insertion fallback.
 - Human anomaly line recording.
+- Intrusion type tagging for character takeover, anomaly line, memory fracture, external will, plot hook, relationship sabotage, clue contamination, and world-rule break.
 - AI reaction capture during active intrusion windows.
 - AI recovery continuity handoff for preserving the context that the story has already been changed by the human.
 - AI anomaly awareness modes: no awareness, memory fracture, and reality doubt.
@@ -110,7 +113,7 @@ VistrTavern records:
 
 - Continuity handoff prompt injection is implemented through SillyTavern `generate_interceptor`, but still needs broader real-environment testing.
 - AI reaction capture depends on SillyTavern runtime events and may need compatibility fixes across versions.
-- The UI is still an experimental control panel, not a polished end-user workflow.
+- The UI is still experimental, though the default path now hides advanced fields until needed.
 - Test coverage is currently limited to a smoke test.
 - SillyTavern extension API changes may affect installation and update behavior.
 

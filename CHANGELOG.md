@@ -1,12 +1,62 @@
 # Changelog
 
+## v0.6.0-alpha
+
+Intrusion-type gameplay release.
+
+### Added
+
+- Main takeover flow now includes an `Intrusion type` selector for character takeover, anomaly line, memory fracture, external will, plot hook, relationship sabotage, clue contamination, and world-rule break.
+- Human takeover messages, disturbance events, handoffs, Markdown exports, Creator Pack, and Organized Material now preserve the selected intrusion type.
+- Continuity handoff prompts now include intrusion-type directives so AI recovery can treat different disruptions differently.
+
+### Changed
+
+- The plugin now frames role takeover as a designed narrative disturbance, not just a chat-editing shortcut.
+- Extension version updated to `0.6.0-alpha`.
+
+## v0.5.2-alpha
+
+Role takeover message insertion release.
+
+### Added
+
+- `Send as Character & Record` takeover action that sends the human-written line into the current SillyTavern chat as the selected character, then records it in VistrTavern memory.
+- Send-as-character compatibility path uses SillyTavern `/sendas` first, with direct chat insertion fallback when slash command execution is unavailable.
+- Debug now reports the latest takeover send method and adds compatibility checks for slash command execution and direct chat insertion.
+
+### Changed
+
+- The primary takeover flow now inserts a visible character message instead of only recording internal memory.
+- User guides and release checks now validate that takeover messages appear as character messages in SillyTavern.
+- Extension version updated to `0.5.2-alpha`.
+
+## v0.5.1-alpha
+
+Low-friction onboarding and UI reduction pass.
+
+### Added
+
+- Takeover guide now clearly tells users which character is being controlled and what to do next.
+- Human Intent presets for conflict, routine break, relationship test, plot push, and hidden motive.
+- Main panel now exposes a shorter zero-config flow: select character, start intrusion, record one anomaly line, capture inspiration.
+- Inline help markers and short descriptions for optional setup, Creator Context Card, Human Intent, Creator Tools, Inspiration Capture, and Debug.
+- Sticky panel header with an explicit Collapse button and Escape-key close behavior so VT does not block SillyTavern controls when not in use.
+
+### Changed
+
+- Advanced room, scene, awareness, duration, and intent fields are now grouped under optional setup.
+- Branch marking, material exports, and debug controls are moved into secondary sections.
+- Creator Context Card and Debug no longer open by default.
+- Extension version updated to `0.5.1-alpha`.
+
 ## v0.5.0-alpha
 
 Creator brainstorm and roleplay-room release.
 
 ### Added
 
-- Roleplay Room metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
+- Creator Context Card metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
 - Human Intent fields before starting an intrusion: goal, target, intended disruption, and secret/reveal.
 - Inspiration Capture after an intrusion, summarizing why the human cameo broke AI ensemble smoothness and what to write next.
 - Creator Brainstorm Space for private creator notes that do not enter chat history.

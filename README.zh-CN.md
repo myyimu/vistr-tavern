@@ -41,7 +41,7 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.5.0-alpha` 表示这个扩展可以通过 SillyTavern 的 GitHub 扩展安装、手动文件夹或 release zip 本地安装测试。它还不适合大规模终端用户支持。
+`v0.6.0-alpha` 表示这个扩展可以通过 SillyTavern 的 GitHub 扩展安装、手动文件夹或 release zip 本地安装测试。它还不适合大规模终端用户支持。
 
 ## 已测试环境
 
@@ -49,7 +49,7 @@ AI 群像正常运行
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
-| `v0.5.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
+| `v0.6.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
 
 ## 产出示例
 
@@ -78,15 +78,18 @@ VistrTavern 重点记录：
 
 - SillyTavern 扩展 manifest。
 - 浮动 VistrTavern 控制面板。
+- 低门槛主流程：选择角色、开始接管、发送一句角色接管发言、捕获灵感。
 - 中英文 UI 语言切换。
 - 角色选择。
 - 临时真人接管状态。
 - 基于倒计时的 AI 自动恢复。
 - 场景和张力字段。
 - 网文剧本、AI 剧本杀、虚拟剧场三种场景类型。
-- 角色对戏房间信息：世界观、剧情背景、可客串角色槽位和 AI 世界维护规则。
+- 创作背景卡信息：世界观、剧情背景、可客串角色槽位和 AI 世界维护规则。
 - 真人意图字段：想制造什么、针对谁、破坏什么关系或规则、泄露什么秘密。
+- 通过 SillyTavern `/sendas` 发送真人接管发言，并提供直接插入聊天的 fallback。
 - 真人异常发言记录。
+- 乱入类型标记：角色接管、异常发言、记忆断片、外部意志、剧情钩子、关系破坏、线索污染和世界规则裂缝。
 - 入侵窗口内的 AI 反应捕获。
 - AI 接管连续性 handoff，用于保存“剧情已经被真人改变”的上下文。
 - AI 异常察觉模式：AI 无感、断片、怀疑。
@@ -110,7 +113,7 @@ VistrTavern 重点记录：
 
 - Continuity handoff prompt 注入已通过 SillyTavern `generate_interceptor` 实现，但仍需要更多真实环境测试。
 - AI 反应捕获依赖 SillyTavern runtime events，不同版本之间可能需要兼容性修正。
-- UI 还是实验控制面板，不是最终用户工作流。
+- UI 仍然是实验形态，但默认流程已经把高级字段收起，只保留主路径。
 - 测试覆盖目前只有 smoke test。
 - SillyTavern 扩展 API 变化可能影响安装和更新行为。
 

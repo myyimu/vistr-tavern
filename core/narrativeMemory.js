@@ -1,4 +1,4 @@
-import { AwarenessScope, BrainstormKind, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
+import { AwarenessScope, BrainstormKind, BranchType, Controller, HandoffAwareness, IntrusionKind, ScenarioPreset, Visibility, createEmptyMemory, createId, normalizeCharacter } from '../data/schema.js';
 
 export class NarrativeMemory {
   constructor(memory = createEmptyMemory()) {
@@ -56,6 +56,7 @@ export class NarrativeMemory {
     scene = null,
     intrusion = null,
     handoff = null,
+    intrusionKind = null,
     source = 'sillytavern',
   }) {
     const trimmedContent = content?.trim();
@@ -73,6 +74,7 @@ export class NarrativeMemory {
       speakerName: speakerName || intrusion?.characterName || 'Unknown',
       controller,
       visibility,
+      intrusionKind: this.#messageIntrusionKind({ intrusionKind, intrusion, controller }),
       content: trimmedContent,
       tension: scene?.tension ?? null,
       source,
@@ -92,6 +94,7 @@ export class NarrativeMemory {
     intrusion = null,
     handoff = null,
     characterId = null,
+    intrusionKind = null,
     awareness = null,
     awarenessScope = null,
   }) {
@@ -107,6 +110,9 @@ export class NarrativeMemory {
       intrusionId: intrusion?.id || handoff?.intrusionId || null,
       handoffId: handoff?.id || null,
       characterId,
+      intrusionKind: intrusionKind || intrusion?.intrusionKind
+        ? this.#normalizeIntrusionKind(intrusionKind || intrusion?.intrusionKind)
+        : null,
       awareness,
       awarenessScope,
       type,
@@ -273,6 +279,7 @@ export class NarrativeMemory {
 
     const humanMessages = relatedMessages.filter((message) => message.controller === Controller.HUMAN);
     const aiReactions = relatedMessages.filter((message) => message.controller === Controller.AI);
+    const intrusionKinds = this.#collectIntrusionKinds(intrusion, humanMessages);
     const sceneId = relatedMessages[0]?.sceneId || this.memory.session.activeSceneId;
     const scene = this.memory.scenes.find((item) => item.id === sceneId) || null;
     const awareness = Object.values(HandoffAwareness).includes(intrusion.awareness)
@@ -290,10 +297,11 @@ export class NarrativeMemory {
       characterId: intrusion.characterId,
       characterName: intrusion.characterName || intrusion.characterId,
       visibility: intrusion.visibility || Visibility.ANONYMOUS,
+      intrusionKinds,
       awareness,
       awarenessScope,
-      summary: this.#handoffSummary(intrusion, humanMessages, aiReactions),
-      prompt: this.#handoffPrompt({ intrusion, scene, humanMessages, aiReactions, awareness, awarenessScope }),
+      summary: this.#handoffSummary(intrusion, humanMessages, aiReactions, intrusionKinds),
+      prompt: this.#handoffPrompt({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope }),
       relatedMessageIds: relatedMessages.map((message) => message.id),
       createdAt: new Date().toISOString(),
     };
@@ -375,12 +383,32 @@ export class NarrativeMemory {
     };
   }
 
-  #handoffSummary(intrusion, humanMessages, aiReactions) {
-    const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
-    return `${name} returned to AI control after ${humanMessages.length} canonical human-controlled line(s) and ${aiReactions.length} AI reaction(s).`;
+  #normalizeIntrusionKind(kind) {
+    return Object.values(IntrusionKind).includes(kind) ? kind : IntrusionKind.CHARACTER_TAKEOVER;
   }
 
-  #handoffPrompt({ intrusion, scene, humanMessages, aiReactions, awareness, awarenessScope }) {
+  #messageIntrusionKind({ intrusionKind, intrusion, controller }) {
+    if (intrusionKind || intrusion?.intrusionKind) {
+      return this.#normalizeIntrusionKind(intrusionKind || intrusion?.intrusionKind);
+    }
+
+    return controller === Controller.HUMAN ? IntrusionKind.CHARACTER_TAKEOVER : null;
+  }
+
+  #collectIntrusionKinds(intrusion, humanMessages) {
+    return [...new Set([
+      intrusion?.intrusionKind,
+      ...humanMessages.map((message) => message.intrusionKind),
+    ].filter(Boolean).map((kind) => this.#normalizeIntrusionKind(kind)))];
+  }
+
+  #handoffSummary(intrusion, humanMessages, aiReactions, intrusionKinds = []) {
+    const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
+    const kindLine = intrusionKinds.length ? ` Intrusion type(s): ${intrusionKinds.join(', ')}.` : '';
+    return `${name} returned to AI control after ${humanMessages.length} canonical human-controlled line(s) and ${aiReactions.length} AI reaction(s).${kindLine}`;
+  }
+
+  #handoffPrompt({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope }) {
     const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
     const sceneLine = scene
       ? `Scene: ${scene.name}${scene.mood ? `, mood: ${scene.mood}` : ''}, tension: ${scene.tension}.`
@@ -395,6 +423,9 @@ export class NarrativeMemory {
       '',
       'Human-controlled character actions:',
       ...this.#formatHandoffMessages(humanMessages),
+      '',
+      'Intrusion type directives:',
+      ...this.#formatIntrusionDirectives(intrusionKinds),
       '',
       ...this.#formatHumanIntent(intrusion.humanIntent),
       '',
@@ -412,12 +443,51 @@ export class NarrativeMemory {
     return lines.join('\n');
   }
 
+  #formatIntrusionDirectives(intrusionKinds = []) {
+    const kinds = intrusionKinds.length ? intrusionKinds : [IntrusionKind.CHARACTER_TAKEOVER];
+    return kinds.flatMap((kind) => this.#intrusionDirective(kind));
+  }
+
+  #intrusionDirective(kind) {
+    const directives = {
+      [IntrusionKind.CHARACTER_TAKEOVER]: [
+        '- Character takeover: treat the human-written line as normal in-world dialogue/action by the recovered character.',
+      ],
+      [IntrusionKind.ANOMALY_LINE]: [
+        '- Anomaly line: preserve the line as something noticeably off-rhythm. Other characters may misread, resist, or question it in-world.',
+      ],
+      [IntrusionKind.MEMORY_FRACTURE]: [
+        '- Memory fracture: let the recovered character or observers sense discontinuity, hesitation, or a missing beat without explaining it as user editing.',
+      ],
+      [IntrusionKind.EXTERNAL_WILL]: [
+        '- External will: allow in-world suspicion that the character was moved by an outside force, curse, stage rule, possession, or unstable reality layer.',
+      ],
+      [IntrusionKind.PLOT_HOOK]: [
+        '- Plot hook: push the line into a concrete next consequence, decision, clue, confrontation, or irreversible scene turn.',
+      ],
+      [IntrusionKind.RELATIONSHIP_SABOTAGE]: [
+        '- Relationship sabotage: track who is hurt, pressured, suspicious, attracted, indebted, or betrayed because of this line.',
+      ],
+      [IntrusionKind.CLUE_CONTAMINATION]: [
+        '- Clue contamination: treat the line as potentially altering testimony, evidence, alibis, motives, or inference chains.',
+      ],
+      [IntrusionKind.WORLD_RULE_BREAK]: [
+        '- World-rule break: let the room interpret the line as evidence that a rule, boundary, prophecy, system, or reality layer has changed.',
+      ],
+    };
+
+    return directives[kind] || directives[IntrusionKind.CHARACTER_TAKEOVER];
+  }
+
   #formatHandoffMessages(messages) {
     if (!messages.length) {
       return ['- None recorded.'];
     }
 
-    return messages.map((message) => `- ${message.speakerName}: ${message.content}`);
+    return messages.map((message) => {
+      const kind = message.intrusionKind ? ` [${message.intrusionKind}]` : '';
+      return `- ${message.speakerName}${kind}: ${message.content}`;
+    });
   }
 
   #formatHumanIntent(intent) {

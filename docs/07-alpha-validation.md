@@ -10,7 +10,7 @@ Fill this table whenever you run a real manual validation pass.
 
 | Item | Value |
 | --- | --- |
-| VistrTavern version | `v0.5.0-alpha` |
+| VistrTavern version | `v0.6.0-alpha` |
 | SillyTavern version | TODO |
 | Browser | TODO |
 | OS | TODO |
@@ -39,21 +39,24 @@ Verify the minimum public-alpha loop:
 2. Confirm the character selector is populated.
 3. Switch `Language` between Chinese and English, then continue in either language.
 4. Switch scenario preset between the three available scenarios.
-5. Save Roleplay Room metadata.
+5. Save Creator Context Card metadata.
 6. Fill Human Intent fields.
 7. Keep awareness mode as `AI 无感`.
 8. Start an intrusion on one character.
-9. Record one human anomaly line.
-10. Let the AI reply while intrusion is active.
-11. End the intrusion.
-12. Capture Inspiration.
-13. Save one Creator Brainstorm note.
-14. Confirm a pending continuity handoff appears in Debug.
-15. Trigger the next generation.
-16. Confirm Debug reports an interceptor call and the handoff becomes consumed.
-17. Mark one branch point.
-18. Confirm the branch point appears in the saved Branch Points list.
-19. Click `Organize Material` and export Markdown / JSON.
+9. Set `Intrusion type` to `Clue contamination`.
+10. Type one takeover line and click `Send as Character & Record`.
+11. Confirm the line appears in SillyTavern as the selected character, not as the user.
+12. Let the AI reply while intrusion is active.
+13. End the intrusion.
+14. Confirm the pending handoff includes an intrusion-type directive.
+15. Capture Inspiration.
+16. Save one Creator Brainstorm note.
+17. Confirm a pending continuity handoff appears in Debug.
+18. Trigger the next generation.
+19. Confirm Debug reports an interceptor call and the handoff becomes consumed.
+20. Mark one branch point.
+21. Confirm the branch point appears in the saved Branch Points list.
+22. Click `Organize Material` and export Markdown / JSON.
 
 Screenshot placeholders:
 

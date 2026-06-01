@@ -1,4 +1,4 @@
-import { Controller, ScenarioPreset } from '../data/schema.js';
+import { Controller, IntrusionKind, ScenarioPreset } from '../data/schema.js';
 
 export class ExportWriter {
   toJson(memory) {
@@ -20,6 +20,7 @@ export class ExportWriter {
     const branchPoints = memory.branchPoints || [];
     const inspirationCaptures = memory.inspirationCaptures || [];
     const brainstormNotes = memory.brainstormNotes || [];
+    const intrusionKindLines = summarizeIntrusionKinds(humanMessages);
 
     return [
       `# ${memory.session.title}`,
@@ -27,7 +28,7 @@ export class ExportWriter {
       '## 核心命题',
       '真人异常源混入 AI 群像后，观察并记录它如何改变戏剧张力、人物关系和世界状态。',
       '',
-      '## 角色对戏房间',
+      '## 创作背景卡',
       formatRoom(memory.session.room),
       '',
       '## 当前场景',
@@ -40,6 +41,9 @@ export class ExportWriter {
       '',
       '## 真人异常发言',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人接管发言',
+      '',
+      '## 乱入类型与叙事作用',
+      intrusionKindLines.length ? intrusionKindLines.join('\n') : '- 暂无乱入类型记录',
       '',
       '## AI 反应',
       aiReactions.length ? aiReactions.map(formatMessage).join('\n') : '- 暂无绑定到入侵窗口的 AI 反应',
@@ -89,6 +93,7 @@ export class ExportWriter {
     const inspirationCaptures = memory.inspirationCaptures || [];
     const brainstormNotes = memory.brainstormNotes || [];
     const awarenessEvents = memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness' || event.type === 'observer_anomaly_awareness');
+    const intrusionKindLines = summarizeIntrusionKinds(humanMessages);
     const profile = materialProfile(memory.session.scenarioPreset);
     const conflictHooks = [
       ...memory.disturbanceEvents.filter((event) => event.severity >= 3).map((event) => event.summary),
@@ -107,6 +112,9 @@ export class ExportWriter {
       '',
       '## 真人异常素材',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
+      '',
+      '## 乱入类型 / 叙事作用',
+      intrusionKindLines.length ? intrusionKindLines.join('\n') : '- 暂无乱入类型记录',
       '',
       '## 真人意图 / 对抗感',
       memory.intrusions.some((intrusion) => intrusion.humanIntent)
@@ -152,6 +160,7 @@ export class ExportWriter {
     const handoffs = memory.handoffs || [];
     const inspirationCaptures = memory.inspirationCaptures || [];
     const brainstormNotes = memory.brainstormNotes || [];
+    const intrusionKindLines = summarizeIntrusionKinds(humanMessages, english);
     const profile = materialProfile(memory.session.scenarioPreset);
     const conflictHooks = uniqueItems([
       ...memory.disturbanceEvents.filter((event) => event.severity >= 3).map((event) => event.summary),
@@ -176,6 +185,9 @@ export class ExportWriter {
         '',
         '## Human Anomaly Lines',
         humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- None recorded',
+        '',
+        '## Intrusion Types',
+        intrusionKindLines.length ? intrusionKindLines.join('\n') : '- No intrusion type records yet',
         '',
         '## Human Intent / Confrontation',
         memory.intrusions.some((intrusion) => intrusion.humanIntent)
@@ -224,6 +236,9 @@ export class ExportWriter {
       '',
       '## 真人异常发言',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
+      '',
+      '## 乱入类型',
+      intrusionKindLines.length ? intrusionKindLines.join('\n') : '- 暂无乱入类型记录',
       '',
       '## 真人意图 / 对抗感',
       memory.intrusions.some((intrusion) => intrusion.humanIntent)
@@ -336,12 +351,86 @@ export class ExportWriter {
 function formatMessage(message) {
   const label = message.visibility === 'anonymous' ? 'Unknown Source' : message.controller;
   const tension = message.tension === null || message.tension === undefined ? '' : ` tension=${message.tension}`;
-  return `- ${message.speakerName} [${label}${tension}]: ${message.content}`;
+  const kind = message.intrusionKind ? ` kind=${message.intrusionKind}` : '';
+  return `- ${message.speakerName} [${label}${tension}${kind}]: ${message.content}`;
+}
+
+function summarizeIntrusionKinds(messages, english = false) {
+  const counts = new Map();
+  for (const message of messages) {
+    const kind = Object.values(IntrusionKind).includes(message.intrusionKind)
+      ? message.intrusionKind
+      : IntrusionKind.CHARACTER_TAKEOVER;
+    counts.set(kind, (counts.get(kind) || 0) + 1);
+  }
+
+  return [...counts.entries()].map(([kind, count]) => {
+    const profile = intrusionKindProfile(kind);
+    return english
+      ? `- ${profile.enName} x${count}: ${profile.enEffect}`
+      : `- ${profile.zhName} x${count}：${profile.zhEffect}`;
+  });
+}
+
+function intrusionKindProfile(kind) {
+  const profiles = {
+    [IntrusionKind.CHARACTER_TAKEOVER]: {
+      zhName: '角色接管',
+      enName: 'Character takeover',
+      zhEffect: '把真人发言作为角色已经做出的剧情事实承接。',
+      enEffect: 'Carry the human line as a canonical role action.',
+    },
+    [IntrusionKind.ANOMALY_LINE]: {
+      zhName: '异常发言',
+      enName: 'Anomaly line',
+      zhEffect: '保留“不像平常 AI 群像”的错位感，让角色误读或质疑。',
+      enEffect: 'Preserve the off-rhythm quality so characters can misread or question it.',
+    },
+    [IntrusionKind.MEMORY_FRACTURE]: {
+      zhName: '记忆断片',
+      enName: 'Memory fracture',
+      zhEffect: '推动角色感到迟疑、断片或失控，但不直接暴露用户操作。',
+      enEffect: 'Push hesitation, missing memory, or loss of control without naming user editing.',
+    },
+    [IntrusionKind.EXTERNAL_WILL]: {
+      zhName: '外部意志',
+      enName: 'External will',
+      zhEffect: '允许世界内解释为外力、诅咒、舞台规则或现实不稳定。',
+      enEffect: 'Allow in-world explanations such as outside force, curse, stage rule, or unstable reality.',
+    },
+    [IntrusionKind.PLOT_HOOK]: {
+      zhName: '剧情钩子',
+      enName: 'Plot hook',
+      zhEffect: '把乱入推进成后续选择、冲突、线索或不可逆转折。',
+      enEffect: 'Turn the intrusion into a next decision, conflict, clue, or irreversible turn.',
+    },
+    [IntrusionKind.RELATIONSHIP_SABOTAGE]: {
+      zhName: '关系破坏',
+      enName: 'Relationship sabotage',
+      zhEffect: '记录被伤害、背叛、吸引、怀疑或被迫表态的关系变化。',
+      enEffect: 'Track hurt, betrayal, attraction, suspicion, or forced positioning.',
+    },
+    [IntrusionKind.CLUE_CONTAMINATION]: {
+      zhName: '线索污染',
+      enName: 'Clue contamination',
+      zhEffect: '让证词、证据、动机、推理链被这句话污染或改写。',
+      enEffect: 'Contaminate testimony, evidence, motives, or inference chains.',
+    },
+    [IntrusionKind.WORLD_RULE_BREAK]: {
+      zhName: '世界规则裂缝',
+      enName: 'World-rule break',
+      zhEffect: '把乱入解释为边界、系统、预言或现实规则发生裂缝。',
+      enEffect: 'Frame the line as a crack in boundaries, systems, prophecy, or reality rules.',
+    },
+  };
+
+  return profiles[kind] || profiles[IntrusionKind.CHARACTER_TAKEOVER];
 }
 
 function formatHandoff(handoff) {
   return [
     `### ${handoff.characterName || handoff.characterId}`,
+    `- Intrusion types: ${handoff.intrusionKinds?.length ? handoff.intrusionKinds.join(', ') : 'character_takeover'}`,
     `- Awareness: ${handoff.awareness}`,
     `- Awareness scope: ${handoff.awarenessScope || 'controlled'}`,
     `- Status: ${handoff.consumedAt ? 'consumed' : 'pending'}`,

@@ -32,6 +32,17 @@ export const AwarenessScope = Object.freeze({
   BOTH: 'both',
 });
 
+export const IntrusionKind = Object.freeze({
+  CHARACTER_TAKEOVER: 'character_takeover',
+  ANOMALY_LINE: 'anomaly_line',
+  MEMORY_FRACTURE: 'memory_fracture',
+  EXTERNAL_WILL: 'external_will',
+  PLOT_HOOK: 'plot_hook',
+  RELATIONSHIP_SABOTAGE: 'relationship_sabotage',
+  CLUE_CONTAMINATION: 'clue_contamination',
+  WORLD_RULE_BREAK: 'world_rule_break',
+});
+
 export const BranchType = Object.freeze({
   RELATIONSHIP: 'relationship',
   CONSPIRACY: 'conspiracy',

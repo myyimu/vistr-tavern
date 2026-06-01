@@ -93,6 +93,7 @@ Do not store only raw chat messages. Every important record should carry control
   "speakerName": "Eileen",
   "controller": "human",
   "visibility": "anonymous",
+  "intrusionKind": "clue_contamination",
   "content": "Do you really believe the king is still alive?",
   "tension": 82,
   "createdAt": "2026-05-27T12:06:00.000Z"
@@ -109,6 +110,7 @@ Do not store only raw chat messages. Every important record should carry control
   "intrusionId": "intrusion_001",
   "handoffId": null,
   "characterId": "char_eileen",
+  "intrusionKind": "clue_contamination",
   "awareness": null,
   "awarenessScope": null,
   "type": "anomaly_detected",
@@ -132,6 +134,7 @@ Created when control returns from human to AI. This is the canonical bridge that
   "characterId": "char_eileen",
   "characterName": "Eileen",
   "visibility": "anonymous",
+  "intrusionKinds": ["clue_contamination"],
   "awareness": "none",
   "awarenessScope": "controlled",
   "summary": "Eileen returned to AI control after 1 canonical human-controlled line(s) and 1 AI reaction(s).",
@@ -157,6 +160,17 @@ Awareness events:
 
 - `self_anomaly_awareness`: the recovered character notices that their own words or actions felt wrong.
 - `observer_anomaly_awareness`: observer AI characters notice that the recovered character behaved abnormally.
+
+Intrusion kind values:
+
+- `character_takeover`
+- `anomaly_line`
+- `memory_fracture`
+- `external_will`
+- `plot_hook`
+- `relationship_sabotage`
+- `clue_contamination`
+- `world_rule_break`
 
 ## Branch Point
 

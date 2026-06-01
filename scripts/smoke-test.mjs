@@ -3,7 +3,7 @@ import { ExportWriter } from '../core/exportWriter.js';
 import { IntrusionEngine } from '../core/intrusionEngine.js';
 import { NarrativeMemory } from '../core/narrativeMemory.js';
 import { SceneManager } from '../core/sceneManager.js';
-import { AwarenessScope, BrainstormKind, BranchType, Controller, HandoffAwareness, ScenarioPreset, Visibility, createEmptyMemory } from '../data/schema.js';
+import { AwarenessScope, BrainstormKind, BranchType, Controller, HandoffAwareness, IntrusionKind, ScenarioPreset, Visibility, createEmptyMemory } from '../data/schema.js';
 
 let now = Date.parse('2026-05-27T12:00:00.000Z');
 const engine = new IntrusionEngine({ now: () => now });
@@ -41,6 +41,7 @@ const humanMessage = memory.recordMessage({
   speakerName: 'Eileen',
   controller: Controller.HUMAN,
   visibility: Visibility.ANONYMOUS,
+  intrusionKind: IntrusionKind.CLUE_CONTAMINATION,
   content: 'Do you really believe the king is still alive?',
   scene,
   intrusion,
@@ -68,6 +69,8 @@ assert.equal(memory.memory.disturbanceEvents.filter((event) => event.type.includ
 assert.match(memory.memory.handoffs[0].prompt, /These events are canonical/);
 assert.match(memory.memory.handoffs[0].prompt, /Do not mention human control/);
 assert.match(memory.memory.handoffs[0].prompt, /Human creative intent/);
+assert.match(memory.memory.handoffs[0].prompt, /Clue contamination/);
+assert.deepEqual(memory.memory.handoffs[0].intrusionKinds, [IntrusionKind.CLUE_CONTAMINATION]);
 assert.equal(memory.getPendingHandoff().id, memory.memory.handoffs[0].id);
 memory.recordHandoffInjected(memory.memory.handoffs[0].id);
 assert.equal(memory.getInjectedHandoff().id, memory.memory.handoffs[0].id);
@@ -106,11 +109,13 @@ assert.equal(brainstorm.kind, BrainstormKind.CONFLICT);
 
 const markdown = writer.toMarkdown(memory.memory);
 assert.match(markdown, /真人异常发言/);
+assert.match(markdown, /乱入类型/);
+assert.match(markdown, /线索污染/);
 assert.match(markdown, /Do you really believe/);
 assert.match(markdown, /AI 接管连续性/);
 assert.match(markdown, /AI 异常察觉/);
 assert.match(markdown, /剧情分支标记/);
-assert.match(markdown, /角色对戏房间/);
+assert.match(markdown, /创作背景卡/);
 assert.match(markdown, /互动灵感捕获/);
 assert.match(markdown, /创作者脑暴笔记/);
 assert.match(markdown, /Forbidden bloodline reveal/);
@@ -122,12 +127,14 @@ assert.match(creatorPack, /冲突升级点/);
 assert.match(creatorPack, /剧情分支/);
 assert.match(creatorPack, /AI 剧本杀/);
 assert.match(creatorPack, /真人意图/);
+assert.match(creatorPack, /乱入类型/);
 assert.match(creatorPack, /Forbidden bloodline reveal/);
 
 const organizedMaterial = writer.toOrganizedMaterial(memory.memory);
 assert.match(organizedMaterial, /素材整理/);
 assert.match(organizedMaterial, /AI 剧本杀/);
 assert.match(organizedMaterial, /互动灵感捕获/);
+assert.match(organizedMaterial, /线索污染/);
 assert.match(organizedMaterial, /剧情分支路线/);
 assert.match(organizedMaterial, /Forbidden bloodline reveal/);
 
@@ -135,6 +142,7 @@ const englishOrganizedMaterial = writer.toOrganizedMaterial(memory.memory, { lan
 assert.match(englishOrganizedMaterial, /Organized Material/);
 assert.match(englishOrganizedMaterial, /AI murder mystery/);
 assert.match(englishOrganizedMaterial, /Human Intent/);
+assert.match(englishOrganizedMaterial, /Clue contamination/);
 
 const characterPrompt = writer.toCharacterSheetPrompt(memory.memory);
 assert.match(characterPrompt, /Character Sheet Extraction Prompt/);

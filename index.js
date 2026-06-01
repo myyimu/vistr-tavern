@@ -3,7 +3,7 @@ import { IntrusionEngine } from './core/intrusionEngine.js';
 import { NarrativeMemory } from './core/narrativeMemory.js';
 import { SceneManager } from './core/sceneManager.js';
 import { StorageAdapter } from './data/storageAdapter.js';
-import { Controller, MODULE_NAME, ScenarioPreset, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
+import { Controller, IntrusionKind, MODULE_NAME, ScenarioPreset, ViewMode, Visibility, normalizeCharacter } from './data/schema.js';
 import { EXTENSION_VERSION } from './data/version.js';
 import { UiOverlay } from './ui/uiOverlay.js';
 
@@ -20,6 +20,8 @@ const runtimeDebug = {
   lastInjectionHandoffId: null,
   lastInjectionError: null,
   lastCapturedAiMessage: null,
+  lastTakeoverSend: null,
+  pendingTakeoverSend: null,
   lastConsumedHandoffId: null,
   lastConsumedAt: null,
   lastError: null,
@@ -97,6 +99,7 @@ function initialize() {
     getCharacters,
     onStartIntrusion: startIntrusion,
     onEndIntrusion: endIntrusion,
+    onSendHumanLineAsCharacter: sendHumanLineAsCharacter,
     onRecordHumanLine: recordHumanLine,
     onMarkBranchPoint: markBranchPoint,
     onSetScenarioPreset: setScenarioPreset,
@@ -182,9 +185,64 @@ async function saveScene(sceneInput) {
   await persist();
 }
 
-async function recordHumanLine({ characterId, speakerName, content }) {
+async function sendHumanLineAsCharacter({ characterId, speakerName, content, intrusionKind = IntrusionKind.CHARACTER_TAKEOVER }) {
+  const trimmed = String(content || '').trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  runtimeDebug.pendingTakeoverSend = {
+    characterId,
+    speakerName,
+    content: trimmed,
+    intrusionKind,
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    const delivery = await deliverCharacterMessage({ speakerName, content: trimmed });
+    runtimeDebug.lastTakeoverSend = {
+      characterId,
+      speakerName,
+      contentPreview: trimmed.slice(0, 120),
+      intrusionKind,
+      method: delivery.method,
+      ok: true,
+      at: new Date().toISOString(),
+    };
+
+    const message = await recordHumanLine({
+      characterId,
+      speakerName,
+      content: trimmed,
+      intrusionKind,
+      source: `sillytavern-${delivery.method}`,
+    });
+
+    return { delivery, message };
+  } catch (error) {
+    runtimeDebug.pendingTakeoverSend = null;
+    runtimeDebug.lastTakeoverSend = {
+      characterId,
+      speakerName,
+      contentPreview: trimmed.slice(0, 120),
+      intrusionKind,
+      method: 'failed',
+      ok: false,
+      at: new Date().toISOString(),
+      error: error?.message || String(error),
+    };
+    recordError('send_as_character_failed', error);
+    throw error;
+  }
+}
+
+async function recordHumanLine({ characterId, speakerName, content, intrusionKind = IntrusionKind.CHARACTER_TAKEOVER, source = 'vistr-tavern-panel' }) {
   const activeScene = sceneManager.getActiveScene();
   const intrusion = intrusionEngine.getActiveIntrusion(characterId);
+  const normalizedKind = Object.values(IntrusionKind).includes(intrusionKind)
+    ? intrusionKind
+    : IntrusionKind.CHARACTER_TAKEOVER;
 
   const message = narrativeMemory.recordMessage({
     characterId,
@@ -192,23 +250,152 @@ async function recordHumanLine({ characterId, speakerName, content }) {
     content,
     controller: Controller.HUMAN,
     visibility: intrusion?.visibility || Visibility.ANONYMOUS,
+    intrusionKind: normalizedKind,
     scene: activeScene,
     intrusion,
-    source: 'vistr-tavern-panel',
+    source,
   });
 
   if (message) {
     narrativeMemory.recordDisturbanceEvent({
       type: 'human_anomaly_line',
       severity: activeScene?.tension >= 70 ? 4 : 2,
-      summary: `${speakerName} produced a human-controlled anomaly line.`,
+      summary: `${speakerName} produced a human-controlled ${intrusionKindLabel(normalizedKind)}. ${intrusionKindEffect(normalizedKind)}`,
       relatedMessageIds: [message.id],
       scene: activeScene,
       intrusion,
+      intrusionKind: normalizedKind,
     });
   }
 
   await persist();
+  return message;
+}
+
+function intrusionKindLabel(kind) {
+  const labels = {
+    [IntrusionKind.CHARACTER_TAKEOVER]: 'character takeover line',
+    [IntrusionKind.ANOMALY_LINE]: 'anomaly line',
+    [IntrusionKind.MEMORY_FRACTURE]: 'memory-fracture line',
+    [IntrusionKind.EXTERNAL_WILL]: 'external-will signal',
+    [IntrusionKind.PLOT_HOOK]: 'plot hook',
+    [IntrusionKind.RELATIONSHIP_SABOTAGE]: 'relationship sabotage',
+    [IntrusionKind.CLUE_CONTAMINATION]: 'clue contamination',
+    [IntrusionKind.WORLD_RULE_BREAK]: 'world-rule break',
+  };
+
+  return labels[kind] || labels[IntrusionKind.CHARACTER_TAKEOVER];
+}
+
+function intrusionKindEffect(kind) {
+  const effects = {
+    [IntrusionKind.CHARACTER_TAKEOVER]: 'The story should treat it as a canonical role action.',
+    [IntrusionKind.ANOMALY_LINE]: 'The room may misread or resist its off-rhythm quality.',
+    [IntrusionKind.MEMORY_FRACTURE]: 'The character may later feel discontinuity or a missing beat.',
+    [IntrusionKind.EXTERNAL_WILL]: 'The scene may frame it as outside influence or unstable reality.',
+    [IntrusionKind.PLOT_HOOK]: 'The line should open a concrete next consequence.',
+    [IntrusionKind.RELATIONSHIP_SABOTAGE]: 'Track the relationship pressure or betrayal it creates.',
+    [IntrusionKind.CLUE_CONTAMINATION]: 'Treat it as evidence that can bend testimony or inference chains.',
+    [IntrusionKind.WORLD_RULE_BREAK]: 'Let the world treat it as a rule or boundary fracture.',
+  };
+
+  return effects[kind] || effects[IntrusionKind.CHARACTER_TAKEOVER];
+}
+
+async function deliverCharacterMessage({ speakerName, content }) {
+  const context = getContext();
+  if (!context) {
+    throw new Error('SillyTavern context is unavailable.');
+  }
+
+  if (typeof context.executeSlashCommandsWithOptions === 'function') {
+    const command = `/sendas name="${escapeSlashCommandArg(speakerName)}" ${content}`;
+    const chatLengthBefore = Array.isArray(context.chat) ? context.chat.length : null;
+    const result = await context.executeSlashCommandsWithOptions(command, {
+      handleParserErrors: true,
+      handleExecutionErrors: true,
+      source: 'VistrTavern',
+    });
+
+    if (result?.isError) {
+      throw new Error(result.errorMessage || 'SillyTavern /sendas failed.');
+    }
+
+    if (chatLengthBefore !== null && Array.isArray(context.chat) && context.chat.length <= chatLengthBefore) {
+      throw new Error('SillyTavern /sendas did not insert a chat message.');
+    }
+
+    return { method: 'sendas', result };
+  }
+
+  return deliverCharacterMessageDirectly(context, { speakerName, content });
+}
+
+async function deliverCharacterMessageDirectly(context, { speakerName, content }) {
+  if (!Array.isArray(context.chat) || typeof context.addOneMessage !== 'function') {
+    throw new Error('SillyTavern chat insertion APIs are unavailable.');
+  }
+
+  const character = findRawCharacterByName(speakerName);
+  const message = createCharacterChatMessage(context, character, { speakerName, content });
+  const eventTypes = context.eventTypes || context.event_types || {};
+  const messageIndex = context.chat.push(message) - 1;
+
+  if (eventTypes.MESSAGE_RECEIVED) {
+    await context.eventSource?.emit?.(eventTypes.MESSAGE_RECEIVED, messageIndex, 'vistr-tavern');
+  }
+
+  context.addOneMessage(message);
+
+  if (eventTypes.CHARACTER_MESSAGE_RENDERED) {
+    await context.eventSource?.emit?.(eventTypes.CHARACTER_MESSAGE_RENDERED, messageIndex, 'vistr-tavern');
+  }
+
+  await context.saveChat?.();
+
+  return { method: 'direct-chat-insert', messageIndex };
+}
+
+function createCharacterChatMessage(context, character, { speakerName, content }) {
+  const now = Date.now();
+  const originalAvatar = character?.avatar || null;
+  const forceAvatar = originalAvatar && typeof context.getThumbnailUrl === 'function'
+    ? context.getThumbnailUrl('avatar', originalAvatar)
+    : undefined;
+  const mes = typeof context.substituteParams === 'function'
+    ? context.substituteParams(content)
+    : content;
+  const extra = {
+    gen_id: now,
+    api: 'manual',
+    model: 'vistr-tavern takeover',
+    vistrTavern: true,
+    vistrTavernTakeover: true,
+    vistrTavernController: 'human',
+  };
+
+  return {
+    name: character?.name || speakerName,
+    is_user: false,
+    is_system: false,
+    send_date: now,
+    mes,
+    force_avatar: forceAvatar,
+    original_avatar: originalAvatar,
+    extra,
+    swipe_id: 0,
+    swipes: [mes],
+    swipe_info: [{
+      send_date: now,
+      gen_started: null,
+      gen_finished: null,
+      extra,
+    }],
+  };
+}
+
+function escapeSlashCommandArg(value) {
+  return String(value ?? '').replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 }
 
 async function markBranchPoint({ characterId, characterName, title, type, summary, options }) {
@@ -303,6 +490,10 @@ async function captureAiMessage(eventData) {
   const chatMessage = latestChatMessage();
   const content = eventData?.message || chatMessage?.mes || chatMessage?.message || '';
   const speakerName = eventData?.name || chatMessage?.name || 'AI';
+  if (shouldIgnoreTakeoverSend({ speakerName, content, chatMessage })) {
+    return;
+  }
+
   const character = findCharacterByName(speakerName);
   const activeScene = sceneManager.getActiveScene();
 
@@ -336,6 +527,29 @@ async function captureAiMessage(eventData) {
 
   await persist();
   overlay?.refresh();
+}
+
+function shouldIgnoreTakeoverSend({ speakerName, content, chatMessage }) {
+  const pending = runtimeDebug.pendingTakeoverSend;
+  if (!pending) {
+    return false;
+  }
+
+  const createdAt = new Date(pending.createdAt).getTime();
+  const isFresh = Number.isFinite(createdAt) && Date.now() - createdAt < 15_000;
+  const namesMatch = normalizeComparableText(speakerName) === normalizeComparableText(pending.speakerName);
+  const contentMatches = normalizeComparableText(content || chatMessage?.mes || '') === normalizeComparableText(pending.content);
+
+  if (isFresh && namesMatch && contentMatches) {
+    runtimeDebug.pendingTakeoverSend = null;
+    return true;
+  }
+
+  if (!isFresh) {
+    runtimeDebug.pendingTakeoverSend = null;
+  }
+
+  return false;
 }
 
 async function injectContinuityHandoff(chat) {
@@ -418,6 +632,10 @@ function findCharacterByName(name) {
   return getCharacters().find((character) => character.name === name) || null;
 }
 
+function findRawCharacterByName(name) {
+  return getRawCharacters().find((character) => character?.name === name || character?.avatar === name) || null;
+}
+
 function latestChatMessage() {
   const context = getContext();
   if (!Array.isArray(context?.chat) || !context.chat.length) {
@@ -483,6 +701,7 @@ function getDebugState() {
     brainstormNoteCount: narrativeMemory?.memory?.brainstormNotes?.length || 0,
     inspirationCaptureCount: narrativeMemory?.memory?.inspirationCaptures?.length || 0,
     lastCapturedAiMessage: runtimeDebug.lastCapturedAiMessage,
+    lastTakeoverSend: runtimeDebug.lastTakeoverSend,
     lastInterceptorCallAt: runtimeDebug.lastInterceptorCallAt,
     lastInjectionResult: runtimeDebug.lastInjectionResult,
     lastInjectionHandoffId: runtimeDebug.lastInjectionHandoffId,
@@ -495,7 +714,7 @@ function getDebugState() {
 
 function inspectCompatibility() {
   const context = getContext();
-  const eventTypes = context?.event_types || {};
+  const eventTypes = context?.eventTypes || context?.event_types || {};
 
   return {
     hasSillyTavernContext: Boolean(context),
@@ -505,6 +724,8 @@ function inspectCompatibility() {
     hasMessageReceivedEvent: Boolean(eventTypes.MESSAGE_RECEIVED),
     hasChatChangedEvent: Boolean(eventTypes.CHAT_CHANGED),
     hasCharacterEditedEvent: Boolean(eventTypes.CHARACTER_EDITED),
+    hasSlashCommandExecution: typeof context?.executeSlashCommandsWithOptions === 'function',
+    hasAddOneMessage: typeof context?.addOneMessage === 'function',
     hasPromptInterceptor: typeof globalThis.VistrTavernPromptInterceptor === 'function',
     checkedAt: new Date().toISOString(),
   };
@@ -550,6 +771,10 @@ function latestBy(items, field) {
   return [...items]
     .filter((item) => item?.[field])
     .sort((left, right) => new Date(right[field]).getTime() - new Date(left[field]).getTime())[0] || null;
+}
+
+function normalizeComparableText(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
 }
 
 function recordError(type, error) {
