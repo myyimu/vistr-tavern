@@ -204,15 +204,15 @@
   margin-top: 10px;
 }
 
-.vt-line-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(96px, 0.75fr);
-  gap: 8px;
+.vt-main-action {
+  min-height: 38px;
+  margin-top: 8px;
+  font-weight: 700;
 }
 
-.vt-line-actions button {
-  min-width: 0;
-  white-space: normal;
+.vt-record-fallback {
+  margin: 8px 0 12px;
+  font-size: 12px;
 }
 
 .vt-active-list {
@@ -235,7 +235,7 @@
 .vt-primary-tool {
   display: grid;
   gap: 8px;
-  margin: 12px 0;
+  margin: 16px 0;
   padding: 10px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -245,9 +245,13 @@
 }
 
 .vt-section-title {
+  position: relative;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  min-height: 24px;
+  padding-right: 2px;
 }
 
 .vt-room {
@@ -270,13 +274,16 @@
 .vt-branch-list summary,
 .vt-inline-options summary,
 .vt-debug summary {
+  position: relative;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  min-height: 24px;
 }
 
 .vt-help-tip {
-  position: relative;
+  position: static;
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
@@ -293,11 +300,12 @@
 
 .vt-help-tip__bubble {
   position: absolute;
-  right: 0;
-  bottom: calc(100% + 8px);
-  z-index: 1;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
   display: none;
-  width: min(260px, calc(100vw - 64px));
+  width: min(320px, calc(100vw - 64px));
+  max-width: calc(100% + 220px);
   padding: 8px 10px;
   border: 1px solid rgba(217, 236, 255, 0.24);
   border-radius: 6px;
@@ -307,6 +315,8 @@
   font-size: 12px;
   font-weight: 400;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .vt-help-tip:hover .vt-help-tip__bubble,

@@ -173,16 +173,15 @@ Type the actual cameo line in `Takeover line`, then click `Send as Character & R
 
 VistrTavern first tries SillyTavern's own `/sendas` command through the extension API. If that API is unavailable, it falls back to direct chat insertion through the exposed chat rendering APIs.
 
-Before sending, choose an `Intrusion type`:
+For a normal first run, leave `Optional: disturbance tag` closed. VistrTavern will use `Character takeover`.
 
-- `Character takeover`: a normal human-controlled role line.
-- `Anomaly line`: something intentionally off-rhythm.
+Open it only when you want to mark the line for later exports and handoff behavior:
+
+- `Character takeover`: a normal role line.
 - `Memory fracture`: a line that should later feel discontinuous.
-- `External will`: a line that hints at outside force or unstable reality.
 - `Plot hook`: a line meant to create the next consequence.
 - `Relationship sabotage`: a line meant to damage, pressure, or test a bond.
 - `Clue contamination`: a line that changes evidence, testimony, or inference.
-- `World-rule break`: a line that suggests the setting rules have cracked.
 
 Example:
 
@@ -198,7 +197,11 @@ This records a structured message with:
 - intrusion id
 - tension
 
-It also creates a disturbance event. The visible SillyTavern message is inserted as a character message, not as a user message. Use `Record Only` only when you intentionally want to save a line to VistrTavern memory without inserting it into the current chat.
+It also creates a disturbance event. The visible SillyTavern message is inserted as a character message, not as a user message. `Record Only` is hidden under the fallback section; use it only when SillyTavern sending fails or when you intentionally want to save a private VT memory note without inserting it into the current chat.
+
+After a takeover line is sent, VistrTavern creates a temporary reaction anchor for the next generation. This anchor tells the next AI response to react directly to the inserted character line before continuing any previous topic.
+
+Prompt injection follows the selected UI language. If the panel is set to Chinese, reaction anchors and continuity handoffs are generated in Chinese; if it is set to English, they are generated in English.
 
 ### 10. Let AI React
 

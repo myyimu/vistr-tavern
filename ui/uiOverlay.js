@@ -5,7 +5,7 @@ const FIRST_RUN_STORAGE_KEY = 'vistr-tavern:first-run-dismissed';
 const DEFAULT_LANGUAGE = 'zh-CN';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onSendHumanLineAsCharacter, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onSaveRoom, onCaptureInspiration, onSaveBrainstormNote, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onSendHumanLineAsCharacter, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onLanguageChange, onSaveRoom, onCaptureInspiration, onSaveBrainstormNote, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
@@ -13,6 +13,7 @@ export class UiOverlay {
     this.onRecordHumanLine = onRecordHumanLine;
     this.onMarkBranchPoint = onMarkBranchPoint;
     this.onSetScenarioPreset = onSetScenarioPreset;
+    this.onLanguageChange = onLanguageChange;
     this.onSaveRoom = onSaveRoom;
     this.onCaptureInspiration = onCaptureInspiration;
     this.onSaveBrainstormNote = onSaveBrainstormNote;
@@ -144,9 +145,10 @@ export class UiOverlay {
 
     this.root.querySelector('[data-vt-character]').addEventListener('change', () => this.refresh());
 
-    this.root.querySelector('[data-vt-language]').addEventListener('change', (event) => {
+    this.root.querySelector('[data-vt-language]').addEventListener('change', async (event) => {
       this.language = normalizeLanguage(event.target.value);
       writeLocalStorage(LANGUAGE_STORAGE_KEY, this.language);
+      await this.onLanguageChange?.(this.language);
       this.#render(false);
     });
 
@@ -474,52 +476,26 @@ export class UiOverlay {
           ${this.#t('humanAnomalyLine')}
           <textarea rows="4" data-vt-human-line placeholder="${this.#t('humanLinePlaceholder')}"></textarea>
         </label>
-        <label class="vt-field vt-compact-field">
-          ${this.#t('intrusionKind')}
-          <select data-vt-intrusion-kind>
-            <option value="${IntrusionKind.CHARACTER_TAKEOVER}">${this.#t('intrusionKindCharacterTakeover')}</option>
-            <option value="${IntrusionKind.ANOMALY_LINE}">${this.#t('intrusionKindAnomalyLine')}</option>
-            <option value="${IntrusionKind.MEMORY_FRACTURE}">${this.#t('intrusionKindMemoryFracture')}</option>
-            <option value="${IntrusionKind.EXTERNAL_WILL}">${this.#t('intrusionKindExternalWill')}</option>
-            <option value="${IntrusionKind.PLOT_HOOK}">${this.#t('intrusionKindPlotHook')}</option>
-            <option value="${IntrusionKind.RELATIONSHIP_SABOTAGE}">${this.#t('intrusionKindRelationshipSabotage')}</option>
-            <option value="${IntrusionKind.CLUE_CONTAMINATION}">${this.#t('intrusionKindClueContamination')}</option>
-            <option value="${IntrusionKind.WORLD_RULE_BREAK}">${this.#t('intrusionKindWorldRuleBreak')}</option>
-          </select>
-        </label>
-        <div class="vt-line-actions">
-          <button type="button" data-vt-send-as-character>${this.#t('sendAsCharacterAndRecordGeneric')}</button>
+        <details class="vt-inline-options vt-intrusion-kind-options">
+          <summary>${this.#t('optionalIntrusionKind')}</summary>
+          <label class="vt-field vt-compact-field">
+            ${this.#t('intrusionKind')}
+            <select data-vt-intrusion-kind>
+              <option value="${IntrusionKind.CHARACTER_TAKEOVER}">${this.#t('intrusionKindCharacterTakeover')}</option>
+              <option value="${IntrusionKind.MEMORY_FRACTURE}">${this.#t('intrusionKindMemoryFracture')}</option>
+              <option value="${IntrusionKind.PLOT_HOOK}">${this.#t('intrusionKindPlotHook')}</option>
+              <option value="${IntrusionKind.RELATIONSHIP_SABOTAGE}">${this.#t('intrusionKindRelationshipSabotage')}</option>
+              <option value="${IntrusionKind.CLUE_CONTAMINATION}">${this.#t('intrusionKindClueContamination')}</option>
+            </select>
+          </label>
+          <p class="vt-help">${this.#t('intrusionKindHelp')}</p>
+        </details>
+        <button class="vt-main-action" type="button" data-vt-send-as-character>${this.#t('sendAsCharacterAndRecordGeneric')}</button>
+        <details class="vt-inline-options vt-record-fallback">
+          <summary>${this.#t('recordFallback')}</summary>
+          <p class="vt-help">${this.#t('recordFallbackHelp')}</p>
           <button type="button" data-vt-record-line>${this.#t('recordHumanLine')}</button>
-        </div>
-
-        <section class="vt-primary-tool">
-          ${sectionTitle(this.#t('inspirationCapture'), this.#t('tipInspirationCapture'))}
-          <p class="vt-help">${this.#t('inspirationHelp')}</p>
-          <button type="button" data-vt-capture-inspiration>${this.#t('captureInspiration')}</button>
-          <span class="vt-copy-status" data-vt-inspiration-status></span>
-          <div data-vt-inspiration-list></div>
-        </section>
-
-        <section class="vt-primary-tool">
-          ${sectionTitle(this.#t('brainstormSpace'), this.#t('tipBrainstormSpace'))}
-          <textarea rows="3" data-vt-brainstorm-content placeholder="${this.#t('brainstormPlaceholder')}"></textarea>
-          <details class="vt-inline-options">
-            <summary>${this.#t('brainstormAdvanced')}</summary>
-            <label class="vt-field">
-              ${this.#t('brainstormKind')}
-              <select data-vt-brainstorm-kind>
-                <option value="${BrainstormKind.SPARK}">${this.#t('brainstormSpark')}</option>
-                <option value="${BrainstormKind.CHARACTER_DRIFT}">${this.#t('brainstormCharacterDrift')}</option>
-                <option value="${BrainstormKind.CONFLICT}">${this.#t('brainstormConflict')}</option>
-                <option value="${BrainstormKind.WRITABLE_SCENE}">${this.#t('brainstormWritableScene')}</option>
-                <option value="${BrainstormKind.NEXT_CAMEO}">${this.#t('brainstormNextCameo')}</option>
-              </select>
-            </label>
-          </details>
-          <button type="button" data-vt-save-brainstorm>${this.#t('saveBrainstorm')}</button>
-          <span class="vt-copy-status" data-vt-brainstorm-status></span>
-          <div data-vt-brainstorm-list></div>
-        </section>
+        </details>
 
         <details class="vt-room">
           <summary>${summaryTitle(this.#t('optionalSetup'), this.#t('tipOptionalSetup'))}</summary>
@@ -640,6 +616,35 @@ export class UiOverlay {
           <p class="vt-help">${this.#t('creatorToolsHelp')}</p>
 
           <details class="vt-inline-options">
+            <summary>${summaryTitle(this.#t('inspirationCapture'), this.#t('tipInspirationCapture'))}</summary>
+            <p class="vt-help">${this.#t('inspirationHelp')}</p>
+            <button type="button" data-vt-capture-inspiration>${this.#t('captureInspiration')}</button>
+            <span class="vt-copy-status" data-vt-inspiration-status></span>
+            <div data-vt-inspiration-list></div>
+          </details>
+
+          <details class="vt-inline-options">
+            <summary>${summaryTitle(this.#t('brainstormSpace'), this.#t('tipBrainstormSpace'))}</summary>
+            <textarea rows="3" data-vt-brainstorm-content placeholder="${this.#t('brainstormPlaceholder')}"></textarea>
+            <details class="vt-inline-options">
+              <summary>${this.#t('brainstormAdvanced')}</summary>
+              <label class="vt-field">
+                ${this.#t('brainstormKind')}
+                <select data-vt-brainstorm-kind>
+                  <option value="${BrainstormKind.SPARK}">${this.#t('brainstormSpark')}</option>
+                  <option value="${BrainstormKind.CHARACTER_DRIFT}">${this.#t('brainstormCharacterDrift')}</option>
+                  <option value="${BrainstormKind.CONFLICT}">${this.#t('brainstormConflict')}</option>
+                  <option value="${BrainstormKind.WRITABLE_SCENE}">${this.#t('brainstormWritableScene')}</option>
+                  <option value="${BrainstormKind.NEXT_CAMEO}">${this.#t('brainstormNextCameo')}</option>
+                </select>
+              </label>
+            </details>
+            <button type="button" data-vt-save-brainstorm>${this.#t('saveBrainstorm')}</button>
+            <span class="vt-copy-status" data-vt-brainstorm-status></span>
+            <div data-vt-brainstorm-list></div>
+          </details>
+
+          <details class="vt-inline-options">
             <summary>${summaryTitle(this.#t('branchPoint'), this.#t('tipBranchPoint'))}</summary>
             <p class="vt-help">${this.#t('branchPointHelp')}</p>
             <div class="vt-grid">
@@ -754,6 +759,8 @@ function formatDebugState(debug, language) {
     [translate(language, 'debugInspirationCaptures'), debug.inspirationCaptureCount ?? 0],
     [translate(language, 'debugBrainstormNotes'), debug.brainstormNoteCount ?? 0],
     [translate(language, 'debugLastTakeoverSend'), formatTakeoverSend(debug.lastTakeoverSend, language)],
+    [translate(language, 'debugPendingReactionAnchor'), formatReactionAnchor(debug.pendingReactionAnchor, language)],
+    [translate(language, 'debugLastReactionAnchor'), formatReactionAnchor(debug.lastReactionAnchor, language)],
     [translate(language, 'debugLastAiMessage'), debug.lastCapturedAiMessage ? `${debug.lastCapturedAiMessage.speakerName} · ${debug.lastCapturedAiMessage.createdAt}` : translate(language, 'none')],
     [translate(language, 'debugInterceptor'), debug.lastInterceptorCallAt ? `${debug.lastInjectionResult} · ${debug.lastInterceptorCallAt}` : debug.lastInjectionResult || translate(language, 'notCalled')],
     [translate(language, 'debugLastError'), debug.lastError ? `${debug.lastError.type}: ${debug.lastError.message}` : debug.lastInjectionError || translate(language, 'none')],
@@ -762,6 +769,19 @@ function formatDebugState(debug, language) {
   return rows
     .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
     .join('');
+}
+
+function formatReactionAnchor(anchor, language) {
+  if (!anchor) {
+    return translate(language, 'none');
+  }
+
+  const status = anchor.consumedAt
+    ? translate(language, 'anchorConsumed')
+    : anchor.injectedAt
+      ? translate(language, 'anchorInjected')
+      : translate(language, 'anchorPending');
+  return `${anchor.characterName || translate(language, 'unknown')} · ${status} · ${anchor.contentPreview || ''}`;
 }
 
 function formatTakeoverSend(send, language) {
@@ -989,6 +1009,9 @@ const I18N = {
   en: {
     activeIntrusions: 'Active Intrusions',
     anonymous: 'Anonymous',
+    anchorConsumed: 'consumed',
+    anchorInjected: 'injected',
+    anchorPending: 'pending',
     awarenessAfterRecovery: 'Awareness after recovery',
     awarenessExplicit: 'Reality doubt',
     awarenessNone: 'AI no awareness',
@@ -1052,7 +1075,9 @@ const I18N = {
     debugLastConsumed: 'Last consumed',
     debugLastError: 'Last error',
     debugLastInjected: 'Last injected',
+    debugLastReactionAnchor: 'Last reaction anchor',
     debugLastTakeoverSend: 'Last takeover send',
+    debugPendingReactionAnchor: 'Pending reaction anchor',
     debugPendingHandoff: 'Pending handoff',
     debugSnapshotCopied: 'Debug snapshot copied',
     debugStorage: 'Storage',
@@ -1121,14 +1146,12 @@ const I18N = {
     intentTarget: 'Target',
     intentTargetPlaceholder: 'Who should feel pressure?',
     intrusionKind: 'Intrusion type',
-    intrusionKindAnomalyLine: 'Anomaly line',
     intrusionKindCharacterTakeover: 'Character takeover',
     intrusionKindClueContamination: 'Clue contamination',
-    intrusionKindExternalWill: 'External will',
     intrusionKindMemoryFracture: 'Memory fracture',
     intrusionKindPlotHook: 'Plot hook',
     intrusionKindRelationshipSabotage: 'Relationship sabotage',
-    intrusionKindWorldRuleBreak: 'World-rule break',
+    intrusionKindHelp: 'Optional tag for exports and handoff behavior. Leave it as Character takeover for normal use.',
     language: 'Language',
     latestHandoffCopied: 'Latest handoff copied',
     loading: 'loading',
@@ -1154,8 +1177,11 @@ const I18N = {
     optionB: 'Option B',
     optionC: 'Option C',
     optionalSetup: 'Optional Setup',
+    optionalIntrusionKind: 'Optional: disturbance tag',
     optionalSetupHelp: 'You can ignore this section for the first run. These settings add context but are not required to start a takeover.',
     recordHumanLine: 'Record Only',
+    recordFallback: 'Fallback: record only',
+    recordFallbackHelp: 'Use only if SillyTavern sending fails or you want a private VT memory note without inserting a chat message.',
     refresh: 'Refresh',
     restartIntrusion: 'Restart Intrusion',
     roleplayRoom: 'Creator Context Card',
@@ -1231,6 +1257,9 @@ const I18N = {
   'zh-CN': {
     activeIntrusions: '进行中的接管',
     anonymous: '匿名',
+    anchorConsumed: '已消费',
+    anchorInjected: '已注入',
+    anchorPending: '待处理',
     awarenessAfterRecovery: '恢复后异常察觉',
     awarenessExplicit: '怀疑',
     awarenessNone: 'AI 无感',
@@ -1294,7 +1323,9 @@ const I18N = {
     debugLastConsumed: '最近消费',
     debugLastError: '最近错误',
     debugLastInjected: '最近注入',
+    debugLastReactionAnchor: '最近反应锚点',
     debugLastTakeoverSend: '最近接管发送',
+    debugPendingReactionAnchor: '待处理反应锚点',
     debugPendingHandoff: '待处理 Handoff',
     debugSnapshotCopied: 'Debug 快照已复制',
     debugStorage: '存储',
@@ -1363,14 +1394,12 @@ const I18N = {
     intentTarget: '针对对象',
     intentTargetPlaceholder: '想让谁感到压力？',
     intrusionKind: '乱入类型',
-    intrusionKindAnomalyLine: '异常发言',
     intrusionKindCharacterTakeover: '角色接管',
     intrusionKindClueContamination: '线索污染',
-    intrusionKindExternalWill: '外部意志',
     intrusionKindMemoryFracture: '记忆断片',
     intrusionKindPlotHook: '剧情钩子',
     intrusionKindRelationshipSabotage: '关系破坏',
-    intrusionKindWorldRuleBreak: '世界规则裂缝',
+    intrusionKindHelp: '可选标记，用于导出和 handoff。普通使用保持“角色接管”即可。',
     language: '语言',
     latestHandoffCopied: '最新 Handoff 已复制',
     loading: '加载中',
@@ -1396,8 +1425,11 @@ const I18N = {
     optionB: '路线 B',
     optionC: '路线 C',
     optionalSetup: '可选设定',
+    optionalIntrusionKind: '可选：乱入标记',
     optionalSetupHelp: '第一次使用可以完全忽略。这里的字段只增加上下文，不影响开始接管。',
     recordHumanLine: '仅记录',
+    recordFallback: 'Fallback：仅记录',
+    recordFallbackHelp: '只在 SillyTavern 发送失败，或你只想保存 VT 私有记忆而不插入聊天时使用。',
     refresh: '刷新',
     restartIntrusion: '重新开始接管',
     roleplayRoom: '创作背景卡',

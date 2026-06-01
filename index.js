@@ -22,6 +22,8 @@ const runtimeDebug = {
   lastCapturedAiMessage: null,
   lastTakeoverSend: null,
   pendingTakeoverSend: null,
+  pendingReactionAnchor: null,
+  lastReactionAnchor: null,
   lastConsumedHandoffId: null,
   lastConsumedAt: null,
   lastError: null,
@@ -46,7 +48,7 @@ exposeGlobal('VistrTavernPromptInterceptor', async function VistrTavernPromptInt
   runtimeDebug.lastInterceptorCallAt = new Date().toISOString();
 
   try {
-    const result = await injectContinuityHandoff(chat);
+    const result = await injectVistrTavernContext(chat);
     runtimeDebug.lastInjectionResult = result.status;
     runtimeDebug.lastInjectionHandoffId = result.handoffId || null;
     runtimeDebug.lastInjectionError = null;
@@ -103,6 +105,7 @@ function initialize() {
     onRecordHumanLine: recordHumanLine,
     onMarkBranchPoint: markBranchPoint,
     onSetScenarioPreset: setScenarioPreset,
+    onLanguageChange: setPromptLanguage,
     onSaveRoom: saveRoom,
     onCaptureInspiration: captureInspiration,
     onSaveBrainstormNote: saveBrainstormNote,
@@ -116,6 +119,7 @@ function initialize() {
     getState,
     getDebugState,
   });
+  setPromptLanguage(overlay.language).catch((error) => recordError('prompt_language_sync_failed', error));
   overlay.mount();
   publishDebugState();
 
@@ -257,6 +261,7 @@ async function recordHumanLine({ characterId, speakerName, content, intrusionKin
   });
 
   if (message) {
+    runtimeDebug.pendingReactionAnchor = createReactionAnchor({ message, intrusion, scene: activeScene });
     narrativeMemory.recordDisturbanceEvent({
       type: 'human_anomaly_line',
       severity: activeScene?.tension >= 70 ? 4 : 2,
@@ -434,6 +439,18 @@ async function setScenarioPreset(preset) {
   await persist();
 }
 
+async function setPromptLanguage(language, { persistChange = true } = {}) {
+  if (!narrativeMemory?.memory?.session) {
+    return;
+  }
+
+  narrativeMemory.memory.session.promptLanguage = normalizePromptLanguage(language);
+  narrativeMemory.memory.session.updatedAt = new Date().toISOString();
+  if (persistChange) {
+    await persist();
+  }
+}
+
 async function saveRoom(roomInput) {
   narrativeMemory.updateRoom(roomInput);
   await persist();
@@ -516,6 +533,7 @@ async function captureAiMessage(eventData) {
   }
 
   if (message) {
+    consumeReactionAnchor(message);
     runtimeDebug.lastCapturedAiMessage = {
       id: message.id,
       speakerName: message.speakerName,
@@ -527,6 +545,40 @@ async function captureAiMessage(eventData) {
 
   await persist();
   overlay?.refresh();
+}
+
+function createReactionAnchor({ message, intrusion, scene }) {
+  if (!message?.id || !intrusion?.id) {
+    return null;
+  }
+
+  return {
+    id: `reaction_${message.id}`,
+    messageId: message.id,
+    intrusionId: intrusion.id,
+    characterId: message.characterId,
+    characterName: message.speakerName,
+    content: message.content,
+    intrusionKind: message.intrusionKind || IntrusionKind.CHARACTER_TAKEOVER,
+    sceneName: scene?.name || null,
+    createdAt: new Date().toISOString(),
+    injectedAt: null,
+  };
+}
+
+function consumeReactionAnchor(message) {
+  const anchor = runtimeDebug.pendingReactionAnchor;
+  if (!anchor) {
+    return;
+  }
+
+  runtimeDebug.lastReactionAnchor = {
+    ...anchor,
+    consumedAt: new Date().toISOString(),
+    consumedByMessageId: message.id,
+    consumedBySpeakerName: message.speakerName,
+  };
+  runtimeDebug.pendingReactionAnchor = null;
 }
 
 function shouldIgnoreTakeoverSend({ speakerName, content, chatMessage }) {
@@ -552,11 +604,54 @@ function shouldIgnoreTakeoverSend({ speakerName, content, chatMessage }) {
   return false;
 }
 
-async function injectContinuityHandoff(chat) {
+async function injectVistrTavernContext(chat) {
   if (!Array.isArray(chat) || !narrativeMemory || !storage) {
     return { status: 'skipped:not-ready' };
   }
 
+  const anchorResult = injectReactionAnchor(chat);
+  const handoffResult = await injectContinuityHandoff(chat);
+
+  if (anchorResult.status === 'injected' && handoffResult.status === 'injected') {
+    return {
+      status: 'injected:reaction-anchor+handoff',
+      handoffId: handoffResult.handoffId,
+      reactionAnchorId: anchorResult.reactionAnchorId,
+    };
+  }
+
+  if (anchorResult.status === 'injected') {
+    return anchorResult;
+  }
+
+  if (anchorResult.status === 'skipped:duplicate-reaction-anchor') {
+    return anchorResult;
+  }
+
+  return handoffResult;
+}
+
+function injectReactionAnchor(chat) {
+  const anchor = runtimeDebug.pendingReactionAnchor;
+  if (!anchor) {
+    return { status: 'skipped:no-reaction-anchor' };
+  }
+
+  if (chat.some((message) => message?.extra?.vistrTavernReactionAnchorId === anchor.id)) {
+    return { status: 'skipped:duplicate-reaction-anchor', reactionAnchorId: anchor.id };
+  }
+
+  const insertionIndex = chat.length;
+  chat.splice(insertionIndex, 0, createReactionAnchorChatMessage(anchor));
+  runtimeDebug.pendingReactionAnchor = {
+    ...anchor,
+    injectedAt: new Date().toISOString(),
+  };
+
+  return { status: 'injected:reaction-anchor', reactionAnchorId: anchor.id };
+}
+
+async function injectContinuityHandoff(chat) {
   const handoff = narrativeMemory.getPendingHandoff();
   if (!handoff || chat.some((message) => message?.extra?.vistrTavernHandoffId === handoff.id)) {
     return {
@@ -572,6 +667,59 @@ async function injectContinuityHandoff(chat) {
   await persist();
 
   return { status: 'injected', handoffId: handoff.id };
+}
+
+function createReactionAnchorChatMessage(anchor) {
+  return {
+    name: 'VistrTavern',
+    is_user: false,
+    is_system: true,
+    send_date: Date.now(),
+    mes: createReactionAnchorPrompt(anchor),
+    extra: {
+      type: 'system',
+      vistrTavern: true,
+      vistrTavernReactionAnchorId: anchor.id,
+    },
+  };
+}
+
+function createReactionAnchorPrompt(anchor) {
+  if (currentPromptLanguage() === 'zh-CN') {
+    return createReactionAnchorPromptZh(anchor);
+  }
+
+  const name = anchor.characterName || 'the recovered character';
+  const sceneLine = anchor.sceneName ? `Scene: ${anchor.sceneName}.` : 'Scene: current chat.';
+  return [
+    '[Immediate Continuity Anchor]',
+    sceneLine,
+    `${name} just said or did the following, and this is now the current topic:`,
+    `"${anchor.content}"`,
+    '',
+    'For the next response:',
+    `- React directly to ${name}'s latest words/actions before continuing any previous topic.`,
+    `- Treat those words/actions as ${name}'s own recent behavior in the fictional world.`,
+    '- Preserve the immediate emotional, relationship, clue, or plot consequence.',
+    '- Do not skip past this moment or resume the previous topic unchanged.',
+  ].join('\n');
+}
+
+function createReactionAnchorPromptZh(anchor) {
+  const name = anchor.characterName || '恢复连续性的角色';
+  const sceneLine = anchor.sceneName ? `场景：${anchor.sceneName}。` : '场景：当前聊天。';
+  return [
+    '[即时连续性锚点]',
+    sceneLine,
+    `${name} 刚刚说出或做出了以下内容，这已经是当前话题：`,
+    `「${anchor.content}」`,
+    '',
+    '下一条回复必须：',
+    `- 先直接回应 ${name} 刚才的话或行动，再继续任何旧话题。`,
+    `- 把这些话或行动当成 ${name} 在故事世界里的近期真实行为。`,
+    '- 承接它造成的即时情绪、关系、线索或剧情后果。',
+    '- 不要跳过这个瞬间，也不要原样回到之前的话题。',
+  ].join('\n');
 }
 
 function createHandoffChatMessage(handoff) {
@@ -702,6 +850,8 @@ function getDebugState() {
     inspirationCaptureCount: narrativeMemory?.memory?.inspirationCaptures?.length || 0,
     lastCapturedAiMessage: runtimeDebug.lastCapturedAiMessage,
     lastTakeoverSend: runtimeDebug.lastTakeoverSend,
+    pendingReactionAnchor: runtimeDebug.pendingReactionAnchor ? summarizeReactionAnchor(runtimeDebug.pendingReactionAnchor) : null,
+    lastReactionAnchor: runtimeDebug.lastReactionAnchor ? summarizeReactionAnchor(runtimeDebug.lastReactionAnchor) : null,
     lastInterceptorCallAt: runtimeDebug.lastInterceptorCallAt,
     lastInjectionResult: runtimeDebug.lastInjectionResult,
     lastInjectionHandoffId: runtimeDebug.lastInjectionHandoffId,
@@ -709,6 +859,19 @@ function getDebugState() {
     lastConsumedHandoffId: runtimeDebug.lastConsumedHandoffId,
     lastConsumedAt: runtimeDebug.lastConsumedAt,
     lastError: runtimeDebug.lastError,
+  };
+}
+
+function summarizeReactionAnchor(anchor) {
+  return {
+    id: anchor.id,
+    characterName: anchor.characterName,
+    intrusionKind: anchor.intrusionKind,
+    createdAt: anchor.createdAt,
+    injectedAt: anchor.injectedAt || null,
+    consumedAt: anchor.consumedAt || null,
+    consumedBySpeakerName: anchor.consumedBySpeakerName || null,
+    contentPreview: anchor.content?.slice?.(0, 120) || '',
   };
 }
 
@@ -775,6 +938,14 @@ function latestBy(items, field) {
 
 function normalizeComparableText(value) {
   return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function normalizePromptLanguage(language) {
+  return language === 'zh-CN' ? 'zh-CN' : 'en';
+}
+
+function currentPromptLanguage() {
+  return normalizePromptLanguage(narrativeMemory?.memory?.session?.promptLanguage || 'en');
 }
 
 function recordError(type, error) {

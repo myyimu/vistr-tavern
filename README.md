@@ -89,7 +89,7 @@ VistrTavern records:
 - Human Intent fields for the creator's desired confrontation, target, disruption, and reveal.
 - Human takeover line delivery through SillyTavern `/sendas`, with direct chat insertion fallback.
 - Human anomaly line recording.
-- Intrusion type tagging for character takeover, anomaly line, memory fracture, external will, plot hook, relationship sabotage, clue contamination, and world-rule break.
+- Intrusion type tagging for character takeover, memory fracture, plot hook, relationship sabotage, and clue contamination.
 - AI reaction capture during active intrusion windows.
 - AI recovery continuity handoff for preserving the context that the story has already been changed by the human.
 - AI anomaly awareness modes: no awareness, memory fracture, and reality doubt.

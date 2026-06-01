@@ -6,13 +6,15 @@ Intrusion-type gameplay release.
 
 ### Added
 
-- Main takeover flow now includes an `Intrusion type` selector for character takeover, anomaly line, memory fracture, external will, plot hook, relationship sabotage, clue contamination, and world-rule break.
+- Main takeover flow now includes an optional `Intrusion type` selector for character takeover, memory fracture, plot hook, relationship sabotage, and clue contamination.
 - Human takeover messages, disturbance events, handoffs, Markdown exports, Creator Pack, and Organized Material now preserve the selected intrusion type.
 - Continuity handoff prompts now include intrusion-type directives so AI recovery can treat different disruptions differently.
 
 ### Changed
 
 - The plugin now frames role takeover as a designed narrative disturbance, not just a chat-editing shortcut.
+- Takeover lines now create a temporary reaction anchor before the next generation, so AI replies are directed to respond to the newly inserted character line instead of drifting back to the previous topic.
+- Prompt injection now follows the UI language: Chinese UI creates Chinese continuity/reaction prompts, English UI creates English prompts.
 - Extension version updated to `0.6.0-alpha`.
 
 ## v0.5.2-alpha

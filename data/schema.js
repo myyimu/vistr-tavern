@@ -83,6 +83,7 @@ export function createEmptyMemory(now = new Date()) {
       createdAt,
       updatedAt: createdAt,
       mode: ViewMode.IMMERSION,
+      promptLanguage: 'en',
       activeSceneId: null,
       scenarioPreset: ScenarioPreset.WEB_NOVEL,
       room: {

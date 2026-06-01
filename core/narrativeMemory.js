@@ -405,36 +405,40 @@ export class NarrativeMemory {
   #handoffSummary(intrusion, humanMessages, aiReactions, intrusionKinds = []) {
     const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
     const kindLine = intrusionKinds.length ? ` Intrusion type(s): ${intrusionKinds.join(', ')}.` : '';
-    return `${name} returned to AI control after ${humanMessages.length} canonical human-controlled line(s) and ${aiReactions.length} AI reaction(s).${kindLine}`;
+    return `${name} recovered continuity after ${humanMessages.length} canonical remembered line(s) and ${aiReactions.length} immediate reaction(s).${kindLine}`;
   }
 
   #handoffPrompt({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope }) {
+    if (this.#promptLanguage() === 'zh-CN') {
+      return this.#handoffPromptZh({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope });
+    }
+
     const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
     const sceneLine = scene
       ? `Scene: ${scene.name}${scene.mood ? `, mood: ${scene.mood}` : ''}, tension: ${scene.tension}.`
       : 'Scene: current active scene.';
 
+    const memoryDirectives = this.#formatIntrusionDirectives(intrusionKinds);
     const lines = [
-      '[VistrTavern Continuity Handoff]',
-      `Character returning to AI control: ${name}.`,
+      '[Continuity Memory]',
+      `Recovered character: ${name}.`,
       sceneLine,
       '',
-      'These events are canonical. Continue from them instead of ignoring, soft-resetting, or rewriting them.',
+      'These events are canonical in-world memory. Continue from them instead of ignoring, soft-resetting, or rewriting them.',
+      `${name} remembers the following words/actions as things they recently said or did. Treat them as part of ${name}'s own continuity unless a memory-fracture or external-will tag explicitly says otherwise.`,
       '',
-      'Human-controlled character actions:',
+      `${name}'s recent remembered words/actions:`,
       ...this.#formatHandoffMessages(humanMessages),
       '',
-      'Intrusion type directives:',
-      ...this.#formatIntrusionDirectives(intrusionKinds),
+      ...(memoryDirectives.length ? ['Memory interpretation directives:', ...memoryDirectives, ''] : []),
+      ...this.#formatDramaticPressure(intrusion.humanIntent),
       '',
-      ...this.#formatHumanIntent(intrusion.humanIntent),
-      '',
-      'AI reactions during the intrusion:',
+      'Other characters\' immediate reactions:',
       ...this.#formatHandoffMessages(aiReactions),
       '',
       'Continuity rules:',
-      '- Treat the human-controlled lines as actions and dialogue that really happened in the story.',
-      '- Preserve emotional, relationship, and world-state consequences created by the intrusion.',
+      `- Treat ${name}'s remembered words/actions as dialogue and actions that really happened in the story.`,
+      '- Preserve emotional, relationship, and world-state consequences created by these remembered events.',
       this.#awarenessRule(awareness),
       '',
       ...this.#awarenessDirective({ intrusion, awareness, awarenessScope }),
@@ -443,21 +447,74 @@ export class NarrativeMemory {
     return lines.join('\n');
   }
 
-  #formatIntrusionDirectives(intrusionKinds = []) {
-    const kinds = intrusionKinds.length ? intrusionKinds : [IntrusionKind.CHARACTER_TAKEOVER];
-    return kinds.flatMap((kind) => this.#intrusionDirective(kind));
+  #handoffPromptZh({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope }) {
+    const name = intrusion.characterName || intrusion.characterId || '未知角色';
+    const sceneLine = scene
+      ? `场景：${scene.name}${scene.mood ? `，氛围：${scene.mood}` : ''}，张力：${scene.tension}。`
+      : '场景：当前活跃场景。';
+    const memoryDirectives = this.#formatIntrusionDirectives(intrusionKinds, 'zh-CN');
+    const lines = [
+      '[连续性记忆]',
+      `恢复连续性的角色：${name}。`,
+      sceneLine,
+      '',
+      '以下事件是故事世界内已经发生的真实记忆。继续承接它们，不要忽略、软重置或改写。',
+      `${name} 记得下面这些话或行动是自己刚刚说过或做过的。除非“记忆断片”标记明确要求，否则把它们当作 ${name} 自己的连续经历。`,
+      '',
+      `${name} 最近记得的发言/行动：`,
+      ...this.#formatHandoffMessages(humanMessages),
+      '',
+      ...(memoryDirectives.length ? ['记忆解释指令：', ...memoryDirectives, ''] : []),
+      ...this.#formatDramaticPressure(intrusion.humanIntent, 'zh-CN'),
+      '',
+      '其他角色的即时反应：',
+      ...this.#formatHandoffMessages(aiReactions),
+      '',
+      '连续性规则：',
+      `- 把 ${name} 记得的发言/行动当作故事里真实发生过的对话和行动。`,
+      '- 保留这些记忆事件造成的情绪、关系和世界状态后果。',
+      this.#awarenessRule(awareness, 'zh-CN'),
+      '',
+      ...this.#awarenessDirective({ intrusion, awareness, awarenessScope, language: 'zh-CN' }),
+    ];
+
+    return lines.join('\n');
   }
 
-  #intrusionDirective(kind) {
+  #formatIntrusionDirectives(intrusionKinds = [], language = 'en') {
+    const kinds = intrusionKinds.filter((kind) => kind !== IntrusionKind.CHARACTER_TAKEOVER);
+    return kinds.flatMap((kind) => this.#intrusionDirective(kind, language));
+  }
+
+  #intrusionDirective(kind, language = 'en') {
+    if (language === 'zh-CN') {
+      const directives = {
+        [IntrusionKind.MEMORY_FRACTURE]: [
+          '- 记忆断片：允许恢复角色或旁观者感到不连续、迟疑或缺失了一拍，但解释必须留在故事世界内部。',
+        ],
+        [IntrusionKind.PLOT_HOOK]: [
+          '- 剧情钩子：把这句话推进成具体后果、选择、线索、对抗或不可逆转折。',
+        ],
+        [IntrusionKind.RELATIONSHIP_SABOTAGE]: [
+          '- 关系破坏：追踪谁因此受伤、受压、怀疑、被吸引、欠下人情或感到背叛。',
+        ],
+        [IntrusionKind.CLUE_CONTAMINATION]: [
+          '- 线索污染：把这句话视为可能改变证词、证据、不在场证明、动机或推理链的信息。',
+        ],
+      };
+
+      return directives[kind] || [];
+    }
+
     const directives = {
       [IntrusionKind.CHARACTER_TAKEOVER]: [
-        '- Character takeover: treat the human-written line as normal in-world dialogue/action by the recovered character.',
+        '- Character takeover: treat the line as normal in-world dialogue/action by the recovered character.',
       ],
       [IntrusionKind.ANOMALY_LINE]: [
         '- Anomaly line: preserve the line as something noticeably off-rhythm. Other characters may misread, resist, or question it in-world.',
       ],
       [IntrusionKind.MEMORY_FRACTURE]: [
-        '- Memory fracture: let the recovered character or observers sense discontinuity, hesitation, or a missing beat without explaining it as user editing.',
+        '- Memory fracture: let the recovered character or observers sense discontinuity, hesitation, or a missing beat without explaining it as editing or authorship.',
       ],
       [IntrusionKind.EXTERNAL_WILL]: [
         '- External will: allow in-world suspicion that the character was moved by an outside force, curse, stage rule, possession, or unstable reality layer.',
@@ -490,30 +547,52 @@ export class NarrativeMemory {
     });
   }
 
-  #formatHumanIntent(intent) {
+  #formatDramaticPressure(intent, language = 'en') {
     if (!intent) {
-      return ['Human creative intent: not recorded.'];
+      return [];
+    }
+
+    if (language === 'zh-CN') {
+      return [
+        '需要保留的戏剧压力：',
+        intent.goal ? `- 场景推进意图：${intent.goal}` : '- 场景推进意图：未记录',
+        intent.target ? `- 压力目标：${intent.target}` : '- 压力目标：未记录',
+        intent.disrupt ? `- 被压迫的关系或规则：${intent.disrupt}` : '- 被压迫的关系或规则：未记录',
+        intent.secret ? `- 秘密 / 揭露压力：${intent.secret}` : '- 秘密 / 揭露压力：未记录',
+      ];
     }
 
     return [
-      'Human creative intent:',
-      intent.goal ? `- Goal: ${intent.goal}` : '- Goal: not recorded',
-      intent.target ? `- Target: ${intent.target}` : '- Target: not recorded',
-      intent.disrupt ? `- Intended disruption: ${intent.disrupt}` : '- Intended disruption: not recorded',
-      intent.secret ? `- Secret / reveal: ${intent.secret}` : '- Secret / reveal: not recorded',
+      'Dramatic pressure to preserve:',
+      intent.goal ? `- Intended scene movement: ${intent.goal}` : '- Intended scene movement: not recorded',
+      intent.target ? `- Pressure target: ${intent.target}` : '- Pressure target: not recorded',
+      intent.disrupt ? `- Relationship or rule under stress: ${intent.disrupt}` : '- Relationship or rule under stress: not recorded',
+      intent.secret ? `- Secret / reveal pressure: ${intent.secret}` : '- Secret / reveal pressure: not recorded',
     ];
   }
 
-  #awarenessRule(awareness) {
+  #awarenessRule(awareness, language = 'en') {
+    if (language === 'zh-CN') {
+      if (awareness === HandoffAwareness.EXPLICIT) {
+        return '- 角色可以在故事世界内明确意识到外部意志、不稳定规则、附身、诅咒或现实裂缝。';
+      }
+
+      if (awareness === HandoffAwareness.SUBTLE) {
+        return '- 角色可以感到迟疑、记忆断片或失控感，但解释必须完全留在故事世界内部。';
+      }
+
+      return '- 解释必须完全留在故事世界内部。把这些记忆中的发言/行动当作角色自己的近期行为。';
+    }
+
     if (awareness === HandoffAwareness.EXPLICIT) {
-      return '- The character may explicitly recognize an external will or takeover as an in-world experience.';
+      return '- The character may explicitly recognize an external will, unstable rule, possession, curse, or reality fracture as an in-world experience.';
     }
 
     if (awareness === HandoffAwareness.SUBTLE) {
-      return '- The character may feel hesitation, memory gaps, or loss of control, but should not explain it as human authorship.';
+      return '- The character may feel hesitation, memory gaps, or loss of control, but should keep the explanation fully inside the fictional world.';
     }
 
-    return '- Do not mention human control, takeover, or external authorship in-world. Treat the lines as the character\'s own actions.';
+    return '- Keep the explanation fully inside the fictional world. Treat the remembered words/actions as the character\'s own recent behavior.';
   }
 
   #recordAwarenessEvents({ intrusion, handoff, scene, awareness, awarenessScope }) {
@@ -550,7 +629,11 @@ export class NarrativeMemory {
     }
   }
 
-  #awarenessDirective({ intrusion, awareness, awarenessScope }) {
+  #awarenessDirective({ intrusion, awareness, awarenessScope, language = 'en' }) {
+    if (language === 'zh-CN') {
+      return this.#awarenessDirectiveZh({ intrusion, awareness, awarenessScope });
+    }
+
     if (awareness === HandoffAwareness.NONE) {
       return ['Awareness Directive:', '- No anomaly awareness should be expressed. Continue immersively from the changed story state.'];
     }
@@ -572,6 +655,46 @@ export class NarrativeMemory {
       intensity,
       '- Do not add a separate fake chat message; express this inside the next model-generated reply.',
     ];
+  }
+
+  #awarenessDirectiveZh({ intrusion, awareness, awarenessScope }) {
+    if (awareness === HandoffAwareness.NONE) {
+      return ['异常察觉指令：', '- 不表现异常察觉。继续从已经改变的故事状态中沉浸式承接。'];
+    }
+
+    const name = intrusion.characterName || intrusion.characterId || '恢复连续性的角色';
+    const targetLine = this.#awarenessScopeLineZh(name, awarenessScope);
+    const monologue = awareness === HandoffAwareness.EXPLICIT
+      ? '*那句话像是从我嘴里说出，却不是从我心里生出来的。这个世界真的稳定吗？*'
+      : '*我刚才为什么会那样说？那不像我。*';
+    const intensity = awareness === HandoffAwareness.EXPLICIT
+      ? '- 内心独白可以怀疑外部意志、世界规则或现实稳定性。'
+      : '- 内心独白应表现迟疑、记忆断片或失控感，但不要跳出故事世界。';
+
+    return [
+      '异常察觉指令：',
+      targetLine,
+      '- 下一条相关 AI 回复应包含一段简短斜体内心独白。',
+      `- 示例内心独白：${monologue}`,
+      intensity,
+      '- 不要额外伪造一条聊天消息；把这种感受写进下一条模型回复里。',
+    ];
+  }
+
+  #awarenessScopeLineZh(name, awarenessScope) {
+    if (awarenessScope === AwarenessScope.OBSERVERS) {
+      return `- 旁观角色可以察觉 ${name} 的行为不像平时；如果旁观者是下一位回复者，可以用内心独白表现这种怀疑。`;
+    }
+
+    if (awarenessScope === AwarenessScope.BOTH) {
+      return `- ${name} 和旁观角色都可以察觉异常；下一位回复者应表现相应的不安。`;
+    }
+
+    return `- 如果 ${name} 是下一位回复者，应察觉自己刚才的话或行动不太对劲。`;
+  }
+
+  #promptLanguage() {
+    return this.memory.session?.promptLanguage === 'zh-CN' ? 'zh-CN' : 'en';
   }
 
   #awarenessScopeLine(name, awarenessScope) {
