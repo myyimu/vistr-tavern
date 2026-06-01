@@ -13,7 +13,7 @@ const writer = new ExportWriter();
 
 memory.syncCharacters([{ name: 'Eileen' }, { name: 'Chancellor' }]);
 const scene = sceneManager.setScene({ name: 'Royal Banquet', mood: 'oppressive', tension: 82 });
-memory.updateRoom({
+memory.updateContextNotes({
   worldview: 'A court where every rumor can become law.',
   background: 'The king may already be dead.',
   roleSlots: 'Princess, chancellor, foreign envoy',
@@ -66,11 +66,11 @@ engine.tick(now);
 assert.equal(engine.isHumanControlled('Eileen'), false);
 assert.equal(memory.memory.handoffs.length, 1);
 assert.equal(memory.memory.disturbanceEvents.filter((event) => event.type.includes('anomaly_awareness')).length, 0);
-assert.match(memory.memory.handoffs[0].prompt, /These events are canonical/);
-assert.match(memory.memory.handoffs[0].prompt, /remembers the following words\/actions/);
-assert.match(memory.memory.handoffs[0].prompt, /Dramatic pressure to preserve/);
+assert.match(memory.memory.handoffs[0].prompt, /Continuity:/);
+assert.match(memory.memory.handoffs[0].prompt, /Do you really believe the king is still alive/);
+assert.match(memory.memory.handoffs[0].prompt, /Continue the current scene/);
 assert.doesNotMatch(memory.memory.handoffs[0].prompt, /human-controlled|Human creative intent|user action/i);
-assert.match(memory.memory.handoffs[0].prompt, /Clue contamination/);
+assert.doesNotMatch(memory.memory.handoffs[0].prompt, /Output boundary|Awareness Directive|chapter titles/);
 assert.deepEqual(memory.memory.handoffs[0].intrusionKinds, [IntrusionKind.CLUE_CONTAMINATION]);
 assert.equal(memory.getPendingHandoff().id, memory.memory.handoffs[0].id);
 memory.recordHandoffInjected(memory.memory.handoffs[0].id);
@@ -116,7 +116,7 @@ assert.match(markdown, /Do you really believe/);
 assert.match(markdown, /AI 接管连续性/);
 assert.match(markdown, /AI 异常察觉/);
 assert.match(markdown, /剧情分支标记/);
-assert.match(markdown, /创作背景卡/);
+assert.match(markdown, /创作上下文/);
 assert.match(markdown, /互动灵感捕获/);
 assert.match(markdown, /创作者脑暴笔记/);
 assert.match(markdown, /Forbidden bloodline reveal/);
@@ -178,8 +178,7 @@ subtleMemory.recordMessage({
 subtleEngine.endIntrusion('Eileen', 'manual');
 assert.equal(subtleMemory.memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness').length, 1);
 assert.equal(subtleMemory.memory.disturbanceEvents.filter((event) => event.type === 'observer_anomaly_awareness').length, 0);
-assert.match(subtleMemory.memory.handoffs[0].prompt, /Awareness Directive/);
-assert.match(subtleMemory.memory.handoffs[0].prompt, /\*Why did I say that\?/);
+assert.match(subtleMemory.memory.handoffs[0].prompt, /unlike themself/);
 
 const explicitMemory = new NarrativeMemory(createEmptyMemory(new Date(now)));
 const explicitSceneManager = new SceneManager(explicitMemory.memory);
@@ -208,7 +207,7 @@ explicitMemory.recordMessage({
 explicitEngine.endIntrusion('Eileen', 'manual');
 assert.equal(explicitMemory.memory.disturbanceEvents.filter((event) => event.type === 'self_anomaly_awareness').length, 1);
 assert.equal(explicitMemory.memory.disturbanceEvents.filter((event) => event.type === 'observer_anomaly_awareness').length, 1);
-assert.match(explicitMemory.memory.handoffs[0].prompt, /world truly stable/);
+assert.match(explicitMemory.memory.handoffs[0].prompt, /outside force or unstable rule/);
 assert.match(writer.toMarkdown(explicitMemory.memory), /self_anomaly_awareness/);
 assert.match(writer.toMarkdown(explicitMemory.memory), /observer_anomaly_awareness/);
 
@@ -239,9 +238,9 @@ zhMemory.recordMessage({
   intrusion: zhIntrusion,
 });
 zhEngine.endIntrusion('艾琳', 'manual');
-assert.match(zhMemory.memory.handoffs[0].prompt, /连续性记忆/);
-assert.match(zhMemory.memory.handoffs[0].prompt, /剧情钩子/);
-assert.match(zhMemory.memory.handoffs[0].prompt, /异常察觉指令/);
+assert.match(zhMemory.memory.handoffs[0].prompt, /连续性/);
+assert.match(zhMemory.memory.handoffs[0].prompt, /你们真的相信国王还活着吗/);
+assert.match(zhMemory.memory.handoffs[0].prompt, /只写 艾琳 的故事内回复/);
 assert.doesNotMatch(zhMemory.memory.handoffs[0].prompt, /Continuity Memory|Immediate Continuity Anchor|Human creative intent/);
 
 console.log('VistrTavern smoke test passed.');

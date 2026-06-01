@@ -39,7 +39,7 @@ Verify the minimum public-alpha loop:
 2. Confirm the character selector is populated.
 3. Switch `Language` between Chinese and English, then continue in either language.
 4. Switch scenario preset between the three available scenarios.
-5. Save Creator Context Card metadata.
+5. Save Creative Context notes.
 6. Fill Human Intent fields.
 7. Keep awareness mode as `AI 无感`.
 8. Start an intrusion on one character.

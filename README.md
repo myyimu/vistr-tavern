@@ -65,7 +65,7 @@ If a feature does not strengthen the dramatic tension caused by a human anomaly 
 
 Multi-character AI interaction is powerful, but it can become fake in a specific way: every character is still ultimately shaped by one model rhythm. VistrTavern treats the human cameo as the rupture that breaks that sameness. AI maintains the world. Humans create the unpredictable intent, resistance, and confrontation that can turn a smooth ensemble scene into usable creative material.
 
-The long-term direction is closer to a roleplay scene space than a generic AI tavern: a room has a worldview, roles, and plot background; a stranger can briefly cameo as one role; the AI cast keeps continuity; the resulting chat becomes script material, prose fragments, character-growth records, and co-creation logs.
+The long-term direction is closer to a roleplay scene space than a generic AI tavern: a scene has roles and dramatic pressure; a human can briefly cameo as one role; the AI cast keeps continuity; the resulting chat becomes script material, prose fragments, character-growth records, and co-creation logs.
 
 VistrTavern records:
 
@@ -85,7 +85,7 @@ VistrTavern records:
 - Timeout-based AI recovery.
 - Scene and tension fields.
 - Scenario presets for web novel/script drafting, AI murder mystery, and virtual theater.
-- Creator Context Card metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
+- Creative Context notes for story premise, current situation, cameo roles, and AI continuity notes.
 - Human Intent fields for the creator's desired confrontation, target, disruption, and reveal.
 - Human takeover line delivery through SillyTavern `/sendas`, with direct chat insertion fallback.
 - Human anomaly line recording.

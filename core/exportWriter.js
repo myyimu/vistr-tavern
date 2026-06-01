@@ -28,8 +28,8 @@ export class ExportWriter {
       '## 核心命题',
       '真人异常源混入 AI 群像后，观察并记录它如何改变戏剧张力、人物关系和世界状态。',
       '',
-      '## 创作背景卡',
-      formatRoom(memory.session.room),
+      '## 创作上下文',
+      formatContextNotes(memory.session.room),
       '',
       '## 当前场景',
       activeScene ? `- 场景：${activeScene.name}` : '- 场景：未设置',
@@ -110,6 +110,9 @@ export class ExportWriter {
         : '当前素材尚未绑定明确场景。',
       `本次导出包含 ${memory.intrusions.length} 次 intrusion、${humanMessages.length} 条真人异常发言、${aiReactions.length} 条 AI 反应、${handoffs.length} 个 continuity handoff 和 ${branchPoints.length} 个剧情分支。`,
       '',
+      '## 创作上下文',
+      formatContextNotes(memory.session.room),
+      '',
       '## 真人异常素材',
       humanMessages.length ? humanMessages.map(formatMessage).join('\n') : '- 暂无真人异常发言',
       '',
@@ -178,8 +181,8 @@ export class ExportWriter {
         '## Scenario Package',
         `- Preset: ${profile.enName}`,
         `- Focus: ${profile.enFocus}`,
-        `- Room worldview: ${memory.session.room?.worldview || 'not set'}`,
-        `- Room background: ${memory.session.room?.background || 'not set'}`,
+        `- Story premise: ${memory.session.room?.worldview || 'not set'}`,
+        `- Current situation: ${memory.session.room?.background || 'not set'}`,
         activeScene ? `- Active scene: ${activeScene.name}` : '- Active scene: not set',
         activeScene ? `- Mood / tension: ${activeScene.mood || 'not set'} / ${activeScene.tension}` : '- Mood / tension: not set',
         '',
@@ -229,8 +232,8 @@ export class ExportWriter {
       '## 场景包装',
       `- 类型：${profile.zhName}`,
       `- 整理重点：${profile.zhFocus}`,
-      `- 房间世界观：${memory.session.room?.worldview || '未设置'}`,
-      `- 剧情背景：${memory.session.room?.background || '未设置'}`,
+      `- 故事前提：${memory.session.room?.worldview || '未设置'}`,
+      `- 当前局面：${memory.session.room?.background || '未设置'}`,
       activeScene ? `- 当前场景：${activeScene.name}` : '- 当前场景：未设置',
       activeScene ? `- 氛围 / 张力：${activeScene.mood || '未设置'} / ${activeScene.tension}` : '- 氛围 / 张力：未设置',
       '',
@@ -449,6 +452,15 @@ function formatAwarenessEvent(event) {
   return `- [${event.type}${awareness}${scope}] ${event.summary} (severity: ${event.severity})`;
 }
 
+function formatContextNotes(context = {}) {
+  return [
+    `- 故事前提：${context.worldview || '未设置'}`,
+    `- 当前局面：${context.background || '未设置'}`,
+    `- 可客串角色：${context.roleSlots || '未设置'}`,
+    `- AI 连续性备注：${context.aiWorldRules || '未设置'}`,
+  ].join('\n');
+}
+
 function formatBranchPoint(branch) {
   const lines = [
     `### ${branch.title}`,
@@ -463,15 +475,6 @@ function formatBranchPoint(branch) {
   }
 
   return lines.join('\n');
-}
-
-function formatRoom(room = {}) {
-  return [
-    `- 世界观：${room.worldview || '未设置'}`,
-    `- 剧情背景：${room.background || '未设置'}`,
-    `- 可客串角色槽位：${room.roleSlots || '未设置'}`,
-    `- AI 世界维护规则：${room.aiWorldRules || '未设置'}`,
-  ].join('\n');
 }
 
 function formatHumanIntent(intrusion) {

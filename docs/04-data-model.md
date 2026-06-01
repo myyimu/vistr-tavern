@@ -28,7 +28,7 @@ Do not store only raw chat messages. Every important record should carry control
 
 `scenarioPreset` controls creator-facing organization and export focus. Supported values are `web_novel`, `murder_mystery`, and `virtual_theater`.
 
-`room` describes the local roleplay scene space. It is not an online room yet; it records worldview, plot background, cameo role slots, and AI world-maintenance rules for export and brainstorming.
+`room` is a legacy internal field name. The current UI presents it as `Creative Context`: story premise, current situation, cameo roles, and AI continuity notes. It does not represent an online room or multiplayer session.
 
 ## Character
 

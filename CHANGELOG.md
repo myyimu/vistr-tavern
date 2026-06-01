@@ -42,27 +42,27 @@ Low-friction onboarding and UI reduction pass.
 - Takeover guide now clearly tells users which character is being controlled and what to do next.
 - Human Intent presets for conflict, routine break, relationship test, plot push, and hidden motive.
 - Main panel now exposes a shorter zero-config flow: select character, start intrusion, record one anomaly line, capture inspiration.
-- Inline help markers and short descriptions for optional setup, Creator Context Card, Human Intent, Creator Tools, Inspiration Capture, and Debug.
+- Inline help markers and short descriptions for optional setup, Creative Context, Human Intent, Creator Tools, Inspiration Capture, and Debug.
 - Sticky panel header with an explicit Collapse button and Escape-key close behavior so VT does not block SillyTavern controls when not in use.
 
 ### Changed
 
-- Advanced room, scene, awareness, duration, and intent fields are now grouped under optional setup.
+- Advanced creative context, scene, awareness, duration, and intent fields are now grouped under optional setup.
 - Branch marking, material exports, and debug controls are moved into secondary sections.
-- Creator Context Card and Debug no longer open by default.
+- Debug no longer opens by default.
 - Extension version updated to `0.5.1-alpha`.
 
 ## v0.5.0-alpha
 
-Creator brainstorm and roleplay-room release.
+Creator brainstorm and interaction-inspiration release.
 
 ### Added
 
-- Creator Context Card metadata for worldview, plot background, cameo role slots, and AI world-maintenance rules.
 - Human Intent fields before starting an intrusion: goal, target, intended disruption, and secret/reveal.
+- Creative Context notes for story premise, current situation, cameo roles, and AI continuity notes.
 - Inspiration Capture after an intrusion, summarizing why the human cameo broke AI ensemble smoothness and what to write next.
 - Creator Brainstorm Space for private creator notes that do not enter chat history.
-- Markdown exports now include room setup, human intent, inspiration captures, and brainstorm notes.
+- Markdown exports now include creative context, human intent, inspiration captures, and brainstorm notes.
 
 ### Changed
 

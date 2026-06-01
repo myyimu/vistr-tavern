@@ -163,16 +163,20 @@ export class NarrativeMemory {
     return branchPoint;
   }
 
-  updateRoom(roomInput = {}) {
+  updateContextNotes(contextInput = {}) {
     const current = this.memory.session.room || {};
     this.memory.session.room = {
-      worldview: roomInput.worldview?.trim?.() ?? current.worldview ?? '',
-      background: roomInput.background?.trim?.() ?? current.background ?? '',
-      roleSlots: roomInput.roleSlots?.trim?.() ?? current.roleSlots ?? '',
-      aiWorldRules: roomInput.aiWorldRules?.trim?.() ?? current.aiWorldRules ?? '',
+      worldview: contextInput.worldview?.trim?.() ?? current.worldview ?? '',
+      background: contextInput.background?.trim?.() ?? current.background ?? '',
+      roleSlots: contextInput.roleSlots?.trim?.() ?? current.roleSlots ?? '',
+      aiWorldRules: contextInput.aiWorldRules?.trim?.() ?? current.aiWorldRules ?? '',
     };
     this.memory.session.updatedAt = new Date().toISOString();
     return this.memory.session.room;
+  }
+
+  updateRoom(roomInput = {}) {
+    return this.updateContextNotes(roomInput);
   }
 
   recordBrainstormNote({
@@ -409,81 +413,98 @@ export class NarrativeMemory {
   }
 
   #handoffPrompt({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope }) {
-    if (this.#promptLanguage() === 'zh-CN') {
+    if (this.#promptLanguage() === 'zh-CN' || this.#messagesContainCjk([intrusion, scene, ...humanMessages, ...aiReactions])) {
       return this.#handoffPromptZh({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope });
     }
 
     const name = intrusion.characterName || intrusion.characterId || 'Unknown character';
-    const sceneLine = scene
-      ? `Scene: ${scene.name}${scene.mood ? `, mood: ${scene.mood}` : ''}, tension: ${scene.tension}.`
-      : 'Scene: current active scene.';
-
-    const memoryDirectives = this.#formatIntrusionDirectives(intrusionKinds);
-    const lines = [
-      '[Continuity Memory]',
-      `Recovered character: ${name}.`,
-      sceneLine,
-      '',
-      'These events are canonical in-world memory. Continue from them instead of ignoring, soft-resetting, or rewriting them.',
-      `${name} remembers the following words/actions as things they recently said or did. Treat them as part of ${name}'s own continuity unless a memory-fracture or external-will tag explicitly says otherwise.`,
-      '',
-      `${name}'s recent remembered words/actions:`,
-      ...this.#formatHandoffMessages(humanMessages),
-      '',
-      ...(memoryDirectives.length ? ['Memory interpretation directives:', ...memoryDirectives, ''] : []),
-      ...this.#formatDramaticPressure(intrusion.humanIntent),
-      '',
-      'Other characters\' immediate reactions:',
-      ...this.#formatHandoffMessages(aiReactions),
-      '',
-      'Continuity rules:',
-      `- Treat ${name}'s remembered words/actions as dialogue and actions that really happened in the story.`,
-      '- Preserve emotional, relationship, and world-state consequences created by these remembered events.',
-      this.#awarenessRule(awareness),
-      '',
-      ...this.#awarenessDirective({ intrusion, awareness, awarenessScope }),
-    ];
-
-    return lines.join('\n');
+    const remembered = this.#compactRememberedLine(humanMessages);
+    const reaction = this.#compactReactionLine(aiReactions);
+    const awarenessLine = this.#compactAwarenessLine({ name, awareness, awarenessScope });
+    return [
+      `Continuity: ${name} remembers this as their own recent dialogue/action: "${remembered}"`,
+      reaction ? `Immediate reaction already seen: "${reaction}"` : '',
+      awarenessLine,
+      `Continue the current scene from that fact. Write only ${name}'s in-world reply; no notes, headings, summaries, or system text.`,
+    ].filter(Boolean).join('\n');
   }
 
   #handoffPromptZh({ intrusion, scene, humanMessages, aiReactions, intrusionKinds, awareness, awarenessScope }) {
     const name = intrusion.characterName || intrusion.characterId || '未知角色';
-    const sceneLine = scene
-      ? `场景：${scene.name}${scene.mood ? `，氛围：${scene.mood}` : ''}，张力：${scene.tension}。`
-      : '场景：当前活跃场景。';
-    const memoryDirectives = this.#formatIntrusionDirectives(intrusionKinds, 'zh-CN');
-    const lines = [
-      '[连续性记忆]',
-      `恢复连续性的角色：${name}。`,
-      sceneLine,
-      '',
-      '以下事件是故事世界内已经发生的真实记忆。继续承接它们，不要忽略、软重置或改写。',
-      `${name} 记得下面这些话或行动是自己刚刚说过或做过的。除非“记忆断片”标记明确要求，否则把它们当作 ${name} 自己的连续经历。`,
-      '',
-      `${name} 最近记得的发言/行动：`,
-      ...this.#formatHandoffMessages(humanMessages),
-      '',
-      ...(memoryDirectives.length ? ['记忆解释指令：', ...memoryDirectives, ''] : []),
-      ...this.#formatDramaticPressure(intrusion.humanIntent, 'zh-CN'),
-      '',
-      '其他角色的即时反应：',
-      ...this.#formatHandoffMessages(aiReactions),
-      '',
-      '连续性规则：',
-      `- 把 ${name} 记得的发言/行动当作故事里真实发生过的对话和行动。`,
-      '- 保留这些记忆事件造成的情绪、关系和世界状态后果。',
-      this.#awarenessRule(awareness, 'zh-CN'),
-      '',
-      ...this.#awarenessDirective({ intrusion, awareness, awarenessScope, language: 'zh-CN' }),
-    ];
+    const remembered = this.#compactRememberedLine(humanMessages);
+    const reaction = this.#compactReactionLine(aiReactions);
+    const awarenessLine = this.#compactAwarenessLine({ name, awareness, awarenessScope, language: 'zh-CN' });
+    return [
+      `连续性：${name} 记得这是自己刚刚说过/做过的事：「${remembered}」`,
+      reaction ? `已经出现的即时反应：「${reaction}」` : '',
+      awarenessLine,
+      `从这个事实继续当前场景。只写 ${name} 的故事内回复；不要写标题、说明、总结或系统文本。`,
+    ].filter(Boolean).join('\n');
+  }
 
-    return lines.join('\n');
+  #compactRememberedLine(messages) {
+    return messages.map((message) => message.content).filter(Boolean).join(' / ').replace(/\s+/g, ' ').trim() || 'nothing recorded';
+  }
+
+  #compactReactionLine(messages) {
+    return messages.map((message) => `${message.speakerName}: ${message.content}`).filter(Boolean).join(' / ').replace(/\s+/g, ' ').trim();
+  }
+
+  #compactAwarenessLine({ name, awareness, awarenessScope, language = 'en' }) {
+    if (awareness === HandoffAwareness.NONE) {
+      return '';
+    }
+
+    if (language === 'zh-CN') {
+      if (awareness === HandoffAwareness.EXPLICIT) {
+        return awarenessScope === AwarenessScope.OBSERVERS
+          ? `旁观角色可以在故事内怀疑 ${name} 的异常。`
+          : `${name} 可以在故事内怀疑自己刚才被外力或不稳定规则影响。`;
+      }
+
+      return awarenessScope === AwarenessScope.OBSERVERS
+        ? `旁观角色可以感觉 ${name} 刚才不太对劲。`
+        : `${name} 可以感觉刚才的话不像平时的自己。`;
+    }
+
+    if (awareness === HandoffAwareness.EXPLICIT) {
+      return awarenessScope === AwarenessScope.OBSERVERS
+        ? `Observers may suspect ${name}'s anomaly in-world.`
+        : `${name} may suspect an in-world outside force or unstable rule affected them.`;
+    }
+
+    return awarenessScope === AwarenessScope.OBSERVERS
+      ? `Observers may feel ${name} was briefly unlike themself.`
+      : `${name} may feel their recent words were unlike themself.`;
   }
 
   #formatIntrusionDirectives(intrusionKinds = [], language = 'en') {
     const kinds = intrusionKinds.filter((kind) => kind !== IntrusionKind.CHARACTER_TAKEOVER);
     return kinds.flatMap((kind) => this.#intrusionDirective(kind, language));
+  }
+
+  #formatOutputBoundary(language = 'en') {
+    if (language === 'zh-CN') {
+      return [
+        '输出边界：',
+        '- 这些内容只是内部连续性约束，不是要写进聊天正文的旁白。',
+        '- 下一条回复只能写角色在故事世界内的反应、台词、动作或内心。',
+        '- 不要输出 Note、备注、假设说明、纠错说明、插件说明、handoff、anchor、连续性记忆等元信息。',
+        '- 不要输出 Markdown 标题、章节标题、LOADED STATES、状态块、系统/调试文本、长度要求或“Please respond...”这类二次指令。',
+        '- 不要新开场景、切换地点、添加路人事件或跳过时间，除非最近记忆本身要求这么做。',
+        '- 使用当前聊天语言继续；中文聊天中不要切换成英文解释。',
+      ];
+    }
+
+    return [
+      'Output boundary:',
+      '- This is an internal continuity constraint, not visible narration to print in the chat.',
+      '- The next reply must only contain in-world character reaction, dialogue, action, or inner thought.',
+      '- Never write a visible Note, assumption, correction, plugin explanation, handoff, anchor, continuity memory, or meta-commentary.',
+      '- Never write Markdown headings, chapter titles, loaded states, status blocks, system/debug text, length instructions, or “Please respond...” instructions.',
+      '- Do not start a new scene, change location, add a crowd event, or time-skip unless the recent memory itself requires it.',
+      '- Continue in the current chat language; do not switch languages for an explanatory note.',
+    ];
   }
 
   #intrusionDirective(kind, language = 'en') {
@@ -529,7 +550,7 @@ export class NarrativeMemory {
         '- Clue contamination: treat the line as potentially altering testimony, evidence, alibis, motives, or inference chains.',
       ],
       [IntrusionKind.WORLD_RULE_BREAK]: [
-        '- World-rule break: let the room interpret the line as evidence that a rule, boundary, prophecy, system, or reality layer has changed.',
+        '- World-rule break: let the scene interpret the line as evidence that a rule, boundary, prophecy, system, or reality layer has changed.',
       ],
     };
 
@@ -697,6 +718,18 @@ export class NarrativeMemory {
     return this.memory.session?.promptLanguage === 'zh-CN' ? 'zh-CN' : 'en';
   }
 
+  #messagesContainCjk(items = []) {
+    return items.some((item) => /[\u3400-\u9fff]/.test([
+      item?.characterName,
+      item?.characterId,
+      item?.speakerName,
+      item?.content,
+      item?.name,
+      item?.mood,
+      item?.summary,
+    ].filter(Boolean).join(' ')));
+  }
+
   #awarenessScopeLine(name, awarenessScope) {
     if (awarenessScope === AwarenessScope.OBSERVERS) {
       return `- Observer characters may notice that ${name} behaved unlike themself and should express synchronized suspicion through inner monologue if they are the next respondent.`;
@@ -773,7 +806,7 @@ export class NarrativeMemory {
 
     const name = targetIntrusion.characterName || targetIntrusion.characterId || 'the controlled character';
     return [
-      intent?.secret ? `Force the room to interpret the secret: ${intent.secret}` : `Ask another character what they think ${name} really meant.`,
+      intent?.secret ? `Force the scene to interpret the secret: ${intent.secret}` : `Ask another character what they think ${name} really meant.`,
       strongestHumanLine ? `Turn the anomaly line into a rumor: ${strongestHumanLine}` : `Let an observer accuse ${name} of acting unlike themself.`,
       intent?.disrupt ? `Push the disrupted relation further: ${intent.disrupt}` : 'Mark the first relationship crack as a branch point.',
     ];

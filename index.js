@@ -106,7 +106,7 @@ function initialize() {
     onMarkBranchPoint: markBranchPoint,
     onSetScenarioPreset: setScenarioPreset,
     onLanguageChange: setPromptLanguage,
-    onSaveRoom: saveRoom,
+    onSaveContextNotes: saveContextNotes,
     onCaptureInspiration: captureInspiration,
     onSaveBrainstormNote: saveBrainstormNote,
     onSaveScene: saveScene,
@@ -189,7 +189,7 @@ async function saveScene(sceneInput) {
   await persist();
 }
 
-async function sendHumanLineAsCharacter({ characterId, speakerName, content, intrusionKind = IntrusionKind.CHARACTER_TAKEOVER }) {
+async function sendHumanLineAsCharacter({ characterId, speakerName, content, intrusionKind = IntrusionKind.CHARACTER_TAKEOVER, takeoverMarkerStyle = 'hidden' }) {
   const trimmed = String(content || '').trim();
   if (!trimmed) {
     return null;
@@ -204,7 +204,7 @@ async function sendHumanLineAsCharacter({ characterId, speakerName, content, int
   };
 
   try {
-    const delivery = await deliverCharacterMessage({ speakerName, content: trimmed });
+    const delivery = await deliverCharacterMessage({ speakerName, content: trimmed, takeoverMarkerStyle });
     runtimeDebug.lastTakeoverSend = {
       characterId,
       speakerName,
@@ -295,7 +295,7 @@ function intrusionKindLabel(kind) {
 function intrusionKindEffect(kind) {
   const effects = {
     [IntrusionKind.CHARACTER_TAKEOVER]: 'The story should treat it as a canonical role action.',
-    [IntrusionKind.ANOMALY_LINE]: 'The room may misread or resist its off-rhythm quality.',
+    [IntrusionKind.ANOMALY_LINE]: 'The scene may misread or resist its off-rhythm quality.',
     [IntrusionKind.MEMORY_FRACTURE]: 'The character may later feel discontinuity or a missing beat.',
     [IntrusionKind.EXTERNAL_WILL]: 'The scene may frame it as outside influence or unstable reality.',
     [IntrusionKind.PLOT_HOOK]: 'The line should open a concrete next consequence.',
@@ -307,7 +307,7 @@ function intrusionKindEffect(kind) {
   return effects[kind] || effects[IntrusionKind.CHARACTER_TAKEOVER];
 }
 
-async function deliverCharacterMessage({ speakerName, content }) {
+async function deliverCharacterMessage({ speakerName, content, takeoverMarkerStyle = 'hidden' }) {
   const context = getContext();
   if (!context) {
     throw new Error('SillyTavern context is unavailable.');
@@ -330,19 +330,30 @@ async function deliverCharacterMessage({ speakerName, content }) {
       throw new Error('SillyTavern /sendas did not insert a chat message.');
     }
 
+    const insertedMessage = Array.isArray(context.chat) && context.chat.length > 0
+      ? context.chat[context.chat.length - 1]
+      : null;
+    if (insertedMessage) {
+      applyTakeoverMarkerMetadata(context, insertedMessage, takeoverMarkerStyle);
+      const messageIndex = context.chat.length - 1;
+      context.updateMessageBlock?.(messageIndex, insertedMessage, { rerenderMessage: true });
+      syncTakeoverMarkerIcon(messageIndex, takeoverMarkerStyle, context);
+      await context.saveChat?.();
+    }
+
     return { method: 'sendas', result };
   }
 
-  return deliverCharacterMessageDirectly(context, { speakerName, content });
+  return deliverCharacterMessageDirectly(context, { speakerName, content, takeoverMarkerStyle });
 }
 
-async function deliverCharacterMessageDirectly(context, { speakerName, content }) {
+async function deliverCharacterMessageDirectly(context, { speakerName, content, takeoverMarkerStyle = 'hidden' }) {
   if (!Array.isArray(context.chat) || typeof context.addOneMessage !== 'function') {
     throw new Error('SillyTavern chat insertion APIs are unavailable.');
   }
 
   const character = findRawCharacterByName(speakerName);
-  const message = createCharacterChatMessage(context, character, { speakerName, content });
+  const message = createCharacterChatMessage(context, character, { speakerName, content, takeoverMarkerStyle });
   const eventTypes = context.eventTypes || context.event_types || {};
   const messageIndex = context.chat.push(message) - 1;
 
@@ -351,6 +362,7 @@ async function deliverCharacterMessageDirectly(context, { speakerName, content }
   }
 
   context.addOneMessage(message);
+  syncTakeoverMarkerIcon(messageIndex, takeoverMarkerStyle, context);
 
   if (eventTypes.CHARACTER_MESSAGE_RENDERED) {
     await context.eventSource?.emit?.(eventTypes.CHARACTER_MESSAGE_RENDERED, messageIndex, 'vistr-tavern');
@@ -361,7 +373,7 @@ async function deliverCharacterMessageDirectly(context, { speakerName, content }
   return { method: 'direct-chat-insert', messageIndex };
 }
 
-function createCharacterChatMessage(context, character, { speakerName, content }) {
+function createCharacterChatMessage(context, character, { speakerName, content, takeoverMarkerStyle = 'hidden' }) {
   const now = Date.now();
   const originalAvatar = character?.avatar || null;
   const forceAvatar = originalAvatar && typeof context.getThumbnailUrl === 'function'
@@ -372,12 +384,11 @@ function createCharacterChatMessage(context, character, { speakerName, content }
     : content;
   const extra = {
     gen_id: now,
-    api: 'manual',
-    model: 'vistr-tavern takeover',
     vistrTavern: true,
     vistrTavernTakeover: true,
     vistrTavernController: 'human',
   };
+  applyTakeoverMarkerMetadata(context, { extra }, takeoverMarkerStyle);
 
   return {
     name: character?.name || speakerName,
@@ -397,6 +408,111 @@ function createCharacterChatMessage(context, character, { speakerName, content }
       extra,
     }],
   };
+}
+
+function applyTakeoverMarkerMetadata(context, message, style = 'hidden') {
+  message.extra = message.extra || {};
+  message.extra.vistrTavern = true;
+  message.extra.vistrTavernTakeover = true;
+  message.extra.vistrTavernController = 'human';
+
+  if (style === 'vt') {
+    message.extra.api = 'manual';
+    message.extra.model = 'VistrTavern takeover';
+    return;
+  }
+
+  if (style === 'ai') {
+    const aiIcon = inferCurrentAiIcon(context);
+    if (aiIcon.api) {
+      message.extra.api = aiIcon.api;
+      message.extra.model = aiIcon.model || '';
+      return;
+    }
+  }
+
+  delete message.extra.api;
+  delete message.extra.model;
+}
+
+function inferCurrentAiIcon(context) {
+  const latestAiMessage = [...(context?.chat || [])]
+    .reverse()
+    .find((message) => {
+      const api = message?.extra?.api;
+      return !message?.is_user
+        && !message?.is_system
+        && api
+        && api !== 'manual'
+        && !message?.extra?.vistrTavernTakeover;
+    });
+
+  const fallbackApi = context?.mainApi && context.mainApi !== 'manual'
+    ? context.mainApi
+    : '';
+
+  return {
+    api: latestAiMessage?.extra?.api || fallbackApi,
+    model: latestAiMessage?.extra?.model || '',
+    messageIndex: latestAiMessage ? context.chat.indexOf(latestAiMessage) : -1,
+  };
+}
+
+function syncTakeoverMarkerIcon(messageIndex, style, context = getContext()) {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const apply = () => {
+    const messageElement = document.querySelector(`[mesid="${messageIndex}"]`);
+    if (!messageElement) {
+      return;
+    }
+
+    if (style === 'hidden') {
+      messageElement.querySelectorAll('.timestamp-icon').forEach((icon) => icon.remove());
+      return;
+    }
+
+    if (style !== 'ai') {
+      return;
+    }
+
+    const timestamp = messageElement.querySelector('.timestamp');
+    if (!timestamp) {
+      return;
+    }
+
+    const aiIcon = inferCurrentAiIcon(context);
+    const sourceIcon = aiIcon.messageIndex >= 0
+      ? document.querySelector(`[mesid="${aiIcon.messageIndex}"] .timestamp-icon`)
+      : null;
+    const replacement = sourceIcon
+      ? sourceIcon.cloneNode(true)
+      : createTimestampIcon(aiIcon);
+
+    messageElement.querySelectorAll('.timestamp-icon').forEach((icon) => icon.remove());
+    if (replacement) {
+      replacement.classList.add('timestamp-icon');
+      timestamp.after(replacement);
+    }
+  };
+
+  apply();
+  setTimeout(apply, 100);
+  setTimeout(apply, 400);
+}
+
+function createTimestampIcon(aiIcon) {
+  if (!aiIcon?.api) {
+    return null;
+  }
+
+  const image = document.createElement('img');
+  image.className = 'icon-svg timestamp-icon';
+  image.src = `/img/${aiIcon.api}.svg`;
+  image.title = aiIcon.model ? `${aiIcon.api} - ${aiIcon.model}` : aiIcon.api;
+  return image;
 }
 
 function escapeSlashCommandArg(value) {
@@ -451,8 +567,8 @@ async function setPromptLanguage(language, { persistChange = true } = {}) {
   }
 }
 
-async function saveRoom(roomInput) {
-  narrativeMemory.updateRoom(roomInput);
+async function saveContextNotes(contextInput) {
+  narrativeMemory.updateContextNotes(contextInput);
   await persist();
 }
 
@@ -610,25 +726,11 @@ async function injectVistrTavernContext(chat) {
   }
 
   const anchorResult = injectReactionAnchor(chat);
-  const handoffResult = await injectContinuityHandoff(chat);
-
-  if (anchorResult.status === 'injected' && handoffResult.status === 'injected') {
-    return {
-      status: 'injected:reaction-anchor+handoff',
-      handoffId: handoffResult.handoffId,
-      reactionAnchorId: anchorResult.reactionAnchorId,
-    };
-  }
-
-  if (anchorResult.status === 'injected') {
+  if (anchorResult.status === 'injected' || anchorResult.status === 'skipped:duplicate-reaction-anchor') {
     return anchorResult;
   }
 
-  if (anchorResult.status === 'skipped:duplicate-reaction-anchor') {
-    return anchorResult;
-  }
-
-  return handoffResult;
+  return injectContinuityHandoff(chat);
 }
 
 function injectReactionAnchor(chat) {
@@ -641,6 +743,17 @@ function injectReactionAnchor(chat) {
     return { status: 'skipped:duplicate-reaction-anchor', reactionAnchorId: anchor.id };
   }
 
+  if (reactionAnchorAlreadyInChat(chat, anchor)) {
+    runtimeDebug.lastReactionAnchor = {
+      ...anchor,
+      consumedAt: new Date().toISOString(),
+      consumedBySpeakerName: anchor.characterName || null,
+      consumedByMessageId: 'already-in-chat',
+    };
+    runtimeDebug.pendingReactionAnchor = null;
+    return { status: 'skipped:reaction-anchor-already-in-chat', reactionAnchorId: anchor.id };
+  }
+
   const insertionIndex = chat.length;
   chat.splice(insertionIndex, 0, createReactionAnchorChatMessage(anchor));
   runtimeDebug.pendingReactionAnchor = {
@@ -651,6 +764,15 @@ function injectReactionAnchor(chat) {
   return { status: 'injected:reaction-anchor', reactionAnchorId: anchor.id };
 }
 
+function reactionAnchorAlreadyInChat(chat, anchor) {
+  return chat.some((message) => (
+    !message?.is_user
+    && !message?.is_system
+    && normalizeComparableText(message.name) === normalizeComparableText(anchor.characterName)
+    && normalizeComparableText(message.mes) === normalizeComparableText(anchor.content)
+  ));
+}
+
 async function injectContinuityHandoff(chat) {
   const handoff = narrativeMemory.getPendingHandoff();
   if (!handoff || chat.some((message) => message?.extra?.vistrTavernHandoffId === handoff.id)) {
@@ -658,6 +780,12 @@ async function injectContinuityHandoff(chat) {
       status: handoff ? 'skipped:duplicate' : 'skipped:no-pending-handoff',
       handoffId: handoff?.id || null,
     };
+  }
+
+  if (handoffMemoryAlreadyInChat(chat, handoff)) {
+    narrativeMemory.recordHandoffConsumed(handoff.id, 'already-in-chat');
+    await persist();
+    return { status: 'skipped:handoff-already-in-chat', handoffId: handoff.id };
   }
 
   const insertionIndex = chat.length > 0 ? Math.max(0, chat.length - 1) : 0;
@@ -671,60 +799,26 @@ async function injectContinuityHandoff(chat) {
 
 function createReactionAnchorChatMessage(anchor) {
   return {
-    name: 'VistrTavern',
+    name: anchor.characterName || 'Character',
     is_user: false,
-    is_system: true,
+    is_system: false,
     send_date: Date.now(),
-    mes: createReactionAnchorPrompt(anchor),
+    mes: normalizeAnchorContent(anchor.content),
     extra: {
-      type: 'system',
       vistrTavern: true,
       vistrTavernReactionAnchorId: anchor.id,
+      vistrTavernSyntheticCharacterLine: true,
     },
   };
 }
 
-function createReactionAnchorPrompt(anchor) {
-  if (currentPromptLanguage() === 'zh-CN') {
-    return createReactionAnchorPromptZh(anchor);
-  }
-
-  const name = anchor.characterName || 'the recovered character';
-  const sceneLine = anchor.sceneName ? `Scene: ${anchor.sceneName}.` : 'Scene: current chat.';
-  return [
-    '[Immediate Continuity Anchor]',
-    sceneLine,
-    `${name} just said or did the following, and this is now the current topic:`,
-    `"${anchor.content}"`,
-    '',
-    'For the next response:',
-    `- React directly to ${name}'s latest words/actions before continuing any previous topic.`,
-    `- Treat those words/actions as ${name}'s own recent behavior in the fictional world.`,
-    '- Preserve the immediate emotional, relationship, clue, or plot consequence.',
-    '- Do not skip past this moment or resume the previous topic unchanged.',
-  ].join('\n');
-}
-
-function createReactionAnchorPromptZh(anchor) {
-  const name = anchor.characterName || '恢复连续性的角色';
-  const sceneLine = anchor.sceneName ? `场景：${anchor.sceneName}。` : '场景：当前聊天。';
-  return [
-    '[即时连续性锚点]',
-    sceneLine,
-    `${name} 刚刚说出或做出了以下内容，这已经是当前话题：`,
-    `「${anchor.content}」`,
-    '',
-    '下一条回复必须：',
-    `- 先直接回应 ${name} 刚才的话或行动，再继续任何旧话题。`,
-    `- 把这些话或行动当成 ${name} 在故事世界里的近期真实行为。`,
-    '- 承接它造成的即时情绪、关系、线索或剧情后果。',
-    '- 不要跳过这个瞬间，也不要原样回到之前的话题。',
-  ].join('\n');
+function normalizeAnchorContent(content) {
+  return String(content || '').replace(/\s+/g, ' ').trim();
 }
 
 function createHandoffChatMessage(handoff) {
   return {
-    name: 'VistrTavern',
+    name: handoffPromptSpeakerName(handoff),
     is_user: false,
     is_system: true,
     send_date: Date.now(),
@@ -735,6 +829,27 @@ function createHandoffChatMessage(handoff) {
       vistrTavernHandoffId: handoff.id,
     },
   };
+}
+
+function handoffMemoryAlreadyInChat(chat, handoff) {
+  const rememberedHumanMessages = (narrativeMemory?.memory?.messages || [])
+    .filter((message) => handoff.relatedMessageIds?.includes(message.id) && message.controller === Controller.HUMAN);
+  if (!rememberedHumanMessages.length) {
+    return false;
+  }
+
+  return rememberedHumanMessages.every((remembered) => chat.some((chatMessage) => (
+    !chatMessage?.is_user
+    && !chatMessage?.is_system
+    && normalizeComparableText(chatMessage.name) === normalizeComparableText(remembered.speakerName)
+    && normalizeComparableText(chatMessage.mes) === normalizeComparableText(remembered.content)
+  )));
+}
+
+function handoffPromptSpeakerName(handoff) {
+  return /[\u3400-\u9fff]/.test(`${handoff?.characterName || ''}${handoff?.prompt || ''}`)
+    ? '旁白'
+    : 'Narrator';
 }
 
 function syncCharacters() {
@@ -826,7 +941,7 @@ function getState() {
     scenarioPreset: Object.values(ScenarioPreset).includes(narrativeMemory.memory.session.scenarioPreset)
       ? narrativeMemory.memory.session.scenarioPreset
       : ScenarioPreset.WEB_NOVEL,
-    room: narrativeMemory.memory.session.room || {},
+    contextNotes: narrativeMemory.memory.session.room || {},
     brainstormNotes: narrativeMemory.memory.brainstormNotes || [],
     inspirationCaptures: narrativeMemory.memory.inspirationCaptures || [],
     awarenessEventCount: awarenessEvents().length,

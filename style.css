@@ -3,6 +3,10 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+#vistr-tavern-root [hidden] {
+  display: none !important;
+}
+
 .vt-floating-button {
   position: fixed;
   right: 18px;
@@ -15,8 +19,22 @@
   background: #17191f;
   color: #f7f3e8;
   font-weight: 700;
+  line-height: 1;
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.vt-shell-collapsed .vt-floating-button {
+  right: 0;
+  bottom: 46vh;
+  width: 24px;
+  height: 58px;
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.vt-shell-open .vt-floating-button {
+  display: none;
 }
 
 .vt-panel {
@@ -71,7 +89,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: -14px -14px 12px;
-  padding: 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(16, 18, 24, 0.96);
   backdrop-filter: blur(10px);
@@ -84,22 +102,56 @@
   font-size: 12px;
 }
 
-.vt-header-actions {
+.vt-header-controls {
   display: grid;
-  min-width: 122px;
+  justify-items: end;
+  min-width: 118px;
   gap: 6px;
 }
 
-.vt-header-actions label {
-  display: grid;
-  gap: 4px;
+.vt-header-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.vt-header-buttons button {
+  width: auto;
+  min-width: 36px;
+  min-height: 30px;
+  padding: 4px 10px;
+}
+
+.vt-header-settings {
+  width: 100%;
   color: #a9afbc;
   font-size: 12px;
 }
 
-.vt-header-actions select,
-.vt-header-actions button {
+.vt-header-settings summary {
+  justify-content: flex-end;
+  cursor: pointer;
+  color: #d9ecff;
+  font-weight: 700;
+}
+
+.vt-header-settings label {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  color: #a9afbc;
+  font-size: 12px;
+}
+
+.vt-header-settings select {
   width: 100%;
+}
+
+.vt-refresh-status {
+  min-height: 16px;
+  color: #8f96a5;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .vt-field {

@@ -18,7 +18,7 @@ Use this checklist before publishing `v0.6.0-alpha`.
 - [ ] Confirm Markdown export includes branch points when marked.
 - [ ] Confirm Creator Pack export includes anomaly lines, AI reactions, conflict hooks, branch routes, and handoff context.
 - [ ] Confirm Organized Material export changes focus based on the selected scenario preset.
-- [ ] Confirm exports include Creator Context Card setup, human intent, inspiration captures, and brainstorm notes.
+- [ ] Confirm exports include creative context, human intent, inspiration captures, and brainstorm notes.
 - [ ] Confirm Character Prompt export includes persona extraction instructions and recorded material.
 - [ ] Confirm JSON export includes `intrusions`, `messages`, `handoffs`, and `branchPoints`.
 - [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.6.0-alpha.zip` is created.
@@ -32,7 +32,7 @@ Use this checklist before publishing `v0.6.0-alpha`.
 - [ ] Floating `VT` button appears in a chat.
 - [ ] The language selector switches the panel between Chinese and English.
 - [ ] The scenario preset selector offers web novel/script, AI murder mystery, and virtual theater.
-- [ ] Creator Context Card fields save and reload.
+- [ ] Creative Context notes save and reload.
 - [ ] Human Intent fields can be recorded with an intrusion.
 - [ ] Character selector is populated.
 - [ ] `Debug` panel shows version and storage mode.

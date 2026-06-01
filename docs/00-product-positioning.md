@@ -55,7 +55,7 @@ VistrTavern tests whether this human anomaly can produce better story material t
 - Relationship graph.
 - Timeline generation.
 - Creator dashboard.
-- Multiplayer rooms.
+- Shared multiplayer sessions.
 - LLM provider adapters.
 - Community role and world packs.
 

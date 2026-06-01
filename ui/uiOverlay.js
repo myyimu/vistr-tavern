@@ -2,10 +2,11 @@ import { AwarenessScope, BrainstormKind, BranchType, ControlMode, HandoffAwarene
 
 const LANGUAGE_STORAGE_KEY = 'vistr-tavern:language';
 const FIRST_RUN_STORAGE_KEY = 'vistr-tavern:first-run-dismissed';
+const TAKEOVER_MARKER_STORAGE_KEY = 'vistr-tavern:takeover-marker-style';
 const DEFAULT_LANGUAGE = 'zh-CN';
 
 export class UiOverlay {
-  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onSendHumanLineAsCharacter, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onLanguageChange, onSaveRoom, onCaptureInspiration, onSaveBrainstormNote, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
+  constructor({ getCharacters, onStartIntrusion, onEndIntrusion, onSendHumanLineAsCharacter, onRecordHumanLine, onMarkBranchPoint, onSetScenarioPreset, onLanguageChange, onSaveContextNotes, onCaptureInspiration, onSaveBrainstormNote, onSaveScene, onCopyLatestHandoff, onExportMarkdown, onExportCreatorPack, onExportOrganizedMaterial, onExportCharacterSheetPrompt, onExportJson, getState, getDebugState }) {
     this.getCharacters = getCharacters;
     this.onStartIntrusion = onStartIntrusion;
     this.onEndIntrusion = onEndIntrusion;
@@ -14,7 +15,7 @@ export class UiOverlay {
     this.onMarkBranchPoint = onMarkBranchPoint;
     this.onSetScenarioPreset = onSetScenarioPreset;
     this.onLanguageChange = onLanguageChange;
-    this.onSaveRoom = onSaveRoom;
+    this.onSaveContextNotes = onSaveContextNotes;
     this.onCaptureInspiration = onCaptureInspiration;
     this.onSaveBrainstormNote = onSaveBrainstormNote;
     this.onSaveScene = onSaveScene;
@@ -27,6 +28,10 @@ export class UiOverlay {
     this.getState = getState;
     this.getDebugState = getDebugState;
     this.language = getStoredLanguage();
+    this.takeoverMarkerStyle = getStoredTakeoverMarkerStyle();
+    this.firstRunDismissed = Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
+    this.lastManualRefreshAt = null;
+    this.isCollapsed = false;
     this.root = null;
     this.panel = null;
   }
@@ -54,6 +59,7 @@ export class UiOverlay {
     const status = this.root.querySelector('[data-vt-status]');
     const debugPanel = this.root.querySelector('[data-vt-debug]');
     const guide = this.root.querySelector('[data-vt-first-run]');
+    const refreshStatus = this.root.querySelector('[data-vt-refresh-status]');
     const selectedCharacterPreview = this.root.querySelector('[data-vt-selected-character]');
     const takeoverGuide = this.root.querySelector('[data-vt-takeover-guide]');
     const startButton = this.root.querySelector('[data-vt-start]');
@@ -103,17 +109,25 @@ export class UiOverlay {
       intrusions: state.intrusionCount,
       handoffs: state.pendingHandoffCount || 0,
     });
-    guide.hidden = Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
+    guide.hidden = this.firstRunDismissed || Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
+    if (refreshStatus) {
+      refreshStatus.textContent = this.lastManualRefreshAt
+        ? this.#t('refreshStatus', {
+          time: new Date(this.lastManualRefreshAt).toLocaleTimeString(),
+          count: this.getCharacters().length,
+        })
+        : '';
+    }
     scenarioSelect.value = state.scenarioPreset || ScenarioPreset.WEB_NOVEL;
     branchList.innerHTML = formatBranchList(state.branchPoints || [], this.language);
     inspirationList.innerHTML = formatInspirationList(state.inspirationCaptures || [], this.language);
     brainstormList.innerHTML = formatBrainstormList(state.brainstormNotes || [], this.language);
-    setInputValue(this.root, '[data-vt-room-worldview]', state.room?.worldview);
-    setInputValue(this.root, '[data-vt-room-background]', state.room?.background);
-    setInputValue(this.root, '[data-vt-room-role-slots]', state.room?.roleSlots);
-    setInputValue(this.root, '[data-vt-room-ai-rules]', state.room?.aiWorldRules);
-
+    setInputValue(this.root, '[data-vt-context-worldview]', state.contextNotes?.worldview);
+    setInputValue(this.root, '[data-vt-context-background]', state.contextNotes?.background);
+    setInputValue(this.root, '[data-vt-context-role-slots]', state.contextNotes?.roleSlots);
+    setInputValue(this.root, '[data-vt-context-ai-rules]', state.contextNotes?.aiWorldRules);
     debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {}, this.language);
+    this.#syncShellState();
   }
 
   #render(panelHidden = this.panel?.hidden ?? true) {
@@ -127,18 +141,28 @@ export class UiOverlay {
   #bind() {
     this.root.querySelector('[data-vt-toggle]').addEventListener('click', () => {
       this.panel.hidden = !this.panel.hidden;
+      if (!this.panel.hidden) {
+        this.isCollapsed = false;
+      }
       this.refresh();
     });
 
-    this.root.querySelector('[data-vt-refresh]').addEventListener('click', () => this.refresh());
+    this.root.querySelector('[data-vt-refresh]').addEventListener('click', () => {
+      this.lastManualRefreshAt = Date.now();
+      this.refresh();
+    });
 
     this.root.querySelector('[data-vt-collapse]').addEventListener('click', () => {
       this.panel.hidden = true;
+      this.isCollapsed = true;
+      this.refresh();
     });
 
     this.panel.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         this.panel.hidden = true;
+        this.isCollapsed = true;
+        this.refresh();
         this.root.querySelector('[data-vt-toggle]')?.focus();
       }
     });
@@ -157,6 +181,11 @@ export class UiOverlay {
       this.#render(false);
     });
 
+    this.root.querySelector('[data-vt-takeover-marker]').addEventListener('change', (event) => {
+      this.takeoverMarkerStyle = normalizeTakeoverMarkerStyle(event.target.value);
+      writeLocalStorage(TAKEOVER_MARKER_STORAGE_KEY, this.takeoverMarkerStyle);
+    });
+
     this.root.querySelectorAll('[data-vt-intent-preset]').forEach((button) => {
       button.addEventListener('click', () => {
         const preset = button.dataset.vtIntentPreset;
@@ -167,20 +196,10 @@ export class UiOverlay {
       });
     });
 
-    this.root.querySelector('[data-vt-save-room]').addEventListener('click', async () => {
-      await this.onSaveRoom?.({
-        worldview: this.root.querySelector('[data-vt-room-worldview]').value,
-        background: this.root.querySelector('[data-vt-room-background]').value,
-        roleSlots: this.root.querySelector('[data-vt-room-role-slots]').value,
-        aiWorldRules: this.root.querySelector('[data-vt-room-ai-rules]').value,
-      });
-      this.root.querySelector('[data-vt-room-status]').textContent = this.#t('roomSaved');
-      this.refresh();
-    });
-
     this.root.querySelector('[data-vt-dismiss-guide]').addEventListener('click', () => {
+      this.firstRunDismissed = true;
       writeLocalStorage(FIRST_RUN_STORAGE_KEY, 'true');
-      this.root.querySelector('[data-vt-first-run]').hidden = true;
+      this.refresh();
     });
 
     this.root.querySelector('[data-vt-start]').addEventListener('click', async () => {
@@ -232,6 +251,17 @@ export class UiOverlay {
       this.refresh();
     });
 
+    this.root.querySelector('[data-vt-save-context]').addEventListener('click', async () => {
+      await this.onSaveContextNotes?.({
+        worldview: this.root.querySelector('[data-vt-context-worldview]').value,
+        background: this.root.querySelector('[data-vt-context-background]').value,
+        roleSlots: this.root.querySelector('[data-vt-context-role-slots]').value,
+        aiWorldRules: this.root.querySelector('[data-vt-context-ai-rules]').value,
+      });
+      this.root.querySelector('[data-vt-context-status]').textContent = this.#t('contextSaved');
+      this.refresh();
+    });
+
     this.root.querySelector('[data-vt-record-line]').addEventListener('click', async () => {
       const character = this.#selectedCharacter();
       const textarea = this.root.querySelector('[data-vt-human-line]');
@@ -265,6 +295,7 @@ export class UiOverlay {
           speakerName: character.name,
           content,
           intrusionKind: this.root.querySelector('[data-vt-intrusion-kind]').value,
+          takeoverMarkerStyle: this.takeoverMarkerStyle,
         });
         textarea.value = '';
         status.textContent = this.#t('sentAsCharacter', { character: character.name });
@@ -424,25 +455,46 @@ export class UiOverlay {
     URL.revokeObjectURL(url);
   }
 
+  #syncShellState() {
+    const toggle = this.root?.querySelector('[data-vt-toggle]');
+    if (!this.root || !this.panel || !toggle) {
+      return;
+    }
+
+    const isClosed = this.panel.hidden;
+    this.root.classList.toggle('vt-shell-closed', isClosed);
+    this.root.classList.toggle('vt-shell-open', !isClosed);
+    this.root.classList.toggle('vt-shell-collapsed', isClosed && this.isCollapsed);
+    toggle.textContent = isClosed ? (this.isCollapsed ? '<' : 'VT') : '';
+    toggle.title = isClosed ? this.#t('openPanel') : this.#t('panelOpen');
+    toggle.setAttribute('aria-label', toggle.title);
+  }
+
   #template() {
     return `
-      <button class="vt-floating-button" type="button" data-vt-toggle title="VistrTavern">VT</button>
+      <button class="vt-floating-button" type="button" data-vt-toggle title="${this.#t('openPanel')}" aria-label="${this.#t('openPanel')}">VT</button>
       <section class="vt-panel" data-vt-panel hidden>
         <header class="vt-panel__header">
           <div>
             <strong>VistrTavern</strong>
             <span data-vt-status>${this.#t('loading')}</span>
           </div>
-          <div class="vt-header-actions">
-            <label>
-              ${this.#t('language')}
-              <select data-vt-language>
-                <option value="zh-CN" ${this.language === 'zh-CN' ? 'selected' : ''}>中文</option>
-                <option value="en" ${this.language === 'en' ? 'selected' : ''}>English</option>
-              </select>
-            </label>
-            <button type="button" data-vt-refresh>${this.#t('refresh')}</button>
-            <button type="button" data-vt-collapse>${this.#t('collapsePanel')}</button>
+          <div class="vt-header-controls">
+            <div class="vt-header-buttons">
+              <button type="button" data-vt-refresh title="${this.#t('refresh')}" aria-label="${this.#t('refresh')}">${this.#t('refreshShort')}</button>
+              <button type="button" data-vt-collapse title="${this.#t('collapsePanel')}" aria-label="${this.#t('collapsePanel')}">×</button>
+            </div>
+            <details class="vt-header-settings">
+              <summary>${this.#t('panelSettings')}</summary>
+              <label>
+                ${this.#t('language')}
+                <select data-vt-language>
+                  <option value="zh-CN" ${this.language === 'zh-CN' ? 'selected' : ''}>中文</option>
+                  <option value="en" ${this.language === 'en' ? 'selected' : ''}>English</option>
+                </select>
+              </label>
+              <span class="vt-refresh-status" data-vt-refresh-status></span>
+            </details>
           </div>
         </header>
 
@@ -526,6 +578,15 @@ export class UiOverlay {
           </div>
 
           <label class="vt-field">
+            ${this.#t('takeoverMarker')}
+            <select data-vt-takeover-marker>
+              <option value="hidden" ${this.takeoverMarkerStyle === 'hidden' ? 'selected' : ''}>${this.#t('takeoverMarkerHidden')}</option>
+              <option value="ai" ${this.takeoverMarkerStyle === 'ai' ? 'selected' : ''}>${this.#t('takeoverMarkerAi')}</option>
+              <option value="vt" ${this.takeoverMarkerStyle === 'vt' ? 'selected' : ''}>${this.#t('takeoverMarkerVt')}</option>
+            </select>
+          </label>
+
+          <label class="vt-field">
             ${this.#t('awarenessAfterRecovery')}
             <select data-vt-awareness>
               <option value="${HandoffAwareness.NONE}">${this.#t('awarenessNone')}</option>
@@ -572,26 +633,26 @@ export class UiOverlay {
           </details>
 
           <details class="vt-inline-options">
-            <summary>${summaryTitle(this.#t('roleplayRoom'), this.#t('tipRoleplayRoom'))}</summary>
-            <p class="vt-help">${this.#t('roleplayRoomHelp')}</p>
+            <summary>${summaryTitle(this.#t('creativeContext'), this.#t('tipCreativeContext'))}</summary>
+            <p class="vt-help">${this.#t('creativeContextHelp')}</p>
             <label class="vt-field">
-              ${this.#t('roomWorldview')}
-              <textarea rows="2" data-vt-room-worldview placeholder="${this.#t('roomWorldviewPlaceholder')}"></textarea>
+              ${this.#t('contextWorldview')}
+              <textarea rows="2" data-vt-context-worldview placeholder="${this.#t('contextWorldviewPlaceholder')}"></textarea>
             </label>
             <label class="vt-field">
-              ${this.#t('roomBackground')}
-              <textarea rows="2" data-vt-room-background placeholder="${this.#t('roomBackgroundPlaceholder')}"></textarea>
+              ${this.#t('contextBackground')}
+              <textarea rows="2" data-vt-context-background placeholder="${this.#t('contextBackgroundPlaceholder')}"></textarea>
             </label>
             <label class="vt-field">
-              ${this.#t('roomRoleSlots')}
-              <textarea rows="2" data-vt-room-role-slots placeholder="${this.#t('roomRoleSlotsPlaceholder')}"></textarea>
+              ${this.#t('contextRoleSlots')}
+              <textarea rows="2" data-vt-context-role-slots placeholder="${this.#t('contextRoleSlotsPlaceholder')}"></textarea>
             </label>
             <label class="vt-field">
-              ${this.#t('roomAiRules')}
-              <textarea rows="2" data-vt-room-ai-rules placeholder="${this.#t('roomAiRulesPlaceholder')}"></textarea>
+              ${this.#t('contextAiRules')}
+              <textarea rows="2" data-vt-context-ai-rules placeholder="${this.#t('contextAiRulesPlaceholder')}"></textarea>
             </label>
-            <button type="button" data-vt-save-room>${this.#t('saveRoom')}</button>
-            <span class="vt-copy-status" data-vt-room-status></span>
+            <button type="button" data-vt-save-context>${this.#t('saveContext')}</button>
+            <span class="vt-copy-status" data-vt-context-status></span>
           </details>
 
           <details class="vt-inline-options">
@@ -976,6 +1037,14 @@ function normalizeLanguage(value) {
   return value === 'en' ? 'en' : 'zh-CN';
 }
 
+function getStoredTakeoverMarkerStyle() {
+  return normalizeTakeoverMarkerStyle(readLocalStorage(TAKEOVER_MARKER_STORAGE_KEY) || 'hidden');
+}
+
+function normalizeTakeoverMarkerStyle(value) {
+  return ['hidden', 'ai', 'vt'].includes(value) ? value : 'hidden';
+}
+
 function readLocalStorage(key) {
   try {
     return globalThis.localStorage?.getItem(key) || '';
@@ -1061,6 +1130,17 @@ const I18N = {
     copyFailed: 'Copy failed',
     copyLatestHandoff: 'Copy Latest Handoff',
     captureInspiration: 'Capture Inspiration',
+    contextAiRules: 'AI continuity notes',
+    contextAiRulesPlaceholder: 'Continuity to preserve, NPC reaction style, world consequences...',
+    contextBackground: 'Current situation',
+    contextBackgroundPlaceholder: 'What pressure or unresolved conflict exists before the cameo?',
+    contextRoleSlots: 'Cameo roles',
+    contextRoleSlotsPlaceholder: 'Which characters or role types can be briefly played?',
+    contextSaved: 'Creative context saved',
+    contextWorldview: 'Story premise',
+    contextWorldviewPlaceholder: 'Court intrigue, haunted city, closed manor, virtual stage...',
+    creativeContext: 'Creative Context',
+    creativeContextHelp: 'Optional notes for exports and material organization. This is local creator context, not a shared multiplayer feature.',
     creatorTools: 'Creator Tools',
     creatorToolsHelp: 'Secondary tools for marking branches, organizing material, and exporting files after a useful scene exists.',
     debug: 'Debug',
@@ -1136,7 +1216,7 @@ const I18N = {
     intentPreset_routine_disrupt: 'Say something the AI ensemble would normally smooth over.',
     intentPreset_routine_goal: 'Break the routine and force a less predictable reaction.',
     intentPreset_routine_secret: '',
-    intentPreset_routine_target: 'The room as a whole.',
+    intentPreset_routine_target: 'The scene as a whole.',
     intentPreset_secret_disrupt: 'Leak knowledge that should not be easy to explain.',
     intentPreset_secret_goal: 'Act from a hidden motive.',
     intentPreset_secret_secret: 'A fact, lie, or motive the character should not openly explain yet.',
@@ -1173,6 +1253,7 @@ const I18N = {
     none: 'none',
     notCalled: 'not-called',
     ok: 'ok',
+    openPanel: 'Open VistrTavern',
     optionA: 'Option A',
     optionB: 'Option B',
     optionC: 'Option C',
@@ -1183,20 +1264,13 @@ const I18N = {
     recordFallback: 'Fallback: record only',
     recordFallbackHelp: 'Use only if SillyTavern sending fails or you want a private VT memory note without inserting a chat message.',
     refresh: 'Refresh',
+    refreshShort: '↻',
+    refreshStatus: 'Refreshed {count} characters at {time}',
     restartIntrusion: 'Restart Intrusion',
-    roleplayRoom: 'Creator Context Card',
-    roleplayRoomHelp: 'Optional export context: worldview, plot background, cameo slots, and what the AI should maintain. It is a local note card, not an online room.',
-    roomAiRules: 'AI world rules',
-    roomAiRulesPlaceholder: 'AI maintains continuity, NPC reactions, world consequences...',
-    roomBackground: 'Plot background',
-    roomBackgroundPlaceholder: 'What is happening before strangers cameo as roles?',
-    roomRoleSlots: 'Cameo role slots',
-    roomRoleSlotsPlaceholder: 'Which roles can a human guest briefly play?',
-    roomSaved: 'Room saved',
-    roomWorldview: 'Worldview',
-    roomWorldviewPlaceholder: 'Court intrigue, haunted city, closed manor, virtual stage...',
+    panelOpen: 'VistrTavern is open',
+    panelSettings: 'Settings',
     saveBrainstorm: 'Save Brainstorm Note',
-    saveRoom: 'Save Room',
+    saveContext: 'Save Context',
     saveScene: 'Save Scene',
     scene: 'Scene',
     sceneSetup: 'Scene setup',
@@ -1214,15 +1288,19 @@ const I18N = {
     targetBoth: 'Both',
     targetControlled: 'Controlled character',
     targetObservers: 'Observers',
+    takeoverMarker: 'Takeover marker',
+    takeoverMarkerAi: 'AI-like icon',
+    takeoverMarkerHidden: 'Hidden',
+    takeoverMarkerVt: 'VT marker',
     tipBrainstormSpace: 'A private creator scratchpad. It does not enter chat or prompt injection.',
     tipBranchPoint: 'Mark a route opened by the cameo, such as a relationship crack, identity reveal, or clue conflict.',
     tipCreatorTools: 'Post-play tools. Open this after you already have useful material.',
+    tipCreativeContext: 'Optional local notes used by exports and material organization only.',
     tipDebug: 'Use this only when checking whether handoff injection, storage, or AI capture worked.',
     tipHumanIntent: 'Optional. Explains the human player’s dramatic purpose so exports can preserve the intent.',
     tipInspirationCapture: 'After an intrusion ends, turn the human cameo and AI reaction into reusable writing prompts.',
     tipMaterialWorkbench: 'One-click organizer for turning the session memory into creator-ready notes.',
     tipOptionalSetup: 'Advanced context. Not required for the first run.',
-    tipRoleplayRoom: 'A local context card for exports and material organization. It does not create online multiplayer.',
     tipSceneSetup: 'Labels the current scene and tension so later exports have better context.',
     selectedCharacterActive: 'Selected: {character} is currently human-controlled.',
     selectedCharacterMissing: 'No character detected. Refresh the chat or check SillyTavern compatibility.',
@@ -1309,6 +1387,17 @@ const I18N = {
     copyFailed: '复制失败',
     copyLatestHandoff: '复制最新 Handoff',
     captureInspiration: '捕获灵感',
+    contextAiRules: 'AI 连续性备注',
+    contextAiRulesPlaceholder: '需要保留的连续性、NPC 反应方式、世界后果……',
+    contextBackground: '当前局面',
+    contextBackgroundPlaceholder: '客串前已经存在什么压力或未解决冲突？',
+    contextRoleSlots: '可客串角色',
+    contextRoleSlotsPlaceholder: '哪些角色或角色类型可以被短暂客串？',
+    contextSaved: '创作上下文已保存',
+    contextWorldview: '故事前提',
+    contextWorldviewPlaceholder: '宫廷阴谋、闹鬼城市、封闭庄园、虚拟舞台……',
+    creativeContext: '创作上下文',
+    creativeContextHelp: '用于导出和素材整理的可选本地备注。它不是共享多人功能。',
     creatorTools: '创作者工具',
     creatorToolsHelp: '有一段可用素材之后再打开：标记剧情分支、整理素材、导出文件。',
     debug: 'Debug',
@@ -1384,7 +1473,7 @@ const I18N = {
     intentPreset_routine_disrupt: '说一句 AI 群像通常会圆滑避开的内容。',
     intentPreset_routine_goal: '打破套路，逼出更不可预测的反应。',
     intentPreset_routine_secret: '',
-    intentPreset_routine_target: '整个房间。',
+    intentPreset_routine_target: '整个场景。',
     intentPreset_secret_disrupt: '泄露一条很难解释来源的信息。',
     intentPreset_secret_goal: '带着隐藏目的行动。',
     intentPreset_secret_secret: '一个暂时不该明说的事实、谎言或动机。',
@@ -1421,6 +1510,7 @@ const I18N = {
     none: '无',
     notCalled: '未调用',
     ok: '正常',
+    openPanel: '打开 VistrTavern',
     optionA: '路线 A',
     optionB: '路线 B',
     optionC: '路线 C',
@@ -1431,20 +1521,13 @@ const I18N = {
     recordFallback: 'Fallback：仅记录',
     recordFallbackHelp: '只在 SillyTavern 发送失败，或你只想保存 VT 私有记忆而不插入聊天时使用。',
     refresh: '刷新',
+    refreshShort: '刷新',
+    refreshStatus: '已刷新：检测到 {count} 个角色 · {time}',
     restartIntrusion: '重新开始接管',
-    roleplayRoom: '创作背景卡',
-    roleplayRoomHelp: '用于导出和素材整理的本地背景卡：世界观、剧情背景、可客串角色和 AI 维护规则。它不是在线房间。',
-    roomAiRules: 'AI 世界维护规则',
-    roomAiRulesPlaceholder: 'AI 负责维持连续性、NPC 反应和世界后果……',
-    roomBackground: '剧情背景',
-    roomBackgroundPlaceholder: '陌生人客串角色前，房间里正在发生什么？',
-    roomRoleSlots: '可客串角色槽位',
-    roomRoleSlotsPlaceholder: '哪些角色可以被人类访客短暂客串？',
-    roomSaved: '房间已保存',
-    roomWorldview: '世界观',
-    roomWorldviewPlaceholder: '宫廷阴谋、闹鬼城市、封闭庄园、虚拟舞台……',
+    panelOpen: 'VistrTavern 已打开',
+    panelSettings: '设置',
     saveBrainstorm: '保存脑暴笔记',
-    saveRoom: '保存房间',
+    saveContext: '保存上下文',
     saveScene: '保存场景',
     scene: '场景',
     sceneSetup: '场景设定',
@@ -1462,15 +1545,19 @@ const I18N = {
     targetBoth: '两者',
     targetControlled: '被接管角色',
     targetObservers: '旁观者',
+    takeoverMarker: '接管标记',
+    takeoverMarkerAi: '像 AI 回复',
+    takeoverMarkerHidden: '隐藏',
+    takeoverMarkerVt: 'VT 标记',
     tipBrainstormSpace: '创作者私有随手笔记，不进入聊天，也不会注入 prompt。',
     tipBranchPoint: '标记这次客串打开的新路线，例如关系裂痕、身份揭露或线索矛盾。',
     tipCreatorTools: '后处理工具。有素材之后再打开，用来整理、标记和导出。',
+    tipCreativeContext: '可选的本地备注，只用于导出和素材整理。',
     tipDebug: '只在检查 handoff 注入、存储或 AI 捕获是否正常时使用。',
     tipHumanIntent: '可选。说明真人玩家的戏剧目的，让导出时保留这层意图。',
     tipInspirationCapture: '接管结束后，把真人客串和 AI 反应整理成可复用创作提示。',
     tipMaterialWorkbench: '一键把当前记忆整理成创作者可读的素材摘要。',
     tipOptionalSetup: '高级上下文。第一次使用不需要填写。',
-    tipRoleplayRoom: '本地创作上下文卡，用于导出和素材整理；不会创建在线多人房间。',
     tipSceneSetup: '给当前场景和张力打标签，让后续导出更有上下文。',
     selectedCharacterActive: '当前选择：{character} 正在被真人接管。',
     selectedCharacterMissing: '没有检测到角色。请打开聊天后刷新，或检查 SillyTavern 兼容性。',

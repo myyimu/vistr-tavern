@@ -100,16 +100,16 @@ Open `Optional Setup` if you want to choose one of the three scenario presets:
 
 The preset affects Creator Pack and Organized Material output. It does not change SillyTavern's model settings.
 
-### 4. Optional: Define the Creator Context Card
+### 4. Optional: Add Creative Context
 
-Open `Optional Setup` -> `Creator Context Card` to describe the local story context:
+Open `Optional Setup` -> `Creative Context` to save local notes for exports and material organization:
 
-- `Worldview`: the rules, genre, or setting.
-- `Plot background`: what is already happening in the room.
-- `Cameo role slots`: which roles a human guest can briefly play.
-- `AI world rules`: what the AI should maintain, such as continuity, NPC reactions, and world consequences.
+- `Story premise`: the rules, genre, or setting.
+- `Current situation`: what pressure or unresolved conflict exists before the cameo.
+- `Cameo roles`: which characters or role types can be briefly played.
+- `AI continuity notes`: what the AI should preserve, such as continuity, NPC reactions, and consequences.
 
-This is local creator metadata for exports and brainstorming. It is a context card, not an online room.
+This is local creator metadata. It does not create a shared multiplayer session.
 
 ### 5. Optional: Set Scene and Tension
 
@@ -353,7 +353,7 @@ Click:
 Markdown export includes:
 
 - current scene
-- Creator Context Card setup
+- creative context
 - intrusion timeline
 - human intent
 - human anomaly lines
@@ -384,7 +384,7 @@ For `v0.6.0-alpha`, a successful test means:
 - the panel can switch between English and Chinese
 - scenario preset changes persist and affect organized material
 - saved branch points are visible in the panel
-- Creator Context Card metadata can be saved
+- Creative Context notes can be saved
 - Human Intent is included in handoff/export material
 - Inspiration Capture and Creator Brainstorm notes appear in exports
 
