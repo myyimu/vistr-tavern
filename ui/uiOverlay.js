@@ -524,27 +524,28 @@ export class UiOverlay {
         </div>
         <span class="vt-copy-status" data-vt-intrusion-status></span>
 
-        <label class="vt-field">
-          ${this.#t('humanAnomalyLine')}
-          <textarea rows="4" data-vt-human-line placeholder="${this.#t('humanLinePlaceholder')}"></textarea>
-        </label>
-        <details class="vt-inline-options vt-intrusion-kind-options">
-          <summary>${this.#t('optionalIntrusionKind')}</summary>
-          <label class="vt-field vt-compact-field">
-            ${this.#t('intrusionKind')}
-            <select data-vt-intrusion-kind>
-              <option value="${IntrusionKind.CHARACTER_TAKEOVER}">${this.#t('intrusionKindCharacterTakeover')}</option>
-              <option value="${IntrusionKind.MEMORY_FRACTURE}">${this.#t('intrusionKindMemoryFracture')}</option>
-              <option value="${IntrusionKind.PLOT_HOOK}">${this.#t('intrusionKindPlotHook')}</option>
-              <option value="${IntrusionKind.RELATIONSHIP_SABOTAGE}">${this.#t('intrusionKindRelationshipSabotage')}</option>
-              <option value="${IntrusionKind.CLUE_CONTAMINATION}">${this.#t('intrusionKindClueContamination')}</option>
-            </select>
+        <details class="vt-inline-options vt-panel-send-fallback">
+          <summary>${this.#t('panelFallbackSend')}</summary>
+          <p class="vt-help">${this.#t('panelFallbackSendHelp')}</p>
+          <label class="vt-field">
+            ${this.#t('humanAnomalyLine')}
+            <textarea rows="4" data-vt-human-line placeholder="${this.#t('humanLinePlaceholder')}"></textarea>
           </label>
-          <p class="vt-help">${this.#t('intrusionKindHelp')}</p>
-        </details>
-        <button class="vt-main-action" type="button" data-vt-send-as-character>${this.#t('sendAsCharacterAndRecordGeneric')}</button>
-        <details class="vt-inline-options vt-record-fallback">
-          <summary>${this.#t('recordFallback')}</summary>
+          <details class="vt-inline-options vt-intrusion-kind-options">
+            <summary>${this.#t('optionalIntrusionKind')}</summary>
+            <label class="vt-field vt-compact-field">
+              ${this.#t('intrusionKind')}
+              <select data-vt-intrusion-kind>
+                <option value="${IntrusionKind.CHARACTER_TAKEOVER}">${this.#t('intrusionKindCharacterTakeover')}</option>
+                <option value="${IntrusionKind.MEMORY_FRACTURE}">${this.#t('intrusionKindMemoryFracture')}</option>
+                <option value="${IntrusionKind.PLOT_HOOK}">${this.#t('intrusionKindPlotHook')}</option>
+                <option value="${IntrusionKind.RELATIONSHIP_SABOTAGE}">${this.#t('intrusionKindRelationshipSabotage')}</option>
+                <option value="${IntrusionKind.CLUE_CONTAMINATION}">${this.#t('intrusionKindClueContamination')}</option>
+              </select>
+            </label>
+            <p class="vt-help">${this.#t('intrusionKindHelp')}</p>
+          </details>
+          <button class="vt-main-action" type="button" data-vt-send-as-character>${this.#t('sendAsCharacterAndRecordGeneric')}</button>
           <p class="vt-help">${this.#t('recordFallbackHelp')}</p>
           <button type="button" data-vt-record-line>${this.#t('recordHumanLine')}</button>
         </details>
@@ -819,6 +820,7 @@ function formatDebugState(debug, language) {
     [translate(language, 'debugAwarenessEvents'), debug.awarenessEventCount ?? 0],
     [translate(language, 'debugInspirationCaptures'), debug.inspirationCaptureCount ?? 0],
     [translate(language, 'debugBrainstormNotes'), debug.brainstormNoteCount ?? 0],
+    [translate(language, 'debugLastNativeInputSend'), formatNativeInputSend(debug.lastNativeInputSend, language)],
     [translate(language, 'debugLastTakeoverSend'), formatTakeoverSend(debug.lastTakeoverSend, language)],
     [translate(language, 'debugPendingReactionAnchor'), formatReactionAnchor(debug.pendingReactionAnchor, language)],
     [translate(language, 'debugLastReactionAnchor'), formatReactionAnchor(debug.lastReactionAnchor, language)],
@@ -852,6 +854,14 @@ function formatTakeoverSend(send, language) {
 
   const status = send.ok ? translate(language, 'ok') : translate(language, 'failed');
   return `${send.speakerName || translate(language, 'unknown')} · ${status} · ${send.method || translate(language, 'unknown')}`;
+}
+
+function formatNativeInputSend(send, language) {
+  if (!send) {
+    return translate(language, 'none');
+  }
+
+  return `${send.speakerName || translate(language, 'unknown')} · ${send.status || translate(language, 'unknown')}`;
 }
 
 function formatBranchList(branchPoints, language) {
@@ -992,6 +1002,8 @@ function formatCompatibility(compatibility, language) {
     [translate(language, 'compatMessageEvent'), compatibility.hasMessageReceivedEvent],
     [translate(language, 'compatSlashCommands'), compatibility.hasSlashCommandExecution],
     [translate(language, 'compatChatInsert'), compatibility.hasAddOneMessage],
+    [translate(language, 'compatNativeInput'), compatibility.hasNativeChatInput],
+    [translate(language, 'compatNativeSend'), compatibility.hasNativeSendButton],
     [translate(language, 'compatPromptInterceptor'), compatibility.hasPromptInterceptor],
   ].filter(([, ok]) => !ok).map(([label]) => label);
 
@@ -1123,6 +1135,8 @@ const I18N = {
     compatEvents: 'events',
     compatChatInsert: 'chat insert',
     compatMessageEvent: 'message event',
+    compatNativeInput: 'native input',
+    compatNativeSend: 'native send button',
     compatPromptInterceptor: 'prompt interceptor',
     compatSlashCommands: 'slash commands',
     collapsePanel: 'Collapse',
@@ -1155,6 +1169,7 @@ const I18N = {
     debugLastConsumed: 'Last consumed',
     debugLastError: 'Last error',
     debugLastInjected: 'Last injected',
+    debugLastNativeInputSend: 'Last native input send',
     debugLastReactionAnchor: 'Last reaction anchor',
     debugLastTakeoverSend: 'Last takeover send',
     debugPendingReactionAnchor: 'Pending reaction anchor',
@@ -1174,7 +1189,7 @@ const I18N = {
     exportOrganizedMaterial: 'Export Organized Material',
     firstRunFallback: 'Use Debug or Copy Latest Handoff if automatic injection is unclear.',
     firstRunFolder: 'Confirm this folder is named',
-    firstRunRecord: 'Write one cameo line, then click Send as Character & Record.',
+    firstRunRecord: 'Type in the normal SillyTavern chat box. During takeover, VT sends it as that character.',
     firstRunRecover: 'End intrusion, then generate the next AI reply.',
     firstRunStart: 'Select a character and start an intrusion. Other settings are optional.',
     firstRunTitle: 'First Run Guide',
@@ -1186,9 +1201,9 @@ const I18N = {
     humanAnomalyLine: 'Takeover line',
     humanIntent: 'Human Intent',
     humanIntentHelp: 'Optional creator note for why this human cameo exists. Presets are enough for most runs.',
-    humanLinePlaceholder: 'Type the line to send as the selected character.',
-    intrusionEndedFor: 'Ended takeover for {character}. Generate the next AI reply, then capture inspiration.',
-    intrusionStartedFor: 'Now taking over {character}. Send the cameo line as this character, then let the AI react.',
+    humanLinePlaceholder: 'Fallback only: type the line to send as the selected character.',
+    intrusionEndedFor: 'Ended takeover for {character}. Generate the next AI reply when you want AI control back.',
+    intrusionStartedFor: 'Now taking over {character}. Type in the normal SillyTavern chat box; VT will send it as this character.',
     inspirationCapture: 'Inspiration Capture',
     inspirationCaptured: 'Inspiration captured',
     inspirationHelp: 'After an intrusion ends, capture why the real human cameo felt different from normal AI ensemble output.',
@@ -1257,6 +1272,8 @@ const I18N = {
     optionA: 'Option A',
     optionB: 'Option B',
     optionC: 'Option C',
+    panelFallbackSend: 'Fallback: panel send',
+    panelFallbackSendHelp: 'Default flow uses the normal SillyTavern chat box. Use this only if native input routing fails.',
     optionalSetup: 'Optional Setup',
     optionalIntrusionKind: 'Optional: disturbance tag',
     optionalSetupHelp: 'You can ignore this section for the first run. These settings add context but are not required to start a takeover.',
@@ -1305,7 +1322,7 @@ const I18N = {
     selectedCharacterActive: 'Selected: {character} is currently human-controlled.',
     selectedCharacterMissing: 'No character detected. Refresh the chat or check SillyTavern compatibility.',
     selectedCharacterReady: 'Selected: {character}. Start Intrusion will hand this role to the human.',
-    takeoverActiveBody: '{character} is under human control until {until}.',
+    takeoverActiveBody: '{character} is under human control until {until}. Normal chat input will appear as this character.',
     takeoverActiveTitle: 'Taking over {character}',
     takeoverHandoffBody: 'Generate the next AI reply so the handoff can be injected. If the result is unclear, use Copy Latest Handoff.',
     takeoverHandoffTitle: 'Recovery handoff is waiting',
@@ -1319,9 +1336,9 @@ const I18N = {
     sendAsCharacterAndRecordGeneric: 'Send as Character & Record',
     sendAsCharacterFailed: 'Send failed: {message}',
     sentAsCharacter: 'Sent as {character} and recorded.',
-    takeoverStepRecord: 'Type the line in VistrTavern, then click Send as Character & Record.',
+    takeoverStepRecord: 'Press Send in SillyTavern. VT routes the line through /sendas and records it.',
     takeoverStepReply: 'Let SillyTavern generate the other characters’ reaction.',
-    takeoverStepWrite: 'Write one line or action as {character}. VistrTavern will insert it into the current SillyTavern chat.',
+    takeoverStepWrite: 'Write one line or action as {character} in the normal SillyTavern chat box.',
     tension: 'Tension',
     title: 'Title',
     titlePlaceholder: 'Identity reveal',
@@ -1380,6 +1397,8 @@ const I18N = {
     compatEvents: '事件系统',
     compatChatInsert: '聊天插入',
     compatMessageEvent: '消息事件',
+    compatNativeInput: '原生输入框',
+    compatNativeSend: '原生发送按钮',
     compatPromptInterceptor: 'prompt interceptor',
     compatSlashCommands: 'slash 命令',
     collapsePanel: '收起',
@@ -1412,6 +1431,7 @@ const I18N = {
     debugLastConsumed: '最近消费',
     debugLastError: '最近错误',
     debugLastInjected: '最近注入',
+    debugLastNativeInputSend: '最近原生输入发送',
     debugLastReactionAnchor: '最近反应锚点',
     debugLastTakeoverSend: '最近接管发送',
     debugPendingReactionAnchor: '待处理反应锚点',
@@ -1431,7 +1451,7 @@ const I18N = {
     exportOrganizedMaterial: '导出整理素材',
     firstRunFallback: '如果自动注入不明确，查看 Debug 或复制最新 Handoff。',
     firstRunFolder: '确认扩展目录名为',
-    firstRunRecord: '写一句客串台词，点击“发送为角色并记录”。',
+    firstRunRecord: '直接在 SillyTavern 原来的聊天框输入。接管期间，VT 会把它发送成该角色的话。',
     firstRunRecover: '结束接管，然后生成下一条 AI 回复。',
     firstRunStart: '选择角色并开始接管，其他设定都可以先不填。',
     firstRunTitle: '首次使用引导',
@@ -1443,9 +1463,9 @@ const I18N = {
     humanAnomalyLine: '接管发言',
     humanIntent: '真人意图',
     humanIntentHelp: '可选的创作者备注，用来记录这次真人客串为什么存在。大多数时候点快捷按钮就够。',
-    humanLinePlaceholder: '在这里输入要冒充当前角色发出的内容。',
-    intrusionEndedFor: '已结束 {character} 的接管。接下来生成下一条 AI 回复，然后捕获灵感。',
-    intrusionStartedFor: '正在接管 {character}。写下客串发言，发送为该角色，然后让 AI 反应。',
+    humanLinePlaceholder: '仅 fallback：输入要作为当前角色发出的内容。',
+    intrusionEndedFor: '已结束 {character} 的接管。需要把控制权还给 AI 时，再生成下一条回复。',
+    intrusionStartedFor: '正在接管 {character}。直接在 SillyTavern 原聊天框输入，VT 会发送成这个角色的话。',
     inspirationCapture: '互动灵感捕获',
     inspirationCaptured: '灵感已捕获',
     inspirationHelp: 'intrusion 结束后，捕获这次真人客串为什么不同于普通 AI 群像输出。',
@@ -1514,6 +1534,8 @@ const I18N = {
     optionA: '路线 A',
     optionB: '路线 B',
     optionC: '路线 C',
+    panelFallbackSend: 'Fallback：面板发送',
+    panelFallbackSendHelp: '默认流程使用 SillyTavern 原聊天框。只有原生输入接管失效时，才用这里。',
     optionalSetup: '可选设定',
     optionalIntrusionKind: '可选：乱入标记',
     optionalSetupHelp: '第一次使用可以完全忽略。这里的字段只增加上下文，不影响开始接管。',
@@ -1562,7 +1584,7 @@ const I18N = {
     selectedCharacterActive: '当前选择：{character} 正在被真人接管。',
     selectedCharacterMissing: '没有检测到角色。请打开聊天后刷新，或检查 SillyTavern 兼容性。',
     selectedCharacterReady: '当前选择：{character}。点击开始接管后，这个角色会交给真人。',
-    takeoverActiveBody: '{character} 现在处于真人控制状态，预计持续到 {until}。',
+    takeoverActiveBody: '{character} 现在处于真人控制状态，预计持续到 {until}。此时普通聊天框会发送成这个角色的话。',
     takeoverActiveTitle: '正在接管 {character}',
     takeoverHandoffBody: '请生成下一条 AI 回复，让 handoff 注入上下文。如果结果不明确，可以使用“复制最新 Handoff”。',
     takeoverHandoffTitle: '恢复衔接等待中',
@@ -1576,9 +1598,9 @@ const I18N = {
     sendAsCharacterAndRecordGeneric: '发送为角色并记录',
     sendAsCharacterFailed: '发送失败：{message}',
     sentAsCharacter: '已作为 {character} 发送并记录。',
-    takeoverStepRecord: '在 VistrTavern 里输入这句话，然后点击“发送为角色并记录”。',
+    takeoverStepRecord: '按 SillyTavern 的发送按钮。VT 会通过 /sendas 路由并记录。',
     takeoverStepReply: '让 SillyTavern 生成其他角色的反应。',
-    takeoverStepWrite: '以 {character} 的身份写一句话或动作，VistrTavern 会把它插入当前 SillyTavern 聊天。',
+    takeoverStepWrite: '在 SillyTavern 原聊天框里，以 {character} 的身份写一句话或动作。',
     tension: '张力',
     title: '标题',
     titlePlaceholder: '身份揭露',

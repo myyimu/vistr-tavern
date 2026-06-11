@@ -7,6 +7,8 @@ import { Controller, IntrusionKind, MODULE_NAME, ScenarioPreset, ViewMode, Visib
 import { EXTENSION_VERSION } from './data/version.js';
 import { UiOverlay } from './ui/uiOverlay.js';
 
+const TAKEOVER_MARKER_STORAGE_KEY = 'vistr-tavern:takeover-marker-style';
+
 let storage;
 let narrativeMemory;
 let sceneManager;
@@ -14,6 +16,8 @@ let intrusionEngine;
 let exportWriter;
 let overlay;
 let tickTimer = null;
+let nativeChatInputBound = false;
+let nativeSendInProgress = false;
 const runtimeDebug = {
   lastInterceptorCallAt: null,
   lastInjectionResult: 'not-called',
@@ -27,6 +31,7 @@ const runtimeDebug = {
   lastConsumedHandoffId: null,
   lastConsumedAt: null,
   lastError: null,
+  lastNativeInputSend: null,
   compatibility: null,
 };
 
@@ -121,6 +126,7 @@ function initialize() {
   });
   setPromptLanguage(overlay.language).catch((error) => recordError('prompt_language_sync_failed', error));
   overlay.mount();
+  bindNativeChatInputSending();
   publishDebugState();
 
   tickTimer = globalThis.setInterval(async () => {
@@ -275,6 +281,144 @@ async function recordHumanLine({ characterId, speakerName, content, intrusionKin
 
   await persist();
   return message;
+}
+
+function bindNativeChatInputSending() {
+  if (nativeChatInputBound || typeof document === 'undefined') {
+    return;
+  }
+
+  nativeChatInputBound = true;
+  document.addEventListener('click', handleNativeChatSendClick, true);
+  document.addEventListener('keydown', handleNativeChatSendKeydown, true);
+}
+
+function handleNativeChatSendClick(event) {
+  if (!event.target?.closest?.('#send_but')) {
+    return;
+  }
+
+  void interceptNativeChatSend(event);
+}
+
+function handleNativeChatSendKeydown(event) {
+  if (event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey || event.isComposing) {
+    return;
+  }
+
+  if (!isNativeChatInput(event.target)) {
+    return;
+  }
+
+  void interceptNativeChatSend(event, event.target);
+}
+
+async function interceptNativeChatSend(event, input = findNativeChatInput()) {
+  const takeover = getSingleActiveTakeoverTarget();
+  const content = readNativeInputValue(input).trim();
+  if (!takeover || !content || content.startsWith('/') || nativeSendInProgress) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation?.();
+  nativeSendInProgress = true;
+  runtimeDebug.lastNativeInputSend = {
+    characterId: takeover.id,
+    speakerName: takeover.name,
+    contentPreview: content.slice(0, 120),
+    status: 'sending',
+    at: new Date().toISOString(),
+  };
+  publishDebugState();
+
+  try {
+    await sendHumanLineAsCharacter({
+      characterId: takeover.id,
+      speakerName: takeover.name,
+      content,
+      intrusionKind: IntrusionKind.CHARACTER_TAKEOVER,
+      takeoverMarkerStyle: readTakeoverMarkerStyle(),
+    });
+    clearNativeInputValue(input);
+    runtimeDebug.lastNativeInputSend = {
+      ...runtimeDebug.lastNativeInputSend,
+      status: 'sent',
+      at: new Date().toISOString(),
+    };
+    overlay?.refresh();
+  } catch (error) {
+    runtimeDebug.lastNativeInputSend = {
+      ...runtimeDebug.lastNativeInputSend,
+      status: 'failed',
+      error: error?.message || String(error),
+      at: new Date().toISOString(),
+    };
+    recordError('native_chat_input_send_failed', error);
+    console.warn('[VistrTavern] Failed to route native chat input as takeover line.', error);
+  } finally {
+    nativeSendInProgress = false;
+    publishDebugState();
+  }
+}
+
+function getSingleActiveTakeoverTarget() {
+  const activeIntrusions = intrusionEngine?.getActiveIntrusions?.() || [];
+  if (activeIntrusions.length !== 1) {
+    return null;
+  }
+
+  const intrusion = activeIntrusions[0];
+  const character = getCharacters().find((item) => item.id === intrusion.characterId);
+  return character || {
+    id: intrusion.characterId,
+    name: intrusion.characterName || intrusion.characterId,
+  };
+}
+
+function findNativeChatInput() {
+  return document.querySelector('#send_textarea, textarea[name="send_textarea"], [contenteditable="true"]#send_textarea');
+}
+
+function isNativeChatInput(element) {
+  return Boolean(element?.matches?.('#send_textarea, textarea[name="send_textarea"], [contenteditable="true"]#send_textarea'));
+}
+
+function readNativeInputValue(input) {
+  if (!input) {
+    return '';
+  }
+
+  if (input.isContentEditable) {
+    return input.innerText || input.textContent || '';
+  }
+
+  return input.value || '';
+}
+
+function clearNativeInputValue(input) {
+  if (!input) {
+    return;
+  }
+
+  if (input.isContentEditable) {
+    input.textContent = '';
+  } else {
+    input.value = '';
+  }
+
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function readTakeoverMarkerStyle() {
+  try {
+    const style = globalThis.localStorage?.getItem(TAKEOVER_MARKER_STORAGE_KEY) || 'hidden';
+    return ['hidden', 'ai', 'vt'].includes(style) ? style : 'hidden';
+  } catch {
+    return 'hidden';
+  }
 }
 
 function intrusionKindLabel(kind) {
@@ -965,6 +1109,7 @@ function getDebugState() {
     inspirationCaptureCount: narrativeMemory?.memory?.inspirationCaptures?.length || 0,
     lastCapturedAiMessage: runtimeDebug.lastCapturedAiMessage,
     lastTakeoverSend: runtimeDebug.lastTakeoverSend,
+    lastNativeInputSend: runtimeDebug.lastNativeInputSend,
     pendingReactionAnchor: runtimeDebug.pendingReactionAnchor ? summarizeReactionAnchor(runtimeDebug.pendingReactionAnchor) : null,
     lastReactionAnchor: runtimeDebug.lastReactionAnchor ? summarizeReactionAnchor(runtimeDebug.lastReactionAnchor) : null,
     lastInterceptorCallAt: runtimeDebug.lastInterceptorCallAt,
@@ -1005,6 +1150,8 @@ function inspectCompatibility() {
     hasSlashCommandExecution: typeof context?.executeSlashCommandsWithOptions === 'function',
     hasAddOneMessage: typeof context?.addOneMessage === 'function',
     hasPromptInterceptor: typeof globalThis.VistrTavernPromptInterceptor === 'function',
+    hasNativeChatInput: typeof document !== 'undefined' && Boolean(findNativeChatInput()),
+    hasNativeSendButton: typeof document !== 'undefined' && Boolean(document.querySelector('#send_but')),
     checkedAt: new Date().toISOString(),
   };
 }

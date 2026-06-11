@@ -4,11 +4,19 @@ English | [中文](README.zh-CN.md)
 
 > Experimental MVP / work in progress.
 >
-> VistrTavern is an early SillyTavern extension prototype for testing human intrusion, AI recovery, structured narrative memory, and export workflows. It is not a stable end-user plugin yet.
+> VistrTavern is an early SillyTavern extension prototype. It lets you temporarily take over an AI character, then type in the normal SillyTavern chat box so the message appears as that AI character speaking. It is not a stable end-user plugin yet.
+
+Shortest flow:
+
+1. Open `VT` and choose the character to take over.
+2. Click `Start Intrusion`.
+3. Type and send in the normal SillyTavern chat box.
+4. The message is inserted as the controlled character and recorded by VT.
+5. Click `End`, then let the AI continue.
 
 ## Core Question
 
-**Can a real human, entering an AI ensemble as an anomaly source, create dramatic tension that traditional AI generation cannot produce?**
+**If a real human can briefly speak as one AI character, will the AI cast produce more useful dramatic change?**
 
 VistrTavern is not a general AI writing tool or a full chat platform. It focuses on what happens when a real person briefly takes control of one character inside an AI-driven cast, and how that abnormal behavior changes judgment, relationships, conflict, and world state.
 
@@ -78,7 +86,7 @@ VistrTavern records:
 
 - SillyTavern extension manifest.
 - Floating VistrTavern control panel.
-- Low-friction main panel: select a character, start intrusion, send one takeover line as that character, capture inspiration.
+- Low-friction main flow: select a character, start intrusion, then send a takeover line from the normal SillyTavern chat box.
 - UI language switch for Chinese and English.
 - Character selection.
 - Temporary human intrusion state.
@@ -87,7 +95,7 @@ VistrTavern records:
 - Scenario presets for web novel/script drafting, AI murder mystery, and virtual theater.
 - Creative Context notes for story premise, current situation, cameo roles, and AI continuity notes.
 - Human Intent fields for the creator's desired confrontation, target, disruption, and reveal.
-- Human takeover line delivery through SillyTavern `/sendas`, with direct chat insertion fallback.
+- During takeover, normal SillyTavern chat-box sends are routed through `/sendas` so they appear as the controlled character; panel send and direct chat insertion remain as fallbacks.
 - Human anomaly line recording.
 - Intrusion type tagging for character takeover, memory fracture, plot hook, relationship sabotage, and clue contamination.
 - AI reaction capture during active intrusion windows.

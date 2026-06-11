@@ -68,7 +68,7 @@ The panel shows the shortest useful path first:
 - character selector
 - takeover guide
 - intrusion controls
-- human anomaly input
+- normal SillyTavern chat-box routing
 - inspiration capture
 - creator scratchpad
 
@@ -84,8 +84,8 @@ The character list is read from the current SillyTavern context. If it is empty,
 
 After selection, VistrTavern shows a small takeover guide. Before starting, it says which role will be handed to the human. During an active intrusion, it changes into a step-by-step prompt:
 
-- write one line or action as that character in the normal SillyTavern chat
-- record or summarize that line in `Human anomaly line`
+- write one line or action as that character in the normal SillyTavern chat box
+- press the normal send button; VistrTavern makes it appear as that character speaking
 - let other AI characters respond
 - end the intrusion
 - capture inspiration after recovery
@@ -163,17 +163,19 @@ Human Intent is saved as creator material and included in exports. It is not a f
 
 Click `Start Intrusion`.
 
-The selected character becomes human-controlled inside VistrTavern's state. During the active window, VistrTavern can send a typed line into the current SillyTavern chat as that character and record the same line as a human-controlled anomaly.
+The selected character becomes human-controlled inside VistrTavern's state. During the active window, keep using the normal SillyTavern chat box; when you send, VistrTavern inserts the line as that character and records it as a human-controlled anomaly.
 
 The panel then shows `Taking over {character}` and the expected next actions. If the wrong character is selected, change the character selector before starting or click `End` and restart the intrusion.
 
 ### 9. Send a Takeover Line
 
-Type the actual cameo line in `Takeover line`, then click `Send as Character & Record`.
+Type the actual cameo line in the normal SillyTavern chat box, then press send.
 
-VistrTavern first tries SillyTavern's own `/sendas` command through the extension API. If that API is unavailable, it falls back to direct chat insertion through the exposed chat rendering APIs.
+VistrTavern intercepts that normal send and first tries SillyTavern's own `/sendas` command through the extension API. If that API is unavailable, it falls back to direct chat insertion through the exposed chat rendering APIs.
 
-For a normal first run, leave `Optional: disturbance tag` closed. VistrTavern will use `Character takeover`.
+If native chat-box routing fails in your SillyTavern version, open `Fallback: panel send`, type the line there, and click `Send as Character & Record`.
+
+For a normal first run, leave the fallback-only `Optional: disturbance tag` closed. VistrTavern will use `Character takeover`.
 
 Open it only when you want to mark the line for later exports and handoff behavior:
 

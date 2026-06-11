@@ -1,7 +1,7 @@
 {
   "name": "vistr-tavern",
   "version": "0.6.0-alpha",
-  "description": "AI ensemble narrative disturbance extension for SillyTavern.",
+  "description": "SillyTavern extension for temporarily speaking as an AI character from the normal chat box.",
   "type": "module",
   "private": true,
   "scripts": {
