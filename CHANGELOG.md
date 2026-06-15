@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.6.1-alpha
+
+Takeover input and panel simplification release.
+
+### Added
+
+- Normal SillyTavern chat-box sends are now routed as the controlled character during an active takeover.
+- Gitee mirror links were added to the README files.
+
+### Changed
+
+- The primary panel is now reduced to role selection, start/end takeover, status, and a short native-chat-box prompt.
+- Fallback panel sending remains available but is no longer the default path.
+- Extension version updated to `0.6.1-alpha`.
+
 ## v0.6.0-alpha
 
 Intrusion-type gameplay release.
