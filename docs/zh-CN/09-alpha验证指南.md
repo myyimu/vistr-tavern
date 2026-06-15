@@ -20,7 +20,7 @@
 ## 干净安装
 
 1. 打开 SillyTavern 的扩展安装器。
-2. 从 `https://github.com/xiaoke5211-star/vistr-tavern` 安装。
+2. 从 `https://github.com/myyimu/vistr-tavern` 安装。
 3. 重启 SillyTavern 或刷新网页界面。
 4. 打开任意聊天。
 5. 确认页面出现浮动 `VT` 按钮。

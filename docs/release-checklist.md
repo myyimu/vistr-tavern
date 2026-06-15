@@ -6,7 +6,7 @@ Use this checklist before publishing `v0.6.0-alpha`.
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
-- [ ] `manifest.json` `homePage` points to `https://github.com/xiaoke5211-star/vistr-tavern`.
+- [ ] `manifest.json` `homePage` points to `https://github.com/myyimu/vistr-tavern`.
 - [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.6.0-alpha`.
 - [ ] `README.md`, `README.zh-CN.md`, and user guides mention GitHub URL install plus manual/zip fallbacks.
 
@@ -25,7 +25,7 @@ Use this checklist before publishing `v0.6.0-alpha`.
 
 ## SillyTavern Install
 
-- [ ] GitHub installer accepts `https://github.com/xiaoke5211-star/vistr-tavern`.
+- [ ] GitHub installer accepts `https://github.com/myyimu/vistr-tavern`.
 - [ ] Install folder is `data/default-user/extensions/vistr-tavern`.
 - [ ] No duplicate `VistrTavern` extension folder remains.
 - [ ] SillyTavern loads the extension without console errors.

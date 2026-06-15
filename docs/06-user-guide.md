@@ -26,7 +26,7 @@ The recommended path is SillyTavern's GitHub extension installer. Manual folder 
 
 1. Open SillyTavern's extensions panel.
 2. Use the GitHub extension installer.
-3. Paste `https://github.com/xiaoke5211-star/vistr-tavern`.
+3. Paste `https://github.com/myyimu/vistr-tavern`.
 4. Install the extension.
 5. Restart SillyTavern or reload the browser UI.
 6. Open a chat and look for the floating `VT` button.

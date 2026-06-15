@@ -2,7 +2,7 @@
 
 English | [中文](README.zh-CN.md)
 
-Mirrors: [GitHub](https://github.com/xiaoke5211-star/vistr-tavern) | [Gitee](https://gitee.com/zyimu/vistr-tavern)
+Mirrors: [GitHub](https://github.com/myyimu/vistr-tavern) | [Gitee](https://gitee.com/zyimu/vistr-tavern)
 
 > Experimental MVP / work in progress.
 >
@@ -55,7 +55,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Tested Environments
 
-Public compatibility is still being collected. If you test VistrTavern, please report results in the [alpha feedback thread](https://github.com/xiaoke5211-star/vistr-tavern/issues/1).
+Public compatibility is still being collected. If you test VistrTavern, please report results in the [alpha feedback thread](https://github.com/myyimu/vistr-tavern/issues/1).
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
@@ -143,7 +143,7 @@ Recommended GitHub install:
 
 1. Open SillyTavern's extensions panel.
 2. Use the GitHub extension installer.
-3. Paste `https://github.com/xiaoke5211-star/vistr-tavern`.
+3. Paste `https://github.com/myyimu/vistr-tavern`.
 4. Install, then restart SillyTavern or reload the web UI.
 5. Open a chat and look for the floating `VT` button.
 

@@ -20,7 +20,7 @@ Fill this table whenever you run a real manual validation pass.
 ## Clean Install
 
 1. Open SillyTavern's extension installer.
-2. Install from `https://github.com/xiaoke5211-star/vistr-tavern`.
+2. Install from `https://github.com/myyimu/vistr-tavern`.
 3. Restart SillyTavern or reload the web UI.
 4. Open any chat.
 5. Confirm the floating `VT` button appears.

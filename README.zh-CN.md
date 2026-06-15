@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-镜像：[GitHub](https://github.com/xiaoke5211-star/vistr-tavern) | [Gitee](https://gitee.com/zyimu/vistr-tavern)
+镜像：[GitHub](https://github.com/myyimu/vistr-tavern) | [Gitee](https://gitee.com/zyimu/vistr-tavern)
 
 > Experimental MVP / work in progress.
 >
@@ -55,7 +55,7 @@ AI 群像正常运行
 
 ## 已测试环境
 
-公开兼容性还在收集中。如果你测试了 VistrTavern，请在 [alpha feedback thread](https://github.com/xiaoke5211-star/vistr-tavern/issues/1) 反馈结果。
+公开兼容性还在收集中。如果你测试了 VistrTavern，请在 [alpha feedback thread](https://github.com/myyimu/vistr-tavern/issues/1) 反馈结果。
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
@@ -143,7 +143,7 @@ npm run verify
 
 1. 打开 SillyTavern 的扩展面板。
 2. 使用 GitHub 扩展安装功能。
-3. 粘贴 `https://github.com/xiaoke5211-star/vistr-tavern`。
+3. 粘贴 `https://github.com/myyimu/vistr-tavern`。
 4. 安装后重启 SillyTavern 或刷新网页界面。
 5. 打开一个聊天，确认页面上出现浮动的 `VT` 按钮。
 
