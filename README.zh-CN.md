@@ -142,10 +142,13 @@ npm run verify
 推荐 GitHub 安装：
 
 1. 打开 SillyTavern 的扩展面板。
-2. 使用 GitHub 扩展安装功能。
-3. 粘贴 `https://github.com/myyimu/vistr-tavern`。
-4. 安装后重启 SillyTavern 或刷新网页界面。
-5. 打开一个聊天，确认页面上出现浮动的 `VT` 按钮。
+2. 点击 `安装扩展程序`。
+3. 在 Git URL 输入框粘贴 `https://github.com/myyimu/vistr-tavern.git`。
+4. 分支或标签名可以留空，除非你需要指定某个 release tag。
+5. 点击 `只给我安装`，然后重启 SillyTavern 或刷新网页界面。
+6. 打开一个聊天，确认页面上出现浮动的 `VT` 按钮。
+
+![SillyTavern 扩展安装器](docs/assets/screenshots/sillytavern-extension-installer.png)
 
 手动文件夹安装：
 

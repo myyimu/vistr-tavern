@@ -142,10 +142,13 @@ This repository is structured as the extension folder itself.
 Recommended GitHub install:
 
 1. Open SillyTavern's extensions panel.
-2. Use the GitHub extension installer.
-3. Paste `https://github.com/myyimu/vistr-tavern`.
-4. Install, then restart SillyTavern or reload the web UI.
-5. Open a chat and look for the floating `VT` button.
+2. Click `Install extension`.
+3. Paste `https://github.com/myyimu/vistr-tavern.git` into the Git URL field.
+4. Leave the branch/tag field empty unless you need a specific release tag.
+5. Click `Install for me`, then restart SillyTavern or reload the web UI.
+6. Open a chat and look for the floating `VT` button.
+
+![SillyTavern extension installer](docs/assets/screenshots/sillytavern-extension-installer.png)
 
 Manual folder install:
 
