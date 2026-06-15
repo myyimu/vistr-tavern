@@ -561,12 +561,7 @@ function createCharacterChatMessage(context, character, { speakerName, content, 
   const mes = typeof context.substituteParams === 'function'
     ? context.substituteParams(content)
     : content;
-  const extra = {
-    gen_id: now,
-    vistrTavern: true,
-    vistrTavernTakeover: true,
-    vistrTavernController: 'human',
-  };
+  const extra = { gen_id: now };
   applyTakeoverMarkerMetadata(context, { extra }, takeoverMarkerStyle);
 
   return {
@@ -589,11 +584,11 @@ function createCharacterChatMessage(context, character, { speakerName, content, 
   };
 }
 
-function applyTakeoverMarkerMetadata(context, message, style = 'hidden') {
+export function applyTakeoverMarkerMetadata(context, message, style = 'hidden') {
   message.extra = message.extra || {};
-  message.extra.vistrTavern = true;
-  message.extra.vistrTavernTakeover = true;
-  message.extra.vistrTavernController = 'human';
+  delete message.extra.vistrTavern;
+  delete message.extra.vistrTavernTakeover;
+  delete message.extra.vistrTavernController;
 
   if (style === 'vt') {
     message.extra.api = 'manual';
