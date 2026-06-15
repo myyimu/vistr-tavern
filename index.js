@@ -377,15 +377,19 @@ async function interceptNativeChatSend(event, input = findNativeChatInput()) {
 
 function getSingleActiveTakeoverTarget() {
   const activeIntrusions = intrusionEngine?.getActiveIntrusions?.() || [];
-  return getNativeTakeoverTargetFromIntrusions(activeIntrusions, getCharacters());
+  return getNativeTakeoverTargetFromIntrusions(activeIntrusions, getCharacters(), { allowUnknown: false });
 }
 
-export function getNativeTakeoverTargetFromIntrusions(activeIntrusions = [], characters = []) {
+export function getNativeTakeoverTargetFromIntrusions(activeIntrusions = [], characters = [], { allowUnknown = true } = {}) {
   if (activeIntrusions.length !== 1) {
     return null;
   }
   const intrusion = activeIntrusions[0];
   const character = characters.find((item) => item.id === intrusion.characterId);
+  if (!character && !allowUnknown) {
+    return null;
+  }
+
   return character || {
     id: intrusion.characterId,
     name: intrusion.characterName || intrusion.characterId,
@@ -597,7 +601,7 @@ export function applyTakeoverMarkerMetadata(context, message, style = 'hidden') 
   }
 
   if (style === 'ai') {
-    const aiIcon = inferCurrentAiIcon(context);
+    const aiIcon = inferCurrentAiIcon(context, { excludeMessage: message });
     if (aiIcon.api) {
       message.extra.api = aiIcon.api;
       message.extra.model = aiIcon.model || '';
@@ -609,12 +613,16 @@ export function applyTakeoverMarkerMetadata(context, message, style = 'hidden') 
   delete message.extra.model;
 }
 
-function inferCurrentAiIcon(context) {
-  const latestAiMessage = [...(context?.chat || [])]
+function inferCurrentAiIcon(context, { excludeMessage = null, excludeIndex = -1 } = {}) {
+  const chat = context?.chat || [];
+  const latestAiMessage = [...chat]
     .reverse()
     .find((message) => {
+      const messageIndex = chat.indexOf(message);
       const api = message?.extra?.api;
-      return !message?.is_user
+      return message !== excludeMessage
+        && messageIndex !== excludeIndex
+        && !message?.is_user
         && !message?.is_system
         && api
         && api !== 'manual'
@@ -628,7 +636,7 @@ function inferCurrentAiIcon(context) {
   return {
     api: latestAiMessage?.extra?.api || fallbackApi,
     model: latestAiMessage?.extra?.model || '',
-    messageIndex: latestAiMessage ? context.chat.indexOf(latestAiMessage) : -1,
+    messageIndex: latestAiMessage ? chat.indexOf(latestAiMessage) : -1,
   };
 }
 
@@ -657,7 +665,7 @@ function syncTakeoverMarkerIcon(messageIndex, style, context = getContext()) {
       return;
     }
 
-    const aiIcon = inferCurrentAiIcon(context);
+    const aiIcon = inferCurrentAiIcon(context, { excludeIndex: messageIndex });
     const sourceIcon = aiIcon.messageIndex >= 0
       ? document.querySelector(`[mesid="${aiIcon.messageIndex}"] .timestamp-icon`)
       : null;
@@ -1049,11 +1057,149 @@ function bindEvent(eventSource, eventType, handler) {
 
 function getRawCharacters() {
   const context = getContext();
-  if (Array.isArray(context?.characters)) {
-    return context.characters;
+  return getTakeoverRawCharactersFromContext(context);
+}
+
+function getAllRawCharacters() {
+  const context = getContext();
+  return Array.isArray(context?.characters) ? context.characters : [];
+}
+
+export function getTakeoverRawCharactersFromContext(context) {
+  const characters = Array.isArray(context?.characters) ? context.characters : [];
+  if (!characters.length) {
+    return [];
   }
 
-  return [];
+  const group = getActiveGroupFromContext(context);
+  if (group) {
+    return filterCharactersByGroupMembers(characters, group);
+  }
+
+  const singleCharacter = getActiveSingleCharacterFromContext(context, characters);
+  return singleCharacter ? [singleCharacter] : characters;
+}
+
+function getActiveGroupFromContext(context) {
+  const inlineGroup = context?.group || context?.currentGroup;
+  if (inlineGroup?.members || inlineGroup?.characters) {
+    return inlineGroup;
+  }
+
+  const groupId = normalizeActiveContextId(
+    context?.groupId
+    ?? context?.selected_group
+    ?? context?.selectedGroup
+    ?? context?.chatMetadata?.groupId
+    ?? context?.chat_metadata?.groupId,
+  );
+  if (!groupId) {
+    return null;
+  }
+
+  const groups = [
+    ...(Array.isArray(context?.groups) ? context.groups : []),
+    ...(Array.isArray(context?.groupChats) ? context.groupChats : []),
+    ...(Array.isArray(context?.group_chats) ? context.group_chats : []),
+  ];
+
+  return groups.find((group) => characterKeys(group).has(groupId)) || null;
+}
+
+function getActiveSingleCharacterFromContext(context, characters) {
+  const inlineCharacter = context?.character || context?.currentCharacter;
+  if (inlineCharacter) {
+    const inlineKeys = characterKeys(inlineCharacter);
+    const matched = characters.find((character, index) => hasAnyKey(characterKeys(character, index), inlineKeys));
+    if (matched) {
+      return matched;
+    }
+  }
+
+  const activeId = normalizeActiveContextId(
+    context?.characterId
+    ?? context?.selectedCharacterId
+    ?? context?.this_chid
+    ?? context?.chid
+    ?? context?.characterIndex
+    ?? context?.active_character,
+  );
+  if (!activeId) {
+    return null;
+  }
+
+  if (/^\d+$/.test(activeId)) {
+    return characters[Number(activeId)] || null;
+  }
+
+  return characters.find((character, index) => characterKeys(character, index).has(activeId)) || null;
+}
+
+function filterCharactersByGroupMembers(characters, group) {
+  const memberKeys = new Set([
+    ...normalizeGroupMembers(group?.members),
+    ...normalizeGroupMembers(group?.characters),
+    ...normalizeGroupMembers(group?.characterIds),
+    ...normalizeGroupMembers(group?.character_ids),
+  ]);
+  if (!memberKeys.size) {
+    return characters;
+  }
+
+  return characters.filter((character, index) => hasAnyKey(characterKeys(character, index), memberKeys));
+}
+
+function normalizeGroupMembers(members) {
+  if (!Array.isArray(members)) {
+    return [];
+  }
+
+  return members.flatMap((member) => [...characterKeys(member)]);
+}
+
+function characterKeys(value, index = null) {
+  const keys = new Set();
+  if (index !== null && index !== undefined) {
+    keys.add(String(index));
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const normalized = normalizeActiveContextId(value);
+    if (normalized) {
+      keys.add(normalized);
+    }
+    return keys;
+  }
+
+  for (const key of ['id', 'avatar', 'name', 'file_name', 'filename']) {
+    const normalized = normalizeActiveContextId(value?.[key]);
+    if (normalized) {
+      keys.add(normalized);
+    }
+  }
+
+  return keys;
+}
+
+function hasAnyKey(left, right) {
+  for (const key of left) {
+    if (right.has(key)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function normalizeActiveContextId(value) {
+  if (value === null || value === undefined || value === false) {
+    return '';
+  }
+
+  const normalized = String(value).trim();
+  return normalized && normalized !== 'null' && normalized !== 'undefined' && normalized !== '-1'
+    ? normalized
+    : '';
 }
 
 function getCharacters() {
@@ -1070,7 +1216,7 @@ function findCharacterByName(name) {
 }
 
 function findRawCharacterByName(name) {
-  return getRawCharacters().find((character) => character?.name === name || character?.avatar === name) || null;
+  return getAllRawCharacters().find((character) => character?.name === name || character?.avatar === name) || null;
 }
 
 function latestChatMessage() {

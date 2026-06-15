@@ -4,6 +4,7 @@ import {
   NATIVE_SEND_BUTTON_SELECTOR,
   applyTakeoverMarkerMetadata,
   getNativeTakeoverTargetFromIntrusions,
+  getTakeoverRawCharactersFromContext,
   shouldRouteNativeChatInput,
 } from '../index.js';
 
@@ -12,9 +13,27 @@ assert.match(NATIVE_CHAT_INPUT_SELECTOR, /#send_textarea/);
 assert.match(NATIVE_CHAT_INPUT_SELECTOR, /textarea\[name="send_textarea"\]/);
 
 const characters = [
-  { id: 'alice', name: 'Alice' },
-  { id: 'bob', name: 'Bob' },
+  { id: 'alice', name: 'Alice', avatar: 'alice.png' },
+  { id: 'bob', name: 'Bob', avatar: 'bob.png' },
+  { id: 'carol', name: 'Carol', avatar: 'carol.png' },
 ];
+
+assert.deepEqual(getTakeoverRawCharactersFromContext({
+  characters,
+  this_chid: 1,
+}), [characters[1]]);
+
+assert.deepEqual(getTakeoverRawCharactersFromContext({
+  characters,
+  selected_group: 'group-1',
+  groups: [{ id: 'group-1', members: ['alice.png', 'carol.png'] }],
+}), [characters[0], characters[2]]);
+
+assert.deepEqual(getTakeoverRawCharactersFromContext({
+  characters,
+  groupId: 'group-2',
+  groups: [{ id: 'group-2', members: [{ name: 'Bob' }] }],
+}), [characters[1]]);
 
 assert.equal(getNativeTakeoverTargetFromIntrusions([], characters), null);
 assert.equal(getNativeTakeoverTargetFromIntrusions([
@@ -24,11 +43,15 @@ assert.equal(getNativeTakeoverTargetFromIntrusions([
 
 assert.deepEqual(getNativeTakeoverTargetFromIntrusions([
   { characterId: 'alice', characterName: 'Alice' },
-], characters), { id: 'alice', name: 'Alice' });
+], characters), characters[0]);
 
 assert.deepEqual(getNativeTakeoverTargetFromIntrusions([
   { characterId: 'unknown', characterName: 'Guest' },
 ], characters), { id: 'unknown', name: 'Guest' });
+
+assert.equal(getNativeTakeoverTargetFromIntrusions([
+  { characterId: 'unknown', characterName: 'Guest' },
+], characters, { allowUnknown: false }), null);
 
 assert.deepEqual(shouldRouteNativeChatInput({
   takeover: { id: 'alice', name: 'Alice' },
@@ -73,6 +96,15 @@ applyTakeoverMarkerMetadata({
   chat: [{ is_user: false, is_system: false, extra: { api: 'openai', model: 'story-model' } }],
 }, aiLikeMessage, 'ai');
 assert.deepEqual(aiLikeMessage.extra, { api: 'openai', model: 'story-model' });
+
+const currentMessage = { is_user: false, is_system: false, extra: { api: 'manual', model: 'Manual' } };
+applyTakeoverMarkerMetadata({
+  chat: [
+    { is_user: false, is_system: false, extra: { api: 'claude', model: 'previous-model' } },
+    currentMessage,
+  ],
+}, currentMessage, 'ai');
+assert.deepEqual(currentMessage.extra, { api: 'claude', model: 'previous-model' });
 
 const vtMarkedMessage = { extra: { vistrTavernTakeover: true, vistrTavernController: 'human' } };
 applyTakeoverMarkerMetadata({}, vtMarkedMessage, 'vt');
