@@ -2,6 +2,8 @@
 
 [English](README.md) | 中文
 
+镜像：[GitHub](https://github.com/xiaoke5211-star/vistr-tavern) | [Gitee](https://gitee.com/zyimu/vistr-tavern)
+
 > Experimental MVP / work in progress.
 >
 > VistrTavern 是一个早期 SillyTavern 扩展原型。它让你临时接管一个 AI 角色，然后直接在 SillyTavern 原聊天框输入，让这句话显示成该 AI 角色说的。它还不是稳定的终端用户插件。

@@ -2,6 +2,8 @@
 
 English | [中文](README.zh-CN.md)
 
+Mirrors: [GitHub](https://github.com/xiaoke5211-star/vistr-tavern) | [Gitee](https://gitee.com/zyimu/vistr-tavern)
+
 > Experimental MVP / work in progress.
 >
 > VistrTavern is an early SillyTavern extension prototype. It lets you temporarily take over an AI character, then type in the normal SillyTavern chat box so the message appears as that AI character speaking. It is not a stable end-user plugin yet.
