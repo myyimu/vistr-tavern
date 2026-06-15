@@ -57,6 +57,10 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 Public compatibility is still being collected. If you test VistrTavern, please report results in the [alpha feedback thread](https://github.com/myyimu/vistr-tavern/issues/1).
 
+## Chinese Discussion And Ideas
+
+Chinese-language topics, usage ideas, roleplay workflow suggestions, and compatibility feedback are welcome in GitHub issues. You can also email `myyimu@163.com`.
+
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
 | `v0.6.0-alpha` | Awaiting public validation | TODO | TODO | TODO |

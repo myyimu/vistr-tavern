@@ -106,6 +106,8 @@ docs/assets/screenshots/export-markdown.png
 
 请测试者使用 `alpha feedback` issue 模板，并提供：
 
+如果不方便开 issue，或有中文议题、使用想法、玩法建议，也可以发邮件到 `myyimu@163.com`。
+
 - SillyTavern 版本。
 - 安装方式。
 - 是否出现 `VT` 按钮。

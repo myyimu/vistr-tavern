@@ -57,6 +57,10 @@ AI 群像正常运行
 
 公开兼容性还在收集中。如果你测试了 VistrTavern，请在 [alpha feedback thread](https://github.com/myyimu/vistr-tavern/issues/1) 反馈结果。
 
+## 中文议题与想法反馈
+
+如果你有关于 VistrTavern 的中文议题、使用想法、剧情玩法建议或兼容性反馈，可以在 GitHub issue 中留言，也可以直接发邮件到 `myyimu@163.com`。
+
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
 | `v0.6.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
