@@ -168,12 +168,12 @@
 
 .vt-first-run {
   display: grid;
-  gap: 8px;
-  margin: 10px 0 14px;
-  padding: 10px;
-  border: 1px solid rgba(92, 187, 255, 0.32);
+  gap: 6px;
+  margin: 8px 0 12px;
+  padding: 9px;
+  border: 1px solid rgba(217, 236, 255, 0.18);
   border-radius: 6px;
-  background: rgba(92, 187, 255, 0.08);
+  background: rgba(217, 236, 255, 0.06);
   color: #d9ecff;
   font-size: 12px;
 }
@@ -196,8 +196,8 @@
 
 .vt-takeover-guide {
   display: grid;
-  gap: 6px;
-  margin: 10px 0 14px;
+  gap: 5px;
+  margin: 8px 0 12px;
   padding: 10px;
   border: 1px solid rgba(133, 214, 177, 0.32);
   border-radius: 6px;
@@ -256,6 +256,18 @@
   margin-top: 10px;
 }
 
+.vt-actions button[data-vt-start] {
+  border-color: rgba(133, 214, 177, 0.45);
+  background: #1f3d31;
+  color: #f3fff8;
+  font-weight: 700;
+}
+
+.vt-actions button[data-vt-end] {
+  background: #171a22;
+  color: #c9ced8;
+}
+
 .vt-main-action {
   min-height: 38px;
   margin-top: 8px;
@@ -307,7 +319,7 @@
 }
 
 .vt-room {
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 .vt-room summary,

@@ -103,12 +103,12 @@ export class UiOverlay {
       ? state.activeIntrusions.map((intrusion) => `<li>${escapeHtml(intrusion.characterName || intrusion.characterId)} · ${escapeHtml(intrusion.visibility)} · ${this.#t('until')} ${new Date(intrusion.endsAt).toLocaleTimeString()}</li>`).join('')
       : `<li>${escapeHtml(this.#t('noActiveIntrusion'))}</li>`;
 
-    status.textContent = this.#t('statusLine', {
-      mode: state.viewMode,
-      messages: state.messageCount,
-      intrusions: state.intrusionCount,
-      handoffs: state.pendingHandoffCount || 0,
-    });
+    status.textContent = formatPanelStatus({
+      selectedCharacter,
+      selectedIntrusion,
+      pendingHandoffCount: state.pendingHandoffCount || 0,
+      messageCount: state.messageCount,
+    }, this.language);
     guide.hidden = this.firstRunDismissed || Boolean(readLocalStorage(FIRST_RUN_STORAGE_KEY));
     if (refreshStatus) {
       refreshStatus.textContent = this.lastManualRefreshAt
@@ -501,11 +501,9 @@ export class UiOverlay {
         <section class="vt-first-run" data-vt-first-run>
           <strong>${this.#t('firstRunTitle')}</strong>
           <ol>
-            <li>${this.#t('firstRunFolder')} <code>vistr-tavern</code>.</li>
             <li>${this.#t('firstRunStart')}</li>
             <li>${this.#t('firstRunRecord')}</li>
             <li>${this.#t('firstRunRecover')}</li>
-            <li>${this.#t('firstRunFallback')}</li>
           </ol>
           <button type="button" data-vt-dismiss-guide>${this.#t('dismissGuide')}</button>
         </section>
@@ -944,6 +942,22 @@ function formatSelectedCharacter(character, intrusion, language) {
   return escapeHtml(translate(language, key, { character: character.name }));
 }
 
+function formatPanelStatus({ selectedCharacter, selectedIntrusion, pendingHandoffCount, messageCount }, language) {
+  if (selectedIntrusion) {
+    return translate(language, 'panelStatusActive', { character: selectedIntrusion.characterName || selectedCharacter?.name || selectedIntrusion.characterId });
+  }
+
+  if (pendingHandoffCount) {
+    return translate(language, 'panelStatusHandoff');
+  }
+
+  if (selectedCharacter) {
+    return translate(language, 'panelStatusReady', { character: selectedCharacter.name });
+  }
+
+  return translate(language, 'panelStatusEmpty', { messages: messageCount || 0 });
+}
+
 function formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHandoffCount }, language) {
   if (!selectedCharacter) {
     return [
@@ -959,13 +973,7 @@ function formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHand
         character: selectedCharacter.name,
         until: new Date(selectedIntrusion.endsAt).toLocaleTimeString(),
       }))}</p>`,
-      '<ol>',
-      `<li>${escapeHtml(translate(language, 'takeoverStepWrite', { character: selectedCharacter.name }))}</li>`,
-      `<li>${escapeHtml(translate(language, 'takeoverStepRecord'))}</li>`,
-      `<li>${escapeHtml(translate(language, 'takeoverStepReply'))}</li>`,
-      `<li>${escapeHtml(translate(language, 'takeoverStepEnd'))}</li>`,
-      `<li>${escapeHtml(translate(language, 'takeoverStepCapture'))}</li>`,
-      '</ol>',
+      `<p>${escapeHtml(translate(language, 'takeoverActiveHint', { character: selectedCharacter.name }))}</p>`,
     ].join('');
   }
 
@@ -1155,7 +1163,7 @@ const I18N = {
     contextWorldviewPlaceholder: 'Court intrigue, haunted city, closed manor, virtual stage...',
     creativeContext: 'Creative Context',
     creativeContextHelp: 'Optional notes for exports and material organization. This is local creator context, not a shared multiplayer feature.',
-    creatorTools: 'Creator Tools',
+    creatorTools: 'Organize & Export',
     creatorToolsHelp: 'Secondary tools for marking branches, organizing material, and exporting files after a useful scene exists.',
     debug: 'Debug',
     debugHelp: 'Troubleshooting data for prompt injection, pending handoffs, captured AI messages, and storage state.',
@@ -1178,21 +1186,19 @@ const I18N = {
     debugStorage: 'Storage',
     debugVersion: 'Version',
     director: 'Director',
-    dismissGuide: 'Dismiss Guide',
+    dismissGuide: 'Got it',
     durationMin: 'Duration min',
     end: 'End',
-    endIntrusionFor: 'End {character}',
+    endIntrusionFor: 'End takeover',
     exportCharacterPrompt: 'Export Character Prompt',
     exportCreatorPack: 'Export Creator Pack',
     exportJson: 'Export JSON',
     exportMarkdown: 'Export Markdown',
     exportOrganizedMaterial: 'Export Organized Material',
-    firstRunFallback: 'Use Debug or Copy Latest Handoff if automatic injection is unclear.',
-    firstRunFolder: 'Confirm this folder is named',
     firstRunRecord: 'Type in the normal SillyTavern chat box. During takeover, VT sends it as that character.',
-    firstRunRecover: 'End intrusion, then generate the next AI reply.',
-    firstRunStart: 'Select a character and start an intrusion. Other settings are optional.',
-    firstRunTitle: 'First Run Guide',
+    firstRunRecover: 'End takeover when finished, then let the AI continue.',
+    firstRunStart: 'Choose a character and start takeover.',
+    firstRunTitle: 'Quick Start',
     failed: 'failed',
     general: 'general',
     handoffConsumed: 'consumed',
@@ -1274,7 +1280,7 @@ const I18N = {
     optionC: 'Option C',
     panelFallbackSend: 'Fallback: panel send',
     panelFallbackSendHelp: 'Default flow uses the normal SillyTavern chat box. Use this only if native input routing fails.',
-    optionalSetup: 'Optional Setup',
+    optionalSetup: 'More Settings',
     optionalIntrusionKind: 'Optional: disturbance tag',
     optionalSetupHelp: 'You can ignore this section for the first run. These settings add context but are not required to start a takeover.',
     recordHumanLine: 'Record Only',
@@ -1283,9 +1289,13 @@ const I18N = {
     refresh: 'Refresh',
     refreshShort: '↻',
     refreshStatus: 'Refreshed {count} characters at {time}',
-    restartIntrusion: 'Restart Intrusion',
+    restartIntrusion: 'Restart takeover',
     panelOpen: 'VistrTavern is open',
     panelSettings: 'Settings',
+    panelStatusActive: 'Taking over {character}',
+    panelStatusEmpty: 'Open a chat and choose a character',
+    panelStatusHandoff: 'Ready for AI to continue',
+    panelStatusReady: 'Ready: {character}',
     saveBrainstorm: 'Save Brainstorm Note',
     saveContext: 'Save Context',
     saveScene: 'Save Scene',
@@ -1300,7 +1310,7 @@ const I18N = {
     savedBranchPoints: 'Saved Branch Points',
     copyMaterial: 'Copy Material',
     organizeMaterial: 'Organize Material',
-    startIntrusion: 'Start Intrusion',
+    startIntrusion: 'Start takeover',
     statusLine: '{mode} · {messages} messages · {intrusions} intrusions · {handoffs} pending handoffs',
     targetBoth: 'Both',
     targetControlled: 'Controlled character',
@@ -1319,17 +1329,18 @@ const I18N = {
     tipMaterialWorkbench: 'One-click organizer for turning the session memory into creator-ready notes.',
     tipOptionalSetup: 'Advanced context. Not required for the first run.',
     tipSceneSetup: 'Labels the current scene and tension so later exports have better context.',
-    selectedCharacterActive: 'Selected: {character} is currently human-controlled.',
+    selectedCharacterActive: '{character} is under your control.',
     selectedCharacterMissing: 'No character detected. Refresh the chat or check SillyTavern compatibility.',
-    selectedCharacterReady: 'Selected: {character}. Start Intrusion will hand this role to the human.',
-    takeoverActiveBody: '{character} is under human control until {until}. Normal chat input will appear as this character.',
-    takeoverActiveTitle: 'Taking over {character}',
-    takeoverHandoffBody: 'Generate the next AI reply so the handoff can be injected. If the result is unclear, use Copy Latest Handoff.',
-    takeoverHandoffTitle: 'Recovery handoff is waiting',
+    selectedCharacterReady: '{character} is selected.',
+    takeoverActiveBody: 'Until {until}, your normal chat-box send becomes {character} speaking.',
+    takeoverActiveHint: 'Write as {character} in the SillyTavern chat box, then press Send.',
+    takeoverActiveTitle: 'You are {character}',
+    takeoverHandoffBody: 'Generate the next AI reply when you want the story to continue from the takeover.',
+    takeoverHandoffTitle: 'AI can continue now',
     takeoverNoCharacterBody: 'Open a chat with at least one character, then refresh VistrTavern.',
     takeoverNoCharacterTitle: 'No role selected',
-    takeoverReadyBody: 'Click Start Intrusion when you want {character} to break the AI ensemble rhythm.',
-    takeoverReadyTitle: 'Ready to take over {character}',
+    takeoverReadyBody: 'Click Start when you want your next chat-box send to become {character}.',
+    takeoverReadyTitle: 'Ready: {character}',
     takeoverStepCapture: 'After recovery, click Capture Inspiration to turn this moment into writing material.',
     takeoverStepEnd: 'Click End when the cameo is finished.',
     sendAsCharacterAndRecord: 'Send as {character} & Record',
@@ -1417,7 +1428,7 @@ const I18N = {
     contextWorldviewPlaceholder: '宫廷阴谋、闹鬼城市、封闭庄园、虚拟舞台……',
     creativeContext: '创作上下文',
     creativeContextHelp: '用于导出和素材整理的可选本地备注。它不是共享多人功能。',
-    creatorTools: '创作者工具',
+    creatorTools: '整理与导出',
     creatorToolsHelp: '有一段可用素材之后再打开：标记剧情分支、整理素材、导出文件。',
     debug: 'Debug',
     debugHelp: '排查 prompt 注入、待处理 handoff、AI 捕获和存储状态时使用。',
@@ -1440,21 +1451,19 @@ const I18N = {
     debugStorage: '存储',
     debugVersion: '版本',
     director: '导演模式',
-    dismissGuide: '关闭引导',
+    dismissGuide: '知道了',
     durationMin: '持续分钟',
     end: '结束',
-    endIntrusionFor: '结束 {character}',
+    endIntrusionFor: '结束接管',
     exportCharacterPrompt: '导出人设 Prompt',
     exportCreatorPack: '导出创作包',
     exportJson: '导出 JSON',
     exportMarkdown: '导出 Markdown',
     exportOrganizedMaterial: '导出整理素材',
-    firstRunFallback: '如果自动注入不明确，查看 Debug 或复制最新 Handoff。',
-    firstRunFolder: '确认扩展目录名为',
     firstRunRecord: '直接在 SillyTavern 原来的聊天框输入。接管期间，VT 会把它发送成该角色的话。',
-    firstRunRecover: '结束接管，然后生成下一条 AI 回复。',
-    firstRunStart: '选择角色并开始接管，其他设定都可以先不填。',
-    firstRunTitle: '首次使用引导',
+    firstRunRecover: '说完后结束接管，再让 AI 继续。',
+    firstRunStart: '选择角色，开始接管。',
+    firstRunTitle: '快速开始',
     failed: '失败',
     general: '通用',
     handoffConsumed: '已消费',
@@ -1536,7 +1545,7 @@ const I18N = {
     optionC: '路线 C',
     panelFallbackSend: 'Fallback：面板发送',
     panelFallbackSendHelp: '默认流程使用 SillyTavern 原聊天框。只有原生输入接管失效时，才用这里。',
-    optionalSetup: '可选设定',
+    optionalSetup: '更多设置',
     optionalIntrusionKind: '可选：乱入标记',
     optionalSetupHelp: '第一次使用可以完全忽略。这里的字段只增加上下文，不影响开始接管。',
     recordHumanLine: '仅记录',
@@ -1545,9 +1554,13 @@ const I18N = {
     refresh: '刷新',
     refreshShort: '刷新',
     refreshStatus: '已刷新：检测到 {count} 个角色 · {time}',
-    restartIntrusion: '重新开始接管',
+    restartIntrusion: '重新接管',
     panelOpen: 'VistrTavern 已打开',
     panelSettings: '设置',
+    panelStatusActive: '正在接管 {character}',
+    panelStatusEmpty: '打开聊天并选择角色',
+    panelStatusHandoff: '可以让 AI 继续了',
+    panelStatusReady: '准备接管：{character}',
     saveBrainstorm: '保存脑暴笔记',
     saveContext: '保存上下文',
     saveScene: '保存场景',
@@ -1581,17 +1594,18 @@ const I18N = {
     tipMaterialWorkbench: '一键把当前记忆整理成创作者可读的素材摘要。',
     tipOptionalSetup: '高级上下文。第一次使用不需要填写。',
     tipSceneSetup: '给当前场景和张力打标签，让后续导出更有上下文。',
-    selectedCharacterActive: '当前选择：{character} 正在被真人接管。',
+    selectedCharacterActive: '{character} 正在由你接管。',
     selectedCharacterMissing: '没有检测到角色。请打开聊天后刷新，或检查 SillyTavern 兼容性。',
-    selectedCharacterReady: '当前选择：{character}。点击开始接管后，这个角色会交给真人。',
-    takeoverActiveBody: '{character} 现在处于真人控制状态，预计持续到 {until}。此时普通聊天框会发送成这个角色的话。',
-    takeoverActiveTitle: '正在接管 {character}',
-    takeoverHandoffBody: '请生成下一条 AI 回复，让 handoff 注入上下文。如果结果不明确，可以使用“复制最新 Handoff”。',
-    takeoverHandoffTitle: '恢复衔接等待中',
+    selectedCharacterReady: '已选择 {character}。',
+    takeoverActiveBody: '到 {until} 前，你在原聊天框发送的内容会变成 {character} 的发言。',
+    takeoverActiveHint: '直接在 SillyTavern 聊天框里以 {character} 的身份输入，然后发送。',
+    takeoverActiveTitle: '你正在扮演 {character}',
+    takeoverHandoffBody: '需要剧情继续时，直接生成下一条 AI 回复即可。',
+    takeoverHandoffTitle: 'AI 可以继续了',
     takeoverNoCharacterBody: '请先打开至少包含一个角色的聊天，然后刷新 VistrTavern。',
     takeoverNoCharacterTitle: '还没有选择角色',
-    takeoverReadyBody: '当你想让 {character} 打破 AI 群像的同质化节奏时，点击“开始接管”。',
-    takeoverReadyTitle: '准备接管 {character}',
+    takeoverReadyBody: '点击开始后，你下一次在聊天框发送的内容会变成 {character} 的话。',
+    takeoverReadyTitle: '准备接管：{character}',
     takeoverStepCapture: '恢复后点击“捕获灵感”，把这次异常整理成创作素材。',
     takeoverStepEnd: '客串结束后点击“结束”。',
     sendAsCharacterAndRecord: '发送为 {character} 并记录',
