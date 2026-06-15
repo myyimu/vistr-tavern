@@ -7,12 +7,19 @@ Takeover input and panel simplification release.
 ### Added
 
 - Normal SillyTavern chat-box sends are now routed as the controlled character during an active takeover.
+- Native chat-box routing now has focused checks for slash-command pass-through, single-takeover routing, current-chat character filtering, and takeover marker metadata.
+- GitHub installer screenshots and more explicit SillyTavern installation steps were added to the README and user guides.
+- Chinese-language discussion, usage ideas, and compatibility feedback can be sent to `myyimu@163.com`.
 - Gitee mirror links were added to the README files.
 
 ### Changed
 
 - The primary panel is now reduced to role selection, start/end takeover, status, and a short native-chat-box prompt.
 - Fallback panel sending remains available but is no longer the default path.
+- Single-character chats now only expose the current AI character for takeover; group chats expose only the group members.
+- Takeover chat messages now stay character-native by default and no longer expose VistrTavern human-controller metadata to the visible SillyTavern chat message.
+- The AI-like takeover marker inherits the previous real AI message icon/model without treating the current takeover message as its own icon source.
+- The GitHub repository account links were updated to `myyimu`.
 - Extension version updated to `0.6.1-alpha`.
 
 ## v0.6.0-alpha
