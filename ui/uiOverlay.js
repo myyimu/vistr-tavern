@@ -89,7 +89,14 @@ export class UiOverlay {
       ? state.activeIntrusions.find((intrusion) => intrusion.characterId === selectedCharacter.id)
       : null;
     selectedCharacterPreview.innerHTML = formatSelectedCharacter(selectedCharacter, selectedIntrusion, this.language);
-    takeoverGuide.innerHTML = formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHandoffCount: state.pendingHandoffCount || 0 }, this.language);
+    const debug = this.getDebugState?.() || state.debug || {};
+    takeoverGuide.innerHTML = formatTakeoverGuide({
+      selectedCharacter,
+      selectedIntrusion,
+      pendingHandoffCount: state.pendingHandoffCount || 0,
+      activeIntrusionCount: state.activeIntrusions.length,
+      nativeInputSend: debug.lastNativeInputSend,
+    }, this.language);
     startButton.disabled = !selectedCharacter;
     endButton.disabled = !selectedIntrusion;
     sendAsButton.disabled = !selectedCharacter || !selectedIntrusion;
@@ -126,7 +133,7 @@ export class UiOverlay {
     setInputValue(this.root, '[data-vt-context-background]', state.contextNotes?.background);
     setInputValue(this.root, '[data-vt-context-role-slots]', state.contextNotes?.roleSlots);
     setInputValue(this.root, '[data-vt-context-ai-rules]', state.contextNotes?.aiWorldRules);
-    debugPanel.innerHTML = formatDebugState(this.getDebugState?.() || state.debug || {}, this.language);
+    debugPanel.innerHTML = formatDebugState(debug, this.language);
     this.#syncShellState();
   }
 
@@ -958,15 +965,21 @@ function formatPanelStatus({ selectedCharacter, selectedIntrusion, pendingHandof
   return translate(language, 'panelStatusEmpty', { messages: messageCount || 0 });
 }
 
-function formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHandoffCount }, language) {
+function formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHandoffCount, activeIntrusionCount = 0, nativeInputSend }, language) {
+  const nativeInputNotice = formatNativeInputNotice(nativeInputSend, language);
+
   if (!selectedCharacter) {
     return [
       `<strong>${escapeHtml(translate(language, 'takeoverNoCharacterTitle'))}</strong>`,
       `<p>${escapeHtml(translate(language, 'takeoverNoCharacterBody'))}</p>`,
+      nativeInputNotice,
     ].join('');
   }
 
   if (selectedIntrusion) {
+    const multiTakeoverNotice = activeIntrusionCount > 1
+      ? `<p class="vt-takeover-alert">${escapeHtml(translate(language, 'takeoverMultipleActiveNotice'))}</p>`
+      : '';
     return [
       `<strong>${escapeHtml(translate(language, 'takeoverActiveTitle', { character: selectedCharacter.name }))}</strong>`,
       `<p>${escapeHtml(translate(language, 'takeoverActiveBody', {
@@ -974,6 +987,8 @@ function formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHand
         until: new Date(selectedIntrusion.endsAt).toLocaleTimeString(),
       }))}</p>`,
       `<p>${escapeHtml(translate(language, 'takeoverActiveHint', { character: selectedCharacter.name }))}</p>`,
+      multiTakeoverNotice,
+      nativeInputNotice,
     ].join('');
   }
 
@@ -981,13 +996,33 @@ function formatTakeoverGuide({ selectedCharacter, selectedIntrusion, pendingHand
     return [
       `<strong>${escapeHtml(translate(language, 'takeoverHandoffTitle'))}</strong>`,
       `<p>${escapeHtml(translate(language, 'takeoverHandoffBody'))}</p>`,
+      nativeInputNotice,
     ].join('');
   }
 
   return [
     `<strong>${escapeHtml(translate(language, 'takeoverReadyTitle', { character: selectedCharacter.name }))}</strong>`,
     `<p>${escapeHtml(translate(language, 'takeoverReadyBody', { character: selectedCharacter.name }))}</p>`,
+    nativeInputNotice,
   ].join('');
+}
+
+function formatNativeInputNotice(send, language) {
+  if (!send || send.status === 'sent') {
+    return '';
+  }
+
+  if (send.status === 'sending') {
+    return `<p class="vt-takeover-note">${escapeHtml(translate(language, 'nativeInputSending', { character: send.speakerName || translate(language, 'unknown') }))}</p>`;
+  }
+
+  if (send.status === 'failed') {
+    return `<p class="vt-takeover-alert">${escapeHtml(translate(language, 'nativeInputFailed', {
+      message: send.error || translate(language, 'unknown'),
+    }))}</p>`;
+  }
+
+  return '';
 }
 
 function setInputValue(root, selector, value = '') {
@@ -1271,6 +1306,8 @@ const I18N = {
     noInspirationCaptures: 'No inspiration captures yet',
     noMaterialAvailable: 'No material available',
     noSavedBranchPoints: 'No branch points marked',
+    nativeInputFailed: 'Native chat-box send failed. Your text was kept in the box. Error: {message}',
+    nativeInputSending: 'Sending as {character} from the SillyTavern chat box...',
     none: 'none',
     notCalled: 'not-called',
     ok: 'ok',
@@ -1319,6 +1356,7 @@ const I18N = {
     takeoverMarkerAi: 'AI-like icon',
     takeoverMarkerHidden: 'Hidden',
     takeoverMarkerVt: 'VT marker',
+    takeoverMultipleActiveNotice: 'Multiple characters are under takeover. Use the panel fallback so VT knows who should speak.',
     tipBrainstormSpace: 'A private creator scratchpad. It does not enter chat or prompt injection.',
     tipBranchPoint: 'Mark a route opened by the cameo, such as a relationship crack, identity reveal, or clue conflict.',
     tipCreatorTools: 'Post-play tools. Open this after you already have useful material.',
@@ -1536,6 +1574,8 @@ const I18N = {
     noInspirationCaptures: '暂无灵感捕获',
     noMaterialAvailable: '暂无可用素材',
     noSavedBranchPoints: '暂无已标记剧情分支',
+    nativeInputFailed: '原聊天框发送失败。输入内容已保留。错误：{message}',
+    nativeInputSending: '正在从 SillyTavern 原聊天框发送为 {character}...',
     none: '无',
     notCalled: '未调用',
     ok: '正常',
@@ -1584,6 +1624,7 @@ const I18N = {
     takeoverMarkerAi: '像 AI 回复',
     takeoverMarkerHidden: '隐藏',
     takeoverMarkerVt: 'VT 标记',
+    takeoverMultipleActiveNotice: '当前有多个角色被接管。请使用面板备用发送，让 VT 知道这句话属于谁。',
     tipBrainstormSpace: '创作者私有随手笔记，不进入聊天，也不会注入 prompt。',
     tipBranchPoint: '标记这次客串打开的新路线，例如关系裂痕、身份揭露或线索矛盾。',
     tipCreatorTools: '后处理工具。有素材之后再打开，用来整理、标记和导出。',

@@ -220,6 +220,14 @@
   padding-left: 18px;
 }
 
+.vt-takeover-note {
+  color: #d9ecff;
+}
+
+.vt-takeover-alert {
+  color: #ffd2d2;
+}
+
 .vt-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

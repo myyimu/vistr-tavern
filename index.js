@@ -8,6 +8,12 @@ import { EXTENSION_VERSION } from './data/version.js';
 import { UiOverlay } from './ui/uiOverlay.js';
 
 const TAKEOVER_MARKER_STORAGE_KEY = 'vistr-tavern:takeover-marker-style';
+export const NATIVE_CHAT_INPUT_SELECTOR = [
+  '#send_textarea',
+  'textarea[name="send_textarea"]',
+  '[contenteditable="true"]#send_textarea',
+].join(', ');
+export const NATIVE_SEND_BUTTON_SELECTOR = '#send_but';
 
 let storage;
 let narrativeMemory;
@@ -75,6 +81,10 @@ function initializeWhenReady() {
   const context = getContext();
   if (context?.eventSource && context?.event_types?.APP_READY) {
     context.eventSource.on(context.event_types.APP_READY, initialize);
+    return;
+  }
+
+  if (typeof document === 'undefined') {
     return;
   }
 
@@ -294,7 +304,7 @@ function bindNativeChatInputSending() {
 }
 
 function handleNativeChatSendClick(event) {
-  if (!event.target?.closest?.('#send_but')) {
+  if (!event.target?.closest?.(NATIVE_SEND_BUTTON_SELECTOR)) {
     return;
   }
 
@@ -316,14 +326,15 @@ function handleNativeChatSendKeydown(event) {
 async function interceptNativeChatSend(event, input = findNativeChatInput()) {
   const takeover = getSingleActiveTakeoverTarget();
   const content = readNativeInputValue(input).trim();
-  if (!takeover || !content || content.startsWith('/') || nativeSendInProgress) {
+  const route = shouldRouteNativeChatInput({ takeover, content, nativeSendInProgress });
+  if (!route.shouldRoute) {
     return;
   }
 
+  nativeSendInProgress = true;
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation?.();
-  nativeSendInProgress = true;
   runtimeDebug.lastNativeInputSend = {
     characterId: takeover.id,
     speakerName: takeover.name,
@@ -357,6 +368,7 @@ async function interceptNativeChatSend(event, input = findNativeChatInput()) {
     };
     recordError('native_chat_input_send_failed', error);
     console.warn('[VistrTavern] Failed to route native chat input as takeover line.', error);
+    overlay?.refresh();
   } finally {
     nativeSendInProgress = false;
     publishDebugState();
@@ -365,24 +377,47 @@ async function interceptNativeChatSend(event, input = findNativeChatInput()) {
 
 function getSingleActiveTakeoverTarget() {
   const activeIntrusions = intrusionEngine?.getActiveIntrusions?.() || [];
+  return getNativeTakeoverTargetFromIntrusions(activeIntrusions, getCharacters());
+}
+
+export function getNativeTakeoverTargetFromIntrusions(activeIntrusions = [], characters = []) {
   if (activeIntrusions.length !== 1) {
     return null;
   }
-
   const intrusion = activeIntrusions[0];
-  const character = getCharacters().find((item) => item.id === intrusion.characterId);
+  const character = characters.find((item) => item.id === intrusion.characterId);
   return character || {
     id: intrusion.characterId,
     name: intrusion.characterName || intrusion.characterId,
   };
 }
 
+export function shouldRouteNativeChatInput({ takeover, content, nativeSendInProgress: inProgress = false }) {
+  if (inProgress) {
+    return { shouldRoute: false, reason: 'send_in_progress' };
+  }
+
+  if (!takeover) {
+    return { shouldRoute: false, reason: 'no_single_takeover' };
+  }
+
+  if (!content?.trim()) {
+    return { shouldRoute: false, reason: 'empty_input' };
+  }
+
+  if (content.trim().startsWith('/')) {
+    return { shouldRoute: false, reason: 'slash_command' };
+  }
+
+  return { shouldRoute: true, reason: 'takeover' };
+}
+
 function findNativeChatInput() {
-  return document.querySelector('#send_textarea, textarea[name="send_textarea"], [contenteditable="true"]#send_textarea');
+  return document.querySelector(NATIVE_CHAT_INPUT_SELECTOR);
 }
 
 function isNativeChatInput(element) {
-  return Boolean(element?.matches?.('#send_textarea, textarea[name="send_textarea"], [contenteditable="true"]#send_textarea'));
+  return Boolean(element?.matches?.(NATIVE_CHAT_INPUT_SELECTOR));
 }
 
 function readNativeInputValue(input) {
@@ -1151,7 +1186,7 @@ function inspectCompatibility() {
     hasAddOneMessage: typeof context?.addOneMessage === 'function',
     hasPromptInterceptor: typeof globalThis.VistrTavernPromptInterceptor === 'function',
     hasNativeChatInput: typeof document !== 'undefined' && Boolean(findNativeChatInput()),
-    hasNativeSendButton: typeof document !== 'undefined' && Boolean(document.querySelector('#send_but')),
+    hasNativeSendButton: typeof document !== 'undefined' && Boolean(document.querySelector(NATIVE_SEND_BUTTON_SELECTOR)),
     checkedAt: new Date().toISOString(),
   };
 }
