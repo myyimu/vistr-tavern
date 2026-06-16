@@ -10,7 +10,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| VistrTavern 版本 | `v0.6.0-alpha` |
+| VistrTavern 版本 | `v0.6.1-alpha` |
 | SillyTavern 版本 | TODO |
 | 浏览器 | TODO |
 | 系统 | TODO |

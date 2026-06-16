@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "check": "node --check index.js && node --check core/narrativeMemory.js && node --check core/exportWriter.js && node --check ui/uiOverlay.js && node --check data/version.js && node --check scripts/smoke-test.mjs && node --check scripts/native-input-test.mjs && node --check scripts/verify-version.mjs && node --check scripts/create-package.mjs",
+    "check": "node scripts/check-syntax.mjs",
     "package:zip": "node scripts/create-package.mjs",
     "test:native-input": "node scripts/native-input-test.mjs",
     "smoke": "node scripts/smoke-test.mjs",

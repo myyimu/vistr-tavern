@@ -10,7 +10,7 @@ Fill this table whenever you run a real manual validation pass.
 
 | Item | Value |
 | --- | --- |
-| VistrTavern version | `v0.6.0-alpha` |
+| VistrTavern version | `v0.6.1-alpha` |
 | SillyTavern version | TODO |
 | Browser | TODO |
 | OS | TODO |

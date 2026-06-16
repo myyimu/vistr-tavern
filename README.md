@@ -51,7 +51,7 @@ The first target is a SillyTavern extension, not a standalone web app.
 
 ## Release Target
 
-`v0.6.0-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
+`v0.6.1-alpha` means the extension can be installed through SillyTavern's GitHub extension installer, by manual folder placement, or from a release zip for local testing. It is not ready for broad end-user support yet.
 
 ## Tested Environments
 
@@ -63,7 +63,7 @@ Chinese-language topics, usage ideas, roleplay workflow suggestions, and compati
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
-| `v0.6.0-alpha` | Awaiting public validation | TODO | TODO | TODO |
+| `v0.6.1-alpha` | Awaiting public validation | TODO | TODO | TODO |
 
 ## Example Outputs
 

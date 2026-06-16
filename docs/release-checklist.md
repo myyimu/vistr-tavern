@@ -1,13 +1,13 @@
 # Release Checklist
 
-Use this checklist before publishing `v0.6.0-alpha`.
+Use this checklist before publishing `v0.6.1-alpha`.
 
 ## Repository
 
 - [ ] Repository name is `vistr-tavern`.
 - [ ] Repository visibility is public.
 - [ ] `manifest.json` `homePage` points to `https://github.com/myyimu/vistr-tavern`.
-- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.6.0-alpha`.
+- [ ] `package.json`, `manifest.json`, and `data/version.js` versions are `0.6.1-alpha`.
 - [ ] `README.md`, `README.zh-CN.md`, and user guides mention GitHub URL install plus manual/zip fallbacks.
 
 ## Local Verification
@@ -21,7 +21,7 @@ Use this checklist before publishing `v0.6.0-alpha`.
 - [ ] Confirm exports include creative context, human intent, inspiration captures, and brainstorm notes.
 - [ ] Confirm Character Prompt export includes persona extraction instructions and recorded material.
 - [ ] Confirm JSON export includes `intrusions`, `messages`, `handoffs`, and `branchPoints`.
-- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.6.0-alpha.zip` is created.
+- [ ] Run `npm run package:zip` and confirm `dist/vistr-tavern-0.6.1-alpha.zip` is created.
 
 ## SillyTavern Install
 
@@ -75,6 +75,6 @@ Use this checklist before publishing `v0.6.0-alpha`.
 ## GitHub Release
 
 - [ ] Commit all release changes.
-- [ ] Tag `v0.6.0-alpha`.
+- [ ] Tag `v0.6.1-alpha`.
 - [ ] Push branch and tag.
 - [ ] Create GitHub Release with alpha status and known limitations.

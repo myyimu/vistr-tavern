@@ -1,6 +1,6 @@
 # User Guide
 
-This guide describes how to install and test VistrTavern `v0.6.0-alpha`.
+This guide describes how to install and test VistrTavern `v0.6.1-alpha`.
 
 VistrTavern is still an experimental MVP. The current goal is to complete one local loop:
 
@@ -375,7 +375,7 @@ Markdown export includes:
 
 ## What to Verify in Alpha Testing
 
-For `v0.6.0-alpha`, a successful test means:
+For `v0.6.1-alpha`, a successful test means:
 
 - the `VT` button appears
 - characters load in the selector
@@ -422,7 +422,7 @@ Check whether the pending handoff count changes after generation. If it does not
 
 ### Handoff pollutes the chat history
 
-This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.6.0-alpha` still needs real-environment verification.
+This should be checked carefully in real SillyTavern testing. The current implementation inserts a marked system-style message into the generation context, but `v0.6.1-alpha` still needs real-environment verification.
 
 ## Privacy Note
 

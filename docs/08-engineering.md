@@ -12,10 +12,15 @@ npm run verify
 
 It runs:
 
-- `npm run check`: syntax checks for the browser entry, core modules, and scripts.
+- `npm run check`: syntax checks all JS/MJS files.
 - `npm run smoke`: behavioral smoke test for narrative memory, handoff, awareness events, and export.
 - `npm run verify:version`: version consistency check.
-- `npm run package:zip`: creates a release zip in `dist/`.
+
+Packaging is a separate release step:
+
+```bash
+npm run package:zip
+```
 
 ## Version Source
 

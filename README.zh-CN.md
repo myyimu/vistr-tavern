@@ -51,7 +51,7 @@ AI 群像正常运行
 
 ## 发布目标
 
-`v0.6.0-alpha` 表示这个扩展可以通过 SillyTavern 的 GitHub 扩展安装、手动文件夹或 release zip 本地安装测试。它还不适合大规模终端用户支持。
+`v0.6.1-alpha` 表示这个扩展可以通过 SillyTavern 的 GitHub 扩展安装、手动文件夹或 release zip 本地安装测试。它还不适合大规模终端用户支持。
 
 ## 已测试环境
 
@@ -63,7 +63,7 @@ AI 群像正常运行
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |
-| `v0.6.0-alpha` | 等待公开验证 | TODO | TODO | TODO |
+| `v0.6.1-alpha` | 等待公开验证 | TODO | TODO | TODO |
 
 ## 产出示例
 
