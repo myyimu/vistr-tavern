@@ -106,7 +106,7 @@ Before sharing screenshots or exports:
 
 Ask testers to use the `alpha feedback` issue template and include:
 
-Chinese-language topics, usage ideas, and private compatibility notes can also be sent to `myyimu@163.com`.
+Chinese-language topics, usage ideas, and private compatibility notes can also be sent to `xiaoke5211@gmail.com`.
 
 - SillyTavern version.
 - Install method.

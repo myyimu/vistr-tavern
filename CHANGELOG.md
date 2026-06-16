@@ -9,7 +9,7 @@ Takeover input and panel simplification release.
 - Normal SillyTavern chat-box sends are now routed as the controlled character during an active takeover.
 - Native chat-box routing now has focused checks for slash-command pass-through, single-takeover routing, current-chat character filtering, and takeover marker metadata.
 - GitHub installer screenshots and more explicit SillyTavern installation steps were added to the README and user guides.
-- Chinese-language discussion, usage ideas, and compatibility feedback can be sent to `myyimu@163.com`.
+- Chinese-language discussion, usage ideas, and compatibility feedback can be sent to `xiaoke5211@gmail.com`.
 - Gitee mirror links were added to the README files.
 
 ### Changed

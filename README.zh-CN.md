@@ -59,7 +59,7 @@ AI 群像正常运行
 
 ## 中文议题与想法反馈
 
-如果你有关于 VistrTavern 的中文议题、使用想法、剧情玩法建议或兼容性反馈，可以在 GitHub issue 中留言，也可以直接发邮件到 `myyimu@163.com`。
+如果你有关于 VistrTavern 的中文议题、使用想法、剧情玩法建议或兼容性反馈，可以在 GitHub issue 中留言，也可以直接发邮件到 `xiaoke5211@gmail.com`。
 
 | VistrTavern | SillyTavern | 系统 | 浏览器 | 状态 |
 | --- | --- | --- | --- | --- |

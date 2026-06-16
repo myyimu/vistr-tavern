@@ -59,7 +59,7 @@ Public compatibility is still being collected. If you test VistrTavern, please r
 
 ## Chinese Discussion And Ideas
 
-Chinese-language topics, usage ideas, roleplay workflow suggestions, and compatibility feedback are welcome in GitHub issues. You can also email `myyimu@163.com`.
+Chinese-language topics, usage ideas, roleplay workflow suggestions, and compatibility feedback are welcome in GitHub issues. You can also email `xiaoke5211@gmail.com`.
 
 | VistrTavern | SillyTavern | OS | Browser | Status |
 | --- | --- | --- | --- | --- |
